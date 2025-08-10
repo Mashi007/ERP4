@@ -1,0 +1,50 @@
+// components/pipeline/pipeline-subnav.tsx
+import { usePathname } from 'next/navigation';
+
+const items = [
+{ href: "/pipeline/oportunidades", label: "Oportunidades" },
+{ href: "/pipeline/embudo", label: "Embudo" },
+]
+
+export function PipelineSubnav() {
+const pathname = usePathname()
+return (
+  <nav aria-label="Submenú Ventas" className="w-full">
+    {/* rest of code here */}
+  </nav>
+)
+}
+
+// app/pipeline/layout.tsx
+import React from 'react';
+
+export default function PipelineLayout({ children }) {
+return (
+  <div>
+    <h1 className="text-2xl font-bold text-gray-900">Ventas</h1>
+    {/* rest of code here */}
+    {children}
+  </div>
+)
+}
+
+// components/sidebar.tsx
+import React from 'react';
+import DollarSign from './icons/DollarSign';
+
+const navigation = [
+{
+  name: "Ventas",
+  href: "/pipeline",
+  icon: DollarSign,
+},
+// rest of code here
+]
+
+export function Sidebar() {
+return (
+  <nav>
+    {/* rest of code here */}
+  </nav>
+)
+}

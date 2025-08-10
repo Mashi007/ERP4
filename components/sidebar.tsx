@@ -1,0 +1,129 @@
+"use client"
+
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+  LayoutDashboard,
+  Users,
+  Calendar,
+  Settings,
+  Building2,
+  DollarSign,
+  Brain,
+  MessageCircle,
+  Mail,
+  CalendarDays,
+  Megaphone,
+} from "lucide-react"
+
+const navigation = [
+  {
+    name: "Dashboard",
+    href: "/",
+    icon: LayoutDashboard,
+  },
+  {
+    name: "Contactos",
+    href: "/contacts",
+    icon: Users,
+  },
+  {
+    name: "Citas",
+    href: "/appointments",
+    icon: CalendarDays,
+  },
+  {
+    name: "Ventas",
+    href: "/pipeline",
+    icon: DollarSign,
+  },
+  // Importante: Oportunidades se mantiene dentro del submenú de Ventas.
+  // Se elimina del menú principal para que no aparezca duplicado.
+  // {
+  //   name: "Oportunidades",
+  //   href: "/deals",
+  //   icon: TrendingUp,
+  // },
+  {
+    name: "Actividades",
+    href: "/activities",
+    icon: Calendar,
+  },
+  {
+    name: "Comunicaciones",
+    href: "/communications",
+    icon: Mail,
+  },
+  {
+    name: "Marketing",
+    href: "/marketing",
+    icon: Megaphone,
+  },
+  {
+    name: "Chat IA",
+    href: "/chat",
+    icon: MessageCircle,
+  },
+  {
+    name: "Informes IA",
+    href: "/reports",
+    icon: Brain,
+  },
+  {
+    name: "Configuración",
+    href: "/settings",
+    icon: Settings,
+  },
+]
+
+export function Sidebar() {
+  const pathname = usePathname()
+
+  return (
+    <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200">
+      {/* Logo/Header */}
+      <div className="flex h-16 items-center px-6 border-b border-gray-200">
+        <div className="flex items-center space-x-2">
+          <Building2 className="h-8 w-8 text-blue-600" />
+          <span className="text-xl font-bold text-gray-900">CRM Pro</span>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 space-y-1 px-3 py-4">
+        {navigation.map((item) => {
+          const isActive = pathname === item.href
+          return (
+            <Link key={item.name} href={item.href}>
+              <Button
+                variant={isActive ? "secondary" : "ghost"}
+                className={cn("w-full justify-start", isActive && "bg-blue-50 text-blue-700 hover:bg-blue-50")}
+              >
+                <item.icon className="mr-3 h-4 w-4" />
+                {item.name}
+                {(item.name === "Informes IA" || item.name === "Chat IA") && (
+                  <span className="ml-auto text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">AI</span>
+                )}
+              </Button>
+            </Link>
+          )
+        })}
+      </nav>
+
+      {/* Footer */}
+      <div className="border-t border-gray-200 p-4">
+        <div className="flex items-center space-x-3">
+          <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
+            <span className="text-sm font-medium text-white">JD</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">John Doe</p>
+            <p className="text-xs text-gray-500 truncate">john@company.com</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
