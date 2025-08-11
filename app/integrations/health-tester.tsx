@@ -1,68 +1,60 @@
 "use client"
 
-import * as React from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 
-type Check = {
-  name: string
-  url: string
-  status: "idle" | "ok" | "error"
-  message?: string
+type Health = { ok: boolean; message?: string }
+
+async function check(path: string): Promise<Health> {
+  try {
+    const res = await fetch(path, { cache: "no-store" })
+    if (!res.ok) return { ok: false, message: `HTTP ${res.status}` }
+    const json = await res.json().catch(() => null)
+    return { ok: true, message: typeof json === "object" ? JSON.stringify(json) : undefined }
+  } catch (e: any) {
+    return { ok: false, message: e?.message || "Network error" }
+  }
 }
 
 export default function HealthTester() {
-  const [checks, setChecks] = React.useState<Check[]>([
-    { name: "Neon (DB)", url: "/api/health/neon", status: "idle" },
-    { name: "xAI (Grok)", url: "/api/health/xai", status: "idle" },
-  ])
+  const [neon, setNeon] = useState<Health | null>(null)
+  const [xai, setXai] = useState<Health | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  async function run(index: number) {
-    setChecks((c) => c.map((ch, i) => (i === index ? { ...ch, status: "idle", message: "" } : ch)))
-    try {
-      const res = await fetch(checks[index].url, { cache: "no-store" })
-      const ok = res.ok
-      const msg = ok ? "OK" : `HTTP ${res.status}`
-      setChecks((c) => c.map((ch, i) => (i === index ? { ...ch, status: ok ? "ok" : "error", message: msg } : ch)))
-    } catch (e: any) {
-      setChecks((c) =>
-        c.map((ch, i) => (i === index ? { ...ch, status: "error", message: e?.message ?? "Network error" } : ch)),
-      )
-    }
+  const run = async () => {
+    setLoading(true)
+    const [a, b] = await Promise.all([check("/api/health/neon"), check("/api/health/xai")])
+    setNeon(a)
+    setXai(b)
+    setLoading(false)
   }
 
-  async function runAll() {
-    for (let i = 0; i < checks.length; i++) {
-      // eslint-disable-next-line no-await-in-loop
-      await run(i)
-    }
-  }
+  useEffect(() => {
+    void run()
+  }, [])
 
   return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Pruebas de Integración</CardTitle>
-        <Button onClick={runAll}>Probar todo</Button>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm">Comprobación de Integraciones</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {checks.map((c, i) => (
-          <div key={c.name} className="flex items-center justify-between rounded-md border p-3">
-            <div className="space-y-0.5">
-              <div className="font-medium">{c.name}</div>
-              <div className="text-xs text-muted-foreground">{c.url}</div>
-              {c.message ? <div className="text-xs">{c.message}</div> : null}
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant={c.status === "ok" ? "default" : c.status === "error" ? "destructive" : "secondary"}>
-                {c.status.toUpperCase()}
-              </Badge>
-              <Button variant="outline" size="sm" onClick={() => run(i)}>
-                Probar
-              </Button>
-            </div>
+      <CardContent className="space-y-3 text-sm">
+        <div>
+          <div className="font-medium">Base de datos (Neon)</div>
+          <div className={neon?.ok ? "text-emerald-600" : "text-rose-600"}>
+            {neon ? (neon.ok ? "OK" : "ERROR") : "—"} {neon?.message ? `· ${neon.message}` : ""}
           </div>
-        ))}
+        </div>
+        <div>
+          <div className="font-medium">xAI</div>
+          <div className={xai?.ok ? "text-emerald-600" : "text-rose-600"}>
+            {xai ? (xai.ok ? "OK" : "ERROR") : "—"} {xai?.message ? `· ${xai.message}` : ""}
+          </div>
+        </div>
+        <Button size="sm" onClick={run} disabled={loading}>
+          {loading ? "Verificando..." : "Reintentar"}
+        </Button>
       </CardContent>
     </Card>
   )
