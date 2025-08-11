@@ -1,8 +1,8 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
+import { useCurrency } from "@/components/providers/currency-provider"
 
 type PipelineDatum = { stage: string; count: number; value: number }
 type ActivityDatum = { type: string; count: number }
@@ -10,6 +10,7 @@ type RevenueMonth = { month: string; revenue: number }
 type StageConv = { stage: string; rate: number; count: number }
 
 export function PipelineChart({ data = [], className }: { data?: PipelineDatum[]; className?: string }) {
+  const { format } = useCurrency()
   const max = Math.max(1, ...data.map((d) => d.value || 0))
   return (
     <Card className={cn(className)}>
@@ -22,9 +23,9 @@ export function PipelineChart({ data = [], className }: { data?: PipelineDatum[]
           <div key={d.stage}>
             <div className="flex justify-between text-xs mb-1">
               <span className="truncate">{d.stage}</span>
-              <span className="text-muted-foreground">{`$${Intl.NumberFormat().format(d.value || 0)} · ${
-                d.count
-              }`}</span>
+              <span className="text-muted-foreground">
+                {format(d.value || 0)} {" · "} {d.count}
+              </span>
             </div>
             <div className="h-2 rounded bg-muted overflow-hidden">
               <div
@@ -70,7 +71,9 @@ export function ActivitiesChart({ data = [], className }: { data?: ActivityDatum
 }
 
 export function RevenueByMonthChart({ data = [], className }: { data?: RevenueMonth[]; className?: string }) {
+  const { code } = useCurrency()
   const max = Math.max(1, ...data.map((d) => d.revenue || 0))
+  const fmt = new Intl.NumberFormat(undefined, { style: "currency", currency: code, maximumFractionDigits: 0 })
   return (
     <Card className={cn(className)}>
       <CardHeader>
@@ -85,6 +88,7 @@ export function RevenueByMonthChart({ data = [], className }: { data?: RevenueMo
                 className="w-4 sm:w-6 bg-emerald-600 rounded"
                 style={{ height: `${Math.max(4, (120 * (d.revenue || 0)) / max)}px` }}
                 aria-label={`Mes ${d.month}`}
+                title={fmt.format(d.revenue || 0)}
               />
               <div className="text-[10px] text-muted-foreground">{d.month.slice(5)}</div>
             </div>
@@ -115,40 +119,6 @@ export function StageConversionChart({ data = [], className }: { data?: StageCon
             <div className="text-[11px] text-muted-foreground">{d.count} oportunidades</div>
           </div>
         ))}
-      </CardContent>
-    </Card>
-  )
-}
-
-export function WinLossCard({
-  wonPct = 60,
-  lostPct = 40,
-  className,
-}: {
-  wonPct?: number
-  lostPct?: number
-  className?: string
-}) {
-  const clamp = (n: number) => Math.min(100, Math.max(0, n))
-  const w = clamp(wonPct)
-  const l = clamp(lostPct)
-  return (
-    <Card className={cn(className)}>
-      <CardHeader>
-        <CardTitle className="text-base">Porcentaje de oportunidades ganadas/perdidas</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-medium text-foreground">Ganado</span>
-          <span className="font-semibold">{w.toFixed(2)}%</span>
-        </div>
-        <Progress value={w} className="[&>div]:bg-emerald-600 h-2" aria-label="Ganado" />
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-medium text-foreground">Perdido</span>
-          <span className="font-semibold">{l.toFixed(2)}%</span>
-        </div>
-        <Progress value={l} className="[&>div]:bg-red-500 h-2" aria-label="Perdido" />
-        <div className="text-[11px] text-muted-foreground">Porcentaje</div>
       </CardContent>
     </Card>
   )

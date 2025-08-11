@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import type React from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,9 +19,28 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
-import { Search, Plus, DollarSign, Calendar, TrendingUp, User, Building, Mail, Phone, Edit, Save, X } from 'lucide-react'
+import {
+  Search,
+  Plus,
+  DollarSign,
+  Calendar,
+  TrendingUp,
+  User,
+  Building,
+  Mail,
+  Phone,
+  Edit,
+  Save,
+  X,
+} from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { cn } from "@/lib/utils"
 import { createOpportunityWithContact, updateOpportunity, deleteOpportunity } from "./actions"
+import { updateDealStage } from "@/app/pipeline/actions"
 import { toast } from "@/hooks/use-toast"
+import { formatEUR } from "@/lib/currency"
+import { useCurrency } from "@/components/providers/currency-provider"
+import type { Contact } from "@/lib/database"
 
 interface Deal {
   id: number
@@ -51,6 +71,15 @@ export default function DealsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+
+  // Estado para búsqueda de Contactos en "Nueva Oportunidad"
+  const [contactQuery, setContactQuery] = useState("")
+  const [contactResults, setContactResults] = useState<Contact[]>([])
+  const [contactOpen, setContactOpen] = useState(false)
+  const contactSearchRef = useRef<HTMLDivElement | null>(null)
+  const contactAbort = useRef<AbortController | null>(null)
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
+
   const [deals, setDeals] = useState<Deal[]>([
     {
       id: 1,
@@ -59,7 +88,7 @@ export default function DealsPage() {
       contact_name: "Johnny Appleseed",
       contact_email: "johnny.appleseed@jetpropulsion.com",
       contact_phone: "+ Click to add",
-      value: 4000.00,
+      value: 4000.0,
       stage: "Nuevo",
       probability: 25,
       expected_close_date: "2024-08-15",
@@ -72,7 +101,7 @@ export default function DealsPage() {
       decision_timeline: "1-3 meses",
       pain_points: "Sistema actual obsoleto, necesitan modernización",
       competitors: "Salesforce, HubSpot",
-      next_steps: "Enviar propuesta detallada la próxima semana"
+      next_steps: "Enviar propuesta detallada la próxima semana",
     },
     {
       id: 2,
@@ -81,7 +110,7 @@ export default function DealsPage() {
       contact_name: "Jane Sampleton",
       contact_email: "janesampleton@gmail.com",
       contact_phone: "+19266529503",
-      value: 5600.00,
+      value: 5600.0,
       stage: "Nuevo",
       probability: 30,
       expected_close_date: "2024-10-15",
@@ -94,7 +123,7 @@ export default function DealsPage() {
       decision_timeline: "3-6 meses",
       pain_points: "Crecimiento rápido, necesitan escalabilidad",
       competitors: "Pipedrive, Zoho",
-      next_steps: "Programar demo técnica con equipo de desarrollo"
+      next_steps: "Programar demo técnica con equipo de desarrollo",
     },
     {
       id: 3,
@@ -103,7 +132,7 @@ export default function DealsPage() {
       contact_name: "Spector Calista",
       contact_email: "spectorcalista@gmail.com",
       contact_phone: "+19266520001",
-      value: 100.00,
+      value: 100.0,
       stage: "Calificación",
       probability: 15,
       expected_close_date: "2024-08-30",
@@ -116,7 +145,7 @@ export default function DealsPage() {
       decision_timeline: "Inmediato",
       pain_points: "Presupuesto muy ajustado, buscan solución económica",
       competitors: "Herramientas gratuitas",
-      next_steps: "Evaluar opciones de plan básico"
+      next_steps: "Evaluar opciones de plan básico",
     },
     {
       id: 4,
@@ -125,7 +154,7 @@ export default function DealsPage() {
       contact_name: "Syed Kareem",
       contact_email: "syedkareem@gmail.com",
       contact_phone: "+447456123456",
-      value: 4100.00,
+      value: 4100.0,
       stage: "Calificación",
       probability: 40,
       expected_close_date: "2024-08-20",
@@ -138,7 +167,7 @@ export default function DealsPage() {
       decision_timeline: "1-3 meses",
       pain_points: "Procesos manuales ineficientes",
       competitors: "SAP, Oracle",
-      next_steps: "Realizar análisis de procesos actuales"
+      next_steps: "Realizar análisis de procesos actuales",
     },
     {
       id: 5,
@@ -147,7 +176,7 @@ export default function DealsPage() {
       contact_name: "Spector Calista",
       contact_email: "spectorcalista@gmail.com",
       contact_phone: "+19266520001",
-      value: 3200.00,
+      value: 3200.0,
       stage: "Negociación",
       probability: 75,
       expected_close_date: "2024-08-10",
@@ -160,7 +189,7 @@ export default function DealsPage() {
       decision_timeline: "Inmediato",
       pain_points: "Satisfechos con servicio actual, quieren expandir",
       competitors: "Ninguno identificado",
-      next_steps: "Finalizar términos de renovación"
+      next_steps: "Finalizar términos de renovación",
     },
     {
       id: 6,
@@ -169,7 +198,7 @@ export default function DealsPage() {
       contact_name: "Spector Calista",
       contact_email: "spectorcalista@gmail.com",
       contact_phone: "+19266520001",
-      value: 3000.00,
+      value: 3000.0,
       stage: "Ganado",
       probability: 100,
       expected_close_date: "2024-08-10",
@@ -182,7 +211,7 @@ export default function DealsPage() {
       decision_timeline: "Inmediato",
       pain_points: "Upgrade a plan premium por crecimiento",
       competitors: "N/A",
-      next_steps: "Implementar nuevas funcionalidades"
+      next_steps: "Implementar nuevas funcionalidades",
     },
     {
       id: 7,
@@ -191,7 +220,7 @@ export default function DealsPage() {
       contact_name: "Martha Jackson",
       contact_email: "marthajackson@gmail.com",
       contact_phone: "+19266091164",
-      value: 2100.00,
+      value: 2100.0,
       stage: "Ganado",
       probability: 100,
       expected_close_date: "2024-08-05",
@@ -204,7 +233,7 @@ export default function DealsPage() {
       decision_timeline: "Inmediato",
       pain_points: "Optimización de procesos de ventas",
       competitors: "N/A",
-      next_steps: "Comenzar implementación"
+      next_steps: "Comenzar implementación",
     },
     {
       id: 8,
@@ -213,7 +242,7 @@ export default function DealsPage() {
       contact_name: "Kevin Jordan",
       contact_email: "kevinjordan@gmail.com",
       contact_phone: "+15898899911",
-      value: 4200.00,
+      value: 4200.0,
       stage: "Ganado",
       probability: 100,
       expected_close_date: "2024-07-15",
@@ -226,7 +255,7 @@ export default function DealsPage() {
       decision_timeline: "Inmediato",
       pain_points: "Integración con herramientas de marketing",
       competitors: "N/A",
-      next_steps: "Proyecto completado exitosamente"
+      next_steps: "Proyecto completado exitosamente",
     },
     {
       id: 9,
@@ -235,7 +264,7 @@ export default function DealsPage() {
       contact_name: "Emily Dean",
       contact_email: "emily.dean@globallearning.com",
       contact_phone: "+ Click to add",
-      value: 3000.00,
+      value: 3000.0,
       stage: "Ganado",
       probability: 100,
       expected_close_date: "2024-06-20",
@@ -248,9 +277,12 @@ export default function DealsPage() {
       decision_timeline: "Inmediato",
       pain_points: "Gestión de estudiantes y cursos",
       competitors: "N/A",
-      next_steps: "Renovación automática configurada"
-    }
+      next_steps: "Renovación automática configurada",
+    },
   ])
+
+  const { code } = useCurrency()
+  const currencySymbol = code === "EUR" ? "€" : "$"
 
   const [newOpportunity, setNewOpportunity] = useState({
     title: "",
@@ -272,11 +304,20 @@ export default function DealsPage() {
     decision_timeline: "",
     pain_points: "",
     competitors: "",
-    next_steps: ""
+    next_steps: "",
   })
 
   const stages = ["Nuevo", "Calificación", "Propuesta", "Negociación", "Cierre", "Ganado", "Perdido"]
-  const leadSources = ["Website", "Referido", "Redes Sociales", "Email Marketing", "Evento", "Llamada Fría", "Cliente Existente", "Otro"]
+  const leadSources = [
+    "Website",
+    "Referido",
+    "Redes Sociales",
+    "Email Marketing",
+    "Evento",
+    "Llamada Fría",
+    "Cliente Existente",
+    "Otro",
+  ]
   const companySizes = ["1-10", "11-50", "51-200", "201-1000", "1000+"]
   const budgetRanges = ["< $1,000", "$1,000 - $5,000", "$5,000 - $25,000", "$25,000 - $100,000", "$100,000+"]
   const decisionTimelines = ["Inmediato", "1-3 meses", "3-6 meses", "6-12 meses", "12+ meses"]
@@ -309,13 +350,68 @@ export default function DealsPage() {
       (deal.contact_name && deal.contact_name.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
+  // Buscar contactos (debounce)
+  useEffect(() => {
+    const handler = setTimeout(async () => {
+      const q = contactQuery.trim()
+      if (q.length < 2) {
+        setContactResults([])
+        return
+      }
+      try {
+        if (contactAbort.current) contactAbort.current.abort()
+        contactAbort.current = new AbortController()
+        const res = await fetch(`/api/contacts/search?q=${encodeURIComponent(q)}&by=any`, {
+          signal: contactAbort.current.signal,
+        })
+        const data = (await res.json()) as { results: Contact[] }
+        setContactResults(data.results || [])
+        setContactOpen(true)
+      } catch (e) {
+        if ((e as any).name !== "AbortError") {
+          console.error("Search contacts failed", e)
+        }
+      }
+    }, 250)
+    return () => clearTimeout(handler)
+  }, [contactQuery])
+
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (!contactSearchRef.current) return
+      if (!contactSearchRef.current.contains(e.target as Node)) {
+        setContactOpen(false)
+      }
+    }
+    if (contactOpen) {
+      document.addEventListener("mousedown", onClickOutside)
+    }
+    return () => document.removeEventListener("mousedown", onClickOutside)
+  }, [contactOpen])
+
+  const handleSelectContact = (c: Contact) => {
+    setSelectedContact(c)
+    // Rellenar todos los campos disponibles desde el contacto
+    setNewOpportunity((prev) => ({
+      ...prev,
+      contact_name: c.name || "",
+      contact_email: c.email || "",
+      contact_phone: c.phone || "",
+      company: c.company || "",
+      job_title: c.job_title || "",
+    }))
+    setContactQuery(c.name || "")
+    setContactOpen(false)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
     try {
       const result = await createOpportunityWithContact(newOpportunity)
-      
+
       if (result.success) {
         const newDeal: Deal = {
           id: result.deal.id,
@@ -337,11 +433,12 @@ export default function DealsPage() {
           decision_timeline: result.deal.decision_timeline,
           pain_points: result.deal.pain_points,
           competitors: result.deal.competitors,
-          next_steps: result.deal.next_steps
+          next_steps: result.deal.next_steps,
         }
-        
+
         setDeals([newDeal, ...deals])
-        
+
+        // Resetear formulario y estados de búsqueda
         setNewOpportunity({
           title: "",
           value: "",
@@ -362,14 +459,16 @@ export default function DealsPage() {
           decision_timeline: "",
           pain_points: "",
           competitors: "",
-          next_steps: ""
+          next_steps: "",
         })
-        
+        setSelectedContact(null)
+        setContactQuery("")
+        setContactResults([])
         setIsDialogOpen(false)
-        
+
         toast({
           title: "¡Oportunidad creada exitosamente!",
-          description: `Se ha creado la oportunidad "${result.deal.title}" y ${result.contactCreated ? 'se ha creado' : 'se ha vinculado'} el contacto "${result.contact.name}". También está disponible en el Embudo de Ventas.`,
+          description: `Se ha creado la oportunidad "${result.deal.title}" y ${result.contactCreated ? "se ha creado" : "se ha vinculado"} el contacto "${result.contact.name}". También está disponible en el Embudo de Ventas.`,
         })
       } else {
         toast({
@@ -379,7 +478,7 @@ export default function DealsPage() {
         })
       }
     } catch (error) {
-      console.error('Error creating opportunity:', error)
+      console.error("Error creating opportunity:", error)
       toast({
         title: "Error al crear oportunidad",
         description: "Ha ocurrido un error inesperado.",
@@ -403,15 +502,13 @@ export default function DealsPage() {
 
     try {
       const result = await updateOpportunity(editingDeal.id, editingDeal)
-      
+
       if (result.success) {
-        setDeals(deals.map(deal => 
-          deal.id === editingDeal.id ? { ...editingDeal, ...result.deal } : deal
-        ))
-        
+        setDeals(deals.map((deal) => (deal.id === editingDeal.id ? { ...editingDeal, ...result.deal } : deal)))
+
         setIsEditDialogOpen(false)
         setEditingDeal(null)
-        
+
         toast({
           title: "¡Oportunidad actualizada exitosamente!",
           description: `La oportunidad "${result.deal.title}" ha sido actualizada en todos los módulos.`,
@@ -424,7 +521,7 @@ export default function DealsPage() {
         })
       }
     } catch (error) {
-      console.error('Error updating opportunity:', error)
+      console.error("Error updating opportunity:", error)
       toast({
         title: "Error al actualizar oportunidad",
         description: "Ha ocurrido un error inesperado.",
@@ -440,10 +537,10 @@ export default function DealsPage() {
 
     try {
       const result = await deleteOpportunity(dealId)
-      
+
       if (result.success) {
-        setDeals(deals.filter(deal => deal.id !== dealId))
-        
+        setDeals(deals.filter((deal) => deal.id !== dealId))
+
         toast({
           title: "Oportunidad eliminada",
           description: "La oportunidad ha sido eliminada exitosamente.",
@@ -456,10 +553,41 @@ export default function DealsPage() {
         })
       }
     } catch (error) {
-      console.error('Error deleting opportunity:', error)
+      console.error("Error deleting opportunity:", error)
       toast({
         title: "Error al eliminar oportunidad",
-        description: "Ha ocurrido un error inesperado.",
+        description: "Ocurrió un error inesperado.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  async function handleChangeStage(dealId: number, newStage: string) {
+    // Optimistic UI
+    setEditingDeal((ed) => (ed && ed.id === dealId ? { ...ed, stage: newStage } : ed))
+    setDeals((prev) => prev.map((d) => (d.id === dealId ? { ...d, stage: newStage } : d)))
+
+    try {
+      const result = await updateDealStage(dealId, newStage)
+      if (result.success) {
+        setDeals((prev) => prev.map((d) => (d.id === dealId ? { ...d, ...result.deal } : d)))
+        setEditingDeal((ed) => (ed && ed.id === dealId ? { ...ed, ...result.deal } : ed))
+        toast({
+          title: "Etapa actualizada",
+          description: `La oportunidad se movió a "${newStage}".`,
+        })
+      } else {
+        toast({
+          title: "No se pudo actualizar la etapa",
+          description: result.error || "Intenta nuevamente.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error updating deal stage:", error)
+      toast({
+        title: "Error al actualizar la etapa",
+        description: "Ocurrió un error inesperado.",
         variant: "destructive",
       })
     }
@@ -467,8 +595,8 @@ export default function DealsPage() {
 
   const totalValue = deals.reduce((sum, deal) => sum + deal.value, 0)
   const weightedValue = deals.reduce((sum, deal) => sum + (deal.value * deal.probability) / 100, 0)
-  const wonDeals = deals.filter(deal => deal.stage === "Ganado")
-  const activeDeals = deals.filter(deal => !["Ganado", "Perdido"].includes(deal.stage))
+  const wonDeals = deals.filter((deal) => deal.stage === "Ganado")
+  const activeDeals = deals.filter((deal) => !["Ganado", "Perdido"].includes(deal.stage))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -478,7 +606,18 @@ export default function DealsPage() {
             <h1 className="text-2xl font-bold text-gray-900">Gestión de Oportunidades</h1>
             <p className="text-gray-600">Administra tu pipeline de ventas - Sincronizado con Embudo de Ventas</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open)
+              if (!open) {
+                setSelectedContact(null)
+                setContactQuery("")
+                setContactResults([])
+                setContactOpen(false)
+              }
+            }}
+          >
             <DialogTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
@@ -489,7 +628,8 @@ export default function DealsPage() {
               <DialogHeader>
                 <DialogTitle>Crear Nueva Oportunidad</DialogTitle>
                 <DialogDescription>
-                  Completa la información de la oportunidad y el contacto. Se sincronizará automáticamente con el Embudo de Ventas.
+                  Completa la información de la oportunidad y el contacto. Se sincronizará automáticamente con el Embudo
+                  de Ventas.
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit}>
@@ -499,7 +639,7 @@ export default function DealsPage() {
                       <DollarSign className="h-5 w-5 text-blue-600" />
                       <h3 className="text-lg font-semibold">Información de la Oportunidad</h3>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="title">Título de la Oportunidad *</Label>
@@ -512,7 +652,7 @@ export default function DealsPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="value">Valor Estimado ($) *</Label>
+                        <Label htmlFor="value">{`Valor Estimado (${currencySymbol}) *`}</Label>
                         <Input
                           id="value"
                           type="number"
@@ -527,7 +667,10 @@ export default function DealsPage() {
                     <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="stage">Etapa</Label>
-                        <Select value={newOpportunity.stage} onValueChange={(value) => setNewOpportunity({ ...newOpportunity, stage: value })}>
+                        <Select
+                          value={newOpportunity.stage}
+                          onValueChange={(value) => setNewOpportunity({ ...newOpportunity, stage: value })}
+                        >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -557,7 +700,9 @@ export default function DealsPage() {
                           id="expected_close_date"
                           type="date"
                           value={newOpportunity.expected_close_date}
-                          onChange={(e) => setNewOpportunity({ ...newOpportunity, expected_close_date: e.target.value })}
+                          onChange={(e) =>
+                            setNewOpportunity({ ...newOpportunity, expected_close_date: e.target.value })
+                          }
                         />
                       </div>
                     </div>
@@ -579,18 +724,90 @@ export default function DealsPage() {
                       <User className="h-5 w-5 text-green-600" />
                       <h3 className="text-lg font-semibold">Información del Contacto</h3>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
+                      {/* Campo con búsqueda de Contactos */}
+                      <div className="space-y-2" ref={contactSearchRef}>
                         <Label htmlFor="contact_name">Nombre del Contacto *</Label>
-                        <Input
-                          id="contact_name"
-                          value={newOpportunity.contact_name}
-                          onChange={(e) => setNewOpportunity({ ...newOpportunity, contact_name: e.target.value })}
-                          placeholder="Juan Pérez"
-                          required
-                        />
+                        <div className="relative">
+                          <Input
+                            id="contact_name"
+                            value={contactQuery}
+                            onChange={(e) => {
+                              setContactQuery(e.target.value)
+                              setNewOpportunity({ ...newOpportunity, contact_name: e.target.value })
+                            }}
+                            onFocus={() => contactResults.length > 0 && setContactOpen(true)}
+                            placeholder="Escribe para buscar..."
+                            required
+                            autoComplete="off"
+                          />
+                          {selectedContact && (
+                            <button
+                              type="button"
+                              aria-label="Limpiar contacto seleccionado"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                              onClick={() => {
+                                setSelectedContact(null)
+                                setContactQuery("")
+                                setNewOpportunity((p) => ({
+                                  ...p,
+                                  contact_name: "",
+                                  contact_email: "",
+                                  contact_phone: "",
+                                  company: "",
+                                  job_title: "",
+                                }))
+                                setContactOpen(false)
+                                setContactResults([])
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+
+                          {contactOpen && contactResults.length > 0 && (
+                            <div
+                              className={cn(
+                                "absolute left-0 right-0 top-full mt-1 z-50",
+                                "rounded-md border bg-white shadow-md",
+                                "max-h-60 overflow-y-auto overflow-x-hidden",
+                              )}
+                              role="listbox"
+                              aria-label="Resultados de contactos"
+                            >
+                              {contactResults.map((c) => (
+                                <button
+                                  type="button"
+                                  key={c.id}
+                                  onClick={() => handleSelectContact(c)}
+                                  className="w-full px-3 py-2 flex items-center gap-3 hover:bg-gray-50 text-left"
+                                >
+                                  <Avatar className="h-7 w-7">
+                                    <AvatarImage src={c.avatar_url || ""} alt={c.name || "Contacto"} />
+                                    <AvatarFallback>
+                                      {(c.name || "?")
+                                        .split(" ")
+                                        .map((s) => s[0])
+                                        .slice(0, 2)
+                                        .join("")
+                                        .toUpperCase()}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="min-w-0">
+                                    <div className="text-sm font-medium text-gray-900 truncate">{c.name}</div>
+                                    <div className="text-xs text-gray-600 break-words">
+                                      {c.company || "Sin empresa"}
+                                    </div>
+                                    {c.email && <div className="text-xs text-gray-500 break-words">{c.email}</div>}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="contact_email">Email *</Label>
                         <Input
@@ -626,13 +843,12 @@ export default function DealsPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="company">Empresa *</Label>
+                      <Label htmlFor="company">Empresa</Label>
                       <Input
                         id="company"
                         value={newOpportunity.company}
                         onChange={(e) => setNewOpportunity({ ...newOpportunity, company: e.target.value })}
                         placeholder="Nombre de la empresa"
-                        required
                       />
                     </div>
                   </div>
@@ -642,11 +858,14 @@ export default function DealsPage() {
                       <TrendingUp className="h-5 w-5 text-purple-600" />
                       <h3 className="text-lg font-semibold">Información Adicional</h3>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="lead_source">Fuente del Lead</Label>
-                        <Select value={newOpportunity.lead_source} onValueChange={(value) => setNewOpportunity({ ...newOpportunity, lead_source: value })}>
+                        <Select
+                          value={newOpportunity.lead_source}
+                          onValueChange={(value) => setNewOpportunity({ ...newOpportunity, lead_source: value })}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Seleccionar fuente" />
                           </SelectTrigger>
@@ -673,7 +892,10 @@ export default function DealsPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="company_size">Tamaño de Empresa</Label>
-                        <Select value={newOpportunity.company_size} onValueChange={(value) => setNewOpportunity({ ...newOpportunity, company_size: value })}>
+                        <Select
+                          value={newOpportunity.company_size}
+                          onValueChange={(value) => setNewOpportunity({ ...newOpportunity, company_size: value })}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Seleccionar tamaño" />
                           </SelectTrigger>
@@ -688,7 +910,10 @@ export default function DealsPage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="budget_range">Rango de Presupuesto</Label>
-                        <Select value={newOpportunity.budget_range} onValueChange={(value) => setNewOpportunity({ ...newOpportunity, budget_range: value })}>
+                        <Select
+                          value={newOpportunity.budget_range}
+                          onValueChange={(value) => setNewOpportunity({ ...newOpportunity, budget_range: value })}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Seleccionar rango" />
                           </SelectTrigger>
@@ -705,7 +930,10 @@ export default function DealsPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="decision_timeline">Timeline de Decisión</Label>
-                      <Select value={newOpportunity.decision_timeline} onValueChange={(value) => setNewOpportunity({ ...newOpportunity, decision_timeline: value })}>
+                      <Select
+                        value={newOpportunity.decision_timeline}
+                        onValueChange={(value) => setNewOpportunity({ ...newOpportunity, decision_timeline: value })}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="¿Cuándo planean decidir?" />
                         </SelectTrigger>
@@ -752,7 +980,7 @@ export default function DealsPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                     Cancelar
@@ -773,10 +1001,8 @@ export default function DealsPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${totalValue.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">
-                {deals.length} oportunidades
-              </p>
+              <div className="text-2xl font-bold">{formatEUR(totalValue)}</div>
+              <p className="text-xs text-muted-foreground">{deals.length} oportunidades</p>
             </CardContent>
           </Card>
           <Card>
@@ -785,10 +1011,8 @@ export default function DealsPage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${Math.round(weightedValue).toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">
-                Basado en probabilidades
-              </p>
+              <div className="text-2xl font-bold">{formatEUR(weightedValue)}</div>
+              <p className="text-xs text-muted-foreground">Basado en probabilidades</p>
             </CardContent>
           </Card>
           <Card>
@@ -798,9 +1022,7 @@ export default function DealsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{activeDeals.length}</div>
-              <p className="text-xs text-muted-foreground">
-                En proceso
-              </p>
+              <p className="text-xs text-muted-foreground">En proceso</p>
             </CardContent>
           </Card>
           <Card>
@@ -811,7 +1033,7 @@ export default function DealsPage() {
             <CardContent>
               <div className="text-2xl font-bold">{wonDeals.length}</div>
               <p className="text-xs text-muted-foreground">
-                ${wonDeals.reduce((sum, deal) => sum + deal.value, 0).toLocaleString()} cerrados
+                {formatEUR(wonDeals.reduce((sum, deal) => sum + deal.value, 0))} cerrados
               </p>
             </CardContent>
           </Card>
@@ -843,12 +1065,7 @@ export default function DealsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge className={getStageColor(deal.stage)}>{deal.stage}</Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(deal)}
-                      className="h-8 w-8 p-0"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(deal)} className="h-8 w-8 p-0">
                       <Edit className="h-4 w-4" />
                     </Button>
                   </div>
@@ -876,7 +1093,7 @@ export default function DealsPage() {
                   )}
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Valor:</span>
-                    <span className="text-lg font-bold text-green-600">${deal.value.toLocaleString()}</span>
+                    <span className="text-lg font-bold text-green-600">{formatEUR(deal.value)}</span>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
@@ -915,7 +1132,8 @@ export default function DealsPage() {
             <DialogHeader>
               <DialogTitle>Editar Oportunidad</DialogTitle>
               <DialogDescription>
-                Modifica la información de la oportunidad. Los cambios se sincronizarán automáticamente con el Embudo de Ventas.
+                Modifica la información de la oportunidad. Los cambios se sincronizarán automáticamente con el Embudo de
+                Ventas.
               </DialogDescription>
             </DialogHeader>
             {editingDeal && (
@@ -926,7 +1144,7 @@ export default function DealsPage() {
                       <DollarSign className="h-5 w-5 text-blue-600" />
                       <h3 className="text-lg font-semibold">Información de la Oportunidad</h3>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="edit_title">Título de la Oportunidad</Label>
@@ -937,12 +1155,14 @@ export default function DealsPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="edit_value">Valor Estimado ($)</Label>
+                        <Label htmlFor="edit_value">{`Valor Estimado (${currencySymbol})`}</Label>
                         <Input
                           id="edit_value"
                           type="number"
                           value={editingDeal.value}
-                          onChange={(e) => setEditingDeal({ ...editingDeal, value: parseFloat(e.target.value) || 0 })}
+                          onChange={(e) =>
+                            setEditingDeal({ ...editingDeal, value: Number.parseFloat(e.target.value) || 0 })
+                          }
                         />
                       </div>
                     </div>
@@ -950,7 +1170,13 @@ export default function DealsPage() {
                     <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="edit_stage">Etapa</Label>
-                        <Select value={editingDeal.stage} onValueChange={(value) => setEditingDeal({ ...editingDeal, stage: value })}>
+                        <Select
+                          value={editingDeal.stage}
+                          onValueChange={(value) => {
+                            // Persistir inmediatamente y reordenar
+                            void handleChangeStage(editingDeal.id, value)
+                          }}
+                        >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -971,7 +1197,9 @@ export default function DealsPage() {
                           min="0"
                           max="100"
                           value={editingDeal.probability}
-                          onChange={(e) => setEditingDeal({ ...editingDeal, probability: parseInt(e.target.value) || 0 })}
+                          onChange={(e) =>
+                            setEditingDeal({ ...editingDeal, probability: Number.parseInt(e.target.value) || 0 })
+                          }
                         />
                       </div>
                       <div className="space-y-2">
@@ -1001,11 +1229,14 @@ export default function DealsPage() {
                       <TrendingUp className="h-5 w-5 text-purple-600" />
                       <h3 className="text-lg font-semibold">Información Adicional</h3>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="edit_lead_source">Fuente del Lead</Label>
-                        <Select value={editingDeal.lead_source || ""} onValueChange={(value) => setEditingDeal({ ...editingDeal, lead_source: value })}>
+                        <Select
+                          value={editingDeal.lead_source || ""}
+                          onValueChange={(value) => setEditingDeal({ ...editingDeal, lead_source: value })}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Seleccionar fuente" />
                           </SelectTrigger>
@@ -1039,14 +1270,14 @@ export default function DealsPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                     Cancelar
                   </Button>
-                  <Button 
-                    type="button" 
-                    variant="destructive" 
+                  <Button
+                    type="button"
+                    variant="destructive"
                     onClick={() => {
                       setIsEditDialogOpen(false)
                       handleDelete(editingDeal.id)

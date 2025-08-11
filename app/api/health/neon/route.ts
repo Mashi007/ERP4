@@ -1,23 +1,58 @@
 import { NextResponse } from "next/server"
-import { sql } from "@/lib/database"
+import { neon } from "@neondatabase/serverless"
 
 export async function GET() {
+  const url = process.env.DATABASE_URL
+  if (!url) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "DATABASE_URL is not set",
+        details: null,
+      },
+      { status: 200 },
+    )
+  }
+
+  const sql = neon(url)
   try {
-    if (!sql) {
-      return NextResponse.json(
-        { ok: false, message: "Sin conexión: DATABASE_URL no configurada o cliente no inicializado." },
-        { status: 200 },
-      )
+    // Probar conexión
+    await sql /*sql*/`select 1;`
+
+    // Intentar contar filas por tabla (si no existen, atrapamos error)
+    async function safeCount(table: string) {
+      try {
+        const rows = await sql /*sql*/`select count(*)::int as c from ${sql(table)};`
+        const c = (rows as any)?.[0]?.c ?? 0
+        return c
+      } catch {
+        return null
+      }
     }
-    // Simple sanity check
-    const rows = await sql`SELECT 1 as ok`
-    const okValue = Array.isArray(rows) ? (rows[0] as any)?.ok : (rows as any)?.[0]?.ok
-    const ok = okValue === 1 || okValue === "1"
-    return NextResponse.json({
-      ok,
-      message: ok ? "Conexión a Neon exitosa." : "Consulta realizada, pero respuesta inesperada.",
-    })
+
+    const [deals, contacts, activities, appointments] = await Promise.all([
+      safeCount("deals"),
+      safeCount("contacts"),
+      safeCount("activities"),
+      safeCount("appointments"),
+    ])
+
+    return NextResponse.json(
+      {
+        ok: true,
+        error: null,
+        details: { deals, contacts, activities, appointments },
+      },
+      { status: 200 },
+    )
   } catch (error: any) {
-    return NextResponse.json({ ok: false, message: `Error: ${error?.message ?? "desconocido"}` }, { status: 200 })
+    return NextResponse.json(
+      {
+        ok: false,
+        error: String(error?.message || error),
+        details: null,
+      },
+      { status: 200 },
+    )
   }
 }

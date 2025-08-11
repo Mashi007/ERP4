@@ -1,50 +1,101 @@
 // components/pipeline/pipeline-subnav.tsx
-import { usePathname } from 'next/navigation';
+"use client"
+
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
 
 const items = [
-{ href: "/pipeline/oportunidades", label: "Oportunidades" },
-{ href: "/pipeline/embudo", label: "Embudo" },
+  { href: "/pipeline/oportunidades", label: "Oportunidades" },
+  { href: "/pipeline/embudo", label: "Embudo" },
 ]
 
 export function PipelineSubnav() {
-const pathname = usePathname()
-return (
-  <nav aria-label="Submenú Ventas" className="w-full">
-    {/* rest of code here */}
-  </nav>
-)
+  const pathname = usePathname()
+
+  return (
+    <nav aria-label="Submenú Ventas" className="w-full">
+      <ul className="flex items-center gap-2 border-b pb-2">
+        {items.map((item) => {
+          const isActive =
+            pathname === item.href || (item.href !== "/pipeline/embudo" && pathname?.startsWith(item.href))
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                className={cn(
+                  "inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  "hover:bg-gray-100",
+                  isActive ? "text-gray-900 bg-gray-100" : "text-gray-600",
+                )}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {item.label}
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </nav>
+  )
 }
 
-// app/pipeline/layout.tsx
-import React from 'react';
+// components/servicios/servicios-subnav.tsx
+"use client"
 
-export default function PipelineLayout({ children }) {
-return (
-  <div>
-    <h1 className="text-2xl font-bold text-gray-900">Ventas</h1>
-    {/* rest of code here */}
-    {children}
-  </div>
-)
-}
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
 
-// components/sidebar.tsx
-import React from 'react';
-import DollarSign from './icons/DollarSign';
-
-const navigation = [
-{
-  name: "Ventas",
-  href: "/pipeline",
-  icon: DollarSign,
-},
-// rest of code here
+const items = [
+  { href: "/servicios", label: "Catálogo" },
+  { href: "/servicios/propuestas", label: "Propuestas" },
 ]
 
-export function Sidebar() {
-return (
-  <nav>
-    {/* rest of code here */}
-  </nav>
-)
+export function ServiciosSubnav() {
+  const pathname = usePathname()
+
+  return (
+    <nav aria-label="Submenú Servicios" className="w-full">
+      <ul className="flex items-center gap-2 border-b pb-2">
+        {items.map((item) => {
+          const isActive = pathname === item.href || pathname?.startsWith(item.href)
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                className={cn(
+                  "inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  "hover:bg-gray-100",
+                  isActive ? "text-gray-900 bg-gray-100" : "text-gray-600",
+                )}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {item.label}
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </nav>
+  )
+}
+
+// app/servicios/page.tsx
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import ServiciosClient from "@/components/servicios/servicios-client"
+
+export default function ServiciosPage() {
+  return (
+    <main className="p-4 md:p-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-xl sm:text-2xl">{"Catálogo"}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ServiciosClient />
+        </CardContent>
+      </Card>
+    </main>
+  )
 }

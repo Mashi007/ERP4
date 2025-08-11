@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { Appointment } from "@/lib/database"
+import AppointmentDetailsDialog from "@/components/appointments/appointment-details-dialog"
 
 // Helpers to normalize and compare dates
 function toLocalDate(input: unknown): Date | null {
@@ -40,6 +41,15 @@ export default function AppointmentCalendar({ appointments, selectedDate, onSele
   const initial = selectedDate ?? new Date()
   const [cursor, setCursor] = useState<Date>(new Date(initial.getFullYear(), initial.getMonth(), 1))
 
+  // NEW: state for details dialog
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null)
+
+  const openDetails = (ap: Appointment) => {
+    setActiveAppointment(ap)
+    setDetailsOpen(true)
+  }
+
   // Keep month in sync if parent changes selectedDate
   useEffect(() => {
     if (selectedDate) {
@@ -51,7 +61,7 @@ export default function AppointmentCalendar({ appointments, selectedDate, onSele
   const byDay = useMemo(() => {
     const map = new Map<string, Appointment[]>()
     for (const ap of appointments) {
-      const d = toLocalDate(ap.appointment_date as unknown)
+      const d = toLocalDate((ap as any).appointment_date as unknown)
       if (!d) continue
       const key = ymd(d)
       const arr = map.get(key) ?? []
@@ -138,12 +148,30 @@ export default function AppointmentCalendar({ appointments, selectedDate, onSele
                   !inCurrentMonth(d) ? "text-gray-400" : "text-gray-900",
                   isSelected ? "ring-2 ring-gray-800" : "",
                 ].join(" ")}
+                aria-label={`Día ${d.getDate()}`}
               >
                 <div className="text-xs font-medium">{d.getDate()}</div>
                 <div className="mt-1 flex flex-col gap-1">
                   {items.slice(0, 3).map((ap) => (
-                    <div key={ap.id} className="truncate rounded bg-gray-100 px-2 py-0.5 text-[10px]">
-                      {ap.title}
+                    <div
+                      key={(ap as any).id}
+                      className="truncate rounded bg-gray-100 px-2 py-0.5 text-[10px] cursor-pointer hover:bg-gray-200"
+                      title={(ap as any).title}
+                      role="button"
+                      tabIndex={0}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation()
+                        openDetails(ap)
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.stopPropagation()
+                          openDetails(ap)
+                        }
+                      }}
+                      aria-label={`Ver detalle de ${(ap as any).title}`}
+                    >
+                      {(ap as any).title}
                     </div>
                   ))}
                   {items.length > 3 && <div className="text-[10px] text-gray-500">+{items.length - 3} más</div>}
@@ -164,17 +192,39 @@ export default function AppointmentCalendar({ appointments, selectedDate, onSele
             <div className="text-sm text-gray-500">No hay eventos para este día.</div>
           ) : (
             (byDay.get(ymd(selected)) ?? []).map((ap) => (
-              <div key={ap.id} className="rounded border p-2">
-                <div className="text-sm font-medium">{ap.title}</div>
+              <div
+                key={(ap as any).id}
+                className="rounded border p-2 hover:bg-gray-50 cursor-pointer"
+                role="button"
+                tabIndex={0}
+                onDoubleClick={() => openDetails(ap)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") openDetails(ap)
+                }}
+                aria-label={`Abrir detalle de ${(ap as any).title}`}
+              >
+                <div className="text-sm font-medium">{(ap as any).title}</div>
                 <div className="text-xs text-gray-600">
-                  {ap.appointment_time} • {ap.company || "Sin empresa"} • {ap.type}
+                  {(ap as any).appointment_time} • {(ap as any).company || "Sin empresa"} • {(ap as any).type}
                 </div>
-                {ap.notes && <div className="text-xs text-gray-500 mt-1 line-clamp-2">{ap.notes}</div>}
+                {(ap as any).notes && (
+                  <div className="text-xs text-gray-500 mt-1 line-clamp-2">{(ap as any).notes}</div>
+                )}
               </div>
             ))
           )}
         </div>
       </div>
+
+      {/* Details dialog */}
+      <AppointmentDetailsDialog
+        open={detailsOpen}
+        onOpenChange={(o) => {
+          setDetailsOpen(o)
+          if (!o) setActiveAppointment(null)
+        }}
+        appointment={activeAppointment}
+      />
     </div>
   )
 }

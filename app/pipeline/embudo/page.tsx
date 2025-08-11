@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 
 import { Search, Plus, DollarSign, TrendingUp, User, Building, Edit, Save, X } from "lucide-react"
-import { createOpportunityWithContact, updateOpportunity, deleteOpportunity } from "../actions"
+import { createOpportunityWithContact, updateOpportunity, deleteOpportunity, updateDealStage } from "../actions"
 import type { Contact } from "@/lib/database"
 import ProposalTable from "@/components/pipeline/proposal-table"
 import {
@@ -36,6 +36,9 @@ import {
   upsertDealToStorage,
   type PipelineDeal,
 } from "@/lib/pipeline-sync"
+import { formatEUR } from "@/lib/currency"
+import { useCurrency } from "@/components/providers/currency-provider"
+import { formatDateEs } from "@/lib/date"
 
 interface Deal {
   id: number
@@ -86,6 +89,8 @@ function toPipelineDeal(d: Deal): PipelineDeal {
 }
 
 export default function EmbudoPage() {
+  const { code } = useCurrency()
+  const currencySymbol = code === "EUR" ? "€" : "$"
   const [searchTerm, setSearchTerm] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -97,6 +102,7 @@ export default function EmbudoPage() {
   // View (details) dialog state
   const [viewingDeal, setViewingDeal] = useState<Deal | null>(null)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+  const [viewingStage, setViewingStage] = useState<string | null>(null)
 
   // Contact search state for "Nueva Oportunidad"
   const [contactQuery, setContactQuery] = useState("")
@@ -538,6 +544,7 @@ export default function EmbudoPage() {
 
   const handleView = (deal: Deal) => {
     setViewingDeal(deal)
+    setViewingStage(deal.stage)
     setIsViewDialogOpen(true)
   }
 
@@ -604,11 +611,27 @@ export default function EmbudoPage() {
     }
   }
 
-  // Eliminar KPIs
-  // const totalValue = deals.reduce((sum, deal) => sum + deal.value, 0)
-  // const weightedValue = deals.reduce((sum, deal) => sum + (deal.value * deal.probability) / 100, 0)
-  // const wonDeals = deals.filter((deal) => deal.stage === "Ganado")
-  // const activeDeals = deals.filter((deal) => !["Ganado", "Perdido"].includes(deal.stage))
+  async function handleChangeStage(dealId: number, newStage: string) {
+    // Optimistic updates
+    setDeals((prev) => prev.map((d) => (d.id === dealId ? { ...d, stage: newStage } : d)))
+    setViewingDeal((vd) => (vd && vd.id === dealId ? { ...vd, stage: newStage } : vd))
+
+    const res = await updateDealStage(dealId, newStage)
+    if (res?.success && res.deal) {
+      setDeals((prev) => prev.map((d) => (d.id === dealId ? { ...d, ...res.deal } : d)))
+      setViewingDeal((vd) => (vd && vd.id === dealId ? { ...vd, ...res.deal } : vd))
+      toast({
+        title: "Etapa actualizada",
+        description: `La oportunidad se movió a "${newStage}".`,
+      })
+    } else {
+      toast({
+        title: "No se pudo actualizar la etapa",
+        description: res?.error || "Intenta nuevamente.",
+        variant: "destructive",
+      })
+    }
+  }
 
   // Organizar deals por etapa para el pipeline
   const pipelineStages = stages.map((stageName) => {
@@ -618,7 +641,7 @@ export default function EmbudoPage() {
     return {
       name: stageName,
       count: stageDeals.length,
-      weightedValue: `$${Math.round(stageValue).toLocaleString()}`,
+      weightedValue: stageValue,
       deals: stageDeals,
     }
   })
@@ -627,9 +650,7 @@ export default function EmbudoPage() {
     const stored = loadDealsFromStorage()
     if (stored.length) {
       setDeals((prev) => {
-        // Merge PipelineDeal[] into Deal[] by id
         const merged = mergeUniqueById(prev.map(toPipelineDeal), stored)
-        // cast back to Deal; fields align
         return merged as unknown as Deal[]
       })
     }
@@ -638,7 +659,6 @@ export default function EmbudoPage() {
       const ce = e as CustomEvent<{ deal: PipelineDeal }>
       const incoming = ce.detail?.deal
       if (!incoming) return
-      // Force stage "Nuevo" in Embudo
       const incomingEmbudo: Deal = { ...(incoming as unknown as Deal), stage: "Nuevo" }
       setDeals((prev) => {
         const exists = prev.some((p) => p.id === incomingEmbudo.id)
@@ -684,6 +704,7 @@ export default function EmbudoPage() {
               </DialogDescription>
             </DialogHeader>
 
+            {/* Formulario de creación */}
             <form onSubmit={handleSubmit}>
               <div className="grid gap-6 py-4">
                 {/* Información de la Oportunidad */}
@@ -705,7 +726,7 @@ export default function EmbudoPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="value">Valor Estimado ($) *</Label>
+                      <Label htmlFor="value">{`Valor Estimado (${currencySymbol}) *`}</Label>
                       <Input
                         id="value"
                         type="number"
@@ -914,7 +935,7 @@ export default function EmbudoPage() {
                       <Label htmlFor="lead_source">Fuente del Lead</Label>
                       <Select
                         value={newOpportunity.lead_source}
-                        onValueChange={(value) => setNewOpportunity({ ...newOpportunity, lead_source: value })}
+                        onChange={(e) => setNewOpportunity({ ...newOpportunity, lead_source: e.target.value })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar fuente" />
@@ -944,7 +965,7 @@ export default function EmbudoPage() {
                       <Label htmlFor="company_size">Tamaño de Empresa</Label>
                       <Select
                         value={newOpportunity.company_size}
-                        onValueChange={(value) => setNewOpportunity({ ...newOpportunity, company_size: value })}
+                        onChange={(e) => setNewOpportunity({ ...newOpportunity, company_size: e.target.value })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar tamaño" />
@@ -962,7 +983,7 @@ export default function EmbudoPage() {
                       <Label htmlFor="budget_range">Rango de Presupuesto</Label>
                       <Select
                         value={newOpportunity.budget_range}
-                        onValueChange={(value) => setNewOpportunity({ ...newOpportunity, budget_range: value })}
+                        onChange={(e) => setNewOpportunity({ ...newOpportunity, budget_range: e.target.value })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar rango" />
@@ -982,7 +1003,7 @@ export default function EmbudoPage() {
                     <Label htmlFor="decision_timeline">Timeline de Decisión</Label>
                     <Select
                       value={newOpportunity.decision_timeline}
-                      onValueChange={(value) => setNewOpportunity({ ...newOpportunity, decision_timeline: value })}
+                      onChange={(e) => setNewOpportunity({ ...newOpportunity, decision_timeline: e.target.value })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="¿Cuándo planean decidir?" />
@@ -1074,7 +1095,7 @@ export default function EmbudoPage() {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Valor ponderado</span>
-                  <span className="font-medium">{stage.weightedValue}</span>
+                  <span className="font-medium">{formatEUR(stage.weightedValue)}</span>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -1102,9 +1123,11 @@ export default function EmbudoPage() {
                             </Button>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-lg font-bold">${deal.value.toLocaleString()}</span>
+                            <span className="text-lg font-bold">{formatEUR(deal.value)}</span>
                             <span className="text-xs text-gray-500">
-                              {deal.expected_close_date ? `Cierra ${deal.expected_close_date}` : "Sin fecha"}
+                              {deal.expected_close_date
+                                ? `Cierra ${formatDateEs(deal.expected_close_date)}`
+                                : "Sin fecha"}
                             </span>
                           </div>
                           <div className="flex items-center space-x-2">
@@ -1142,44 +1165,65 @@ export default function EmbudoPage() {
         ))}
       </div>
 
-      {/* Detalle y edición */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+      {/* Detalle - ahora persiste inmediatamente al cambiar la etapa */}
+      <Dialog
+        open={isViewDialogOpen}
+        onOpenChange={(open) => {
+          setIsViewDialogOpen(open)
+        }}
+      >
         <DialogContent className="w-[95vw] sm:max-w-[900px] md:max-w-[1100px] lg:max-w-[1200px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalle de la Oportunidad</DialogTitle>
-            <DialogDescription>Consulta la información completa de la oportunidad.</DialogDescription>
+            <DialogDescription>Selecciona una etapa y se guardará inmediatamente.</DialogDescription>
           </DialogHeader>
 
           {viewingDeal && (
             <div className="grid gap-6 py-2">
-              {/* Resumen superior */}
+              {/* Resumen superior editable: Título (solo lectura) + Etapa (select) */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
+                <div className="space-y-2 md:col-span-2">
                   <Label>Título</Label>
                   <Input value={viewingDeal.title} readOnly />
                 </div>
                 <div className="space-y-2">
-                  <Label>Empresa</Label>
-                  <Input value={viewingDeal.company} readOnly />
-                </div>
-                <div className="space-y-2">
-                  <Label>Valor</Label>
-                  <Input value={`$${viewingDeal.value.toLocaleString()}`} readOnly />
+                  <Label>Etapa</Label>
+                  <Select
+                    value={viewingStage ?? viewingDeal.stage}
+                    onValueChange={(v) => {
+                      setViewingStage(v)
+                      if (viewingDeal) {
+                        void handleChangeStage(viewingDeal.id, v)
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona etapa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stages.map((s) => (
+                        <SelectItem value={s} key={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
+              {/* Datos de solo lectura abajo */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Etapa</Label>
-                  <Input value={viewingDeal.stage} readOnly />
-                </div>
                 <div className="space-y-2">
                   <Label>Probabilidad</Label>
                   <Input value={`${viewingDeal.probability}%`} readOnly />
                 </div>
                 <div className="space-y-2">
                   <Label>Cierre esperado</Label>
-                  <Input value={viewingDeal.expected_close_date || "Sin fecha"} readOnly />
+                  <Input value={formatDateEs(viewingDeal.expected_close_date)} readOnly />
+                </div>
+                <div className="space-y-2">
+                  <Label>Valor</Label>
+                  <Input value={formatEUR(viewingDeal.value)} readOnly />
                 </div>
               </div>
 
@@ -1267,10 +1311,8 @@ export default function EmbudoPage() {
                   type="button"
                   onClick={() => {
                     setIsViewDialogOpen(false)
-                    if (viewingDeal) {
-                      setEditingDeal(viewingDeal)
-                      setIsEditDialogOpen(true)
-                    }
+                    setEditingDeal(viewingDeal!)
+                    setIsEditDialogOpen(true)
                   }}
                 >
                   Editar
@@ -1281,7 +1323,7 @@ export default function EmbudoPage() {
                     variant="destructive"
                     onClick={() => {
                       setIsViewDialogOpen(false)
-                      handleDelete(viewingDeal.id)
+                      void handleDelete(viewingDeal.id)
                     }}
                   >
                     Eliminar
@@ -1323,7 +1365,7 @@ export default function EmbudoPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit_value">Valor Estimado ($)</Label>
+                      <Label htmlFor="edit_value">{`Valor Estimado (${currencySymbol})`}</Label>
                       <Input
                         id="edit_value"
                         type="number"
@@ -1340,7 +1382,9 @@ export default function EmbudoPage() {
                       <Label htmlFor="edit_stage">Etapa</Label>
                       <Select
                         value={editingDeal.stage}
-                        onValueChange={(value) => setEditingDeal({ ...editingDeal, stage: value })}
+                        onValueChange={(value) => {
+                          void handleChangeStage(editingDeal.id, value)
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -1401,7 +1445,7 @@ export default function EmbudoPage() {
                       <Label htmlFor="edit_lead_source">Fuente del Lead</Label>
                       <Select
                         value={editingDeal.lead_source || ""}
-                        onValueChange={(value) => setEditingDeal({ ...editingDeal, lead_source: value })}
+                        onChange={(e) => setEditingDeal({ ...editingDeal, lead_source: e.target.value })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar fuente" />
@@ -1436,7 +1480,6 @@ export default function EmbudoPage() {
                   </div>
                 </div>
               </div>
-
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                   Cancelar

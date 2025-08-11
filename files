@@ -1,181 +1,134 @@
-// components/sidebar.tsx
-"use client"
+// app/layout.tsx
+import { CurrencyProvider } from "@/components/providers/currency-provider"
+import { ReactNode } from "react"
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Users, TrendingUp, Calendar, Settings, Building2, DollarSign, Brain, MessageCircle, Mail, CalendarDays, Megaphone } from 'lucide-react'
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <CurrencyProvider>
+          {children}
+        </CurrencyProvider>
+      </body>
+    </html>
+  )
+}
 
-const navigation = [
-  {
-    name: "Dashboard",
-    href: "/",
-    icon: LayoutDashboard,
-  },
-  {
-    name: "Contactos",
-    href: "/contacts",
-    icon: Users,
-  },
-  {
-    name: "Citas",
-    href: "/appointments",
-    icon: CalendarDays,
-  },
-  {
-    name: "Ventas",
-    href: "/pipeline",
-    icon: DollarSign,
-  },
-  {
-    name: "Oportunidades",
-    href: "/deals",
-    icon: TrendingUp,
-  },
-  {
-    name: "Actividades",
-    href: "/activities",
-    icon: Calendar,
-  },
-  {
-    name: "Comunicaciones",
-    href: "/communications",
-    icon: Mail,
-  },
-  {
-    name: "Marketing",
-    href: "/marketing",
-    icon: Megaphone,
-  },
-  {
-    name: "Chat IA",
-    href: "/chat",
-    icon: MessageCircle,
-  },
-  {
-    name: "Informes IA",
-    href: "/reports",
-    icon: Brain,
-  },
-  {
-    name: "Configuración",
-    href: "/settings",
-    icon: Settings,
-  },
-]
+// components/dashboard-charts.tsx
+import React from "react"
+import { useCurrency } from "@/components/providers/currency-provider"
 
-export function Sidebar() {
-  const pathname = usePathname()
+interface PipelineChartProps {
+  data: any[]
+}
+
+export function PipelineChart({ data }: PipelineChartProps) {
+  const { format } = useCurrency()
 
   return (
-    <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200">
-      {/* Logo/Header */}
-      <div className="flex h-16 items-center px-6 border-b border-gray-200">
-        <div className="flex items-center space-x-2">
-          <Building2 className="h-8 w-8 text-blue-600" />
-          <span className="text-xl font-bold text-gray-900">CRM Pro</span>
+    <div>
+      {data.map((d) => (
+        <div key={d.id}>
+          {format(d.value || 0)} {" · "} {d.count}
         </div>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link key={item.name} href={item.href}>
-              <Button
-                variant={isActive ? "secondary" : "ghost"}
-                className={cn("w-full justify-start", isActive && "bg-blue-50 text-blue-700 hover:bg-blue-50")}
-              >
-                <item.icon className="mr-3 h-4 w-4" />
-                {item.name}
-                {(item.name === "Informes IA" || item.name === "Chat IA") && (
-                  <span className="ml-auto text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
-                    AI
-                  </span>
-                )}
-              </Button>
-            </Link>
-          )
-        })}
-      </nav>
-
-      {/* Footer */}
-      <div className="border-t border-gray-200 p-4">
-        <div className="flex items-center space-x-3">
-          <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
-            <span className="text-sm font-medium text-white">JD</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">John Doe</p>
-            <p className="text-xs text-gray-500 truncate">john@company.com</p>
-          </div>
-        </div>
-      </div>
+      ))}
     </div>
   )
 }
 
-// app/pipeline/layout.tsx
-import type { ReactNode } from "react"
-import { PipelineSubnav } from "@/components/pipeline/pipeline-subnav"
+// app/dashboard/page.tsx
+import { getOrgCurrency } from "@/lib/org-settings"
+import { ReactNode } from "react"
 
-export default function PipelineLayout({ children }: { children: ReactNode }) {
+export default async function DashboardPage() {
+  const data = await fetchData()
+  const report = await fetchReport()
+  const owners = await fetchOwners()
+
+  const currencyCode = await getOrgCurrency("default")
+  const currencyFmt = new Intl.NumberFormat(undefined, { style: "currency", currency: currencyCode, maximumFractionDigits: 0 })
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="px-6 pt-6">
-        <div className="flex items-end justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Ventas</h1>
-            <p className="text-gray-600">Gestiona tu pipeline y oportunidades</p>
-          </div>
-        </div>
-        <PipelineSubnav />
-      </header>
-      <main className="p-6">{children}</main>
+    <div>
+      <StatCard title="Ingresos (pipeline)" value={currencyFmt.format(data.totals.totalRevenue)} />
+      {/* ** rest of code here ** */}
     </div>
   )
 }
 
-// components/pipeline/pipeline-subnav.tsx
-"use client"
+// app/deals/page.tsx
+import React from "react"
+import { useCurrency } from "@/components/providers/currency-provider"
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
+interface DealsPageProps {
+  deals: any[]
+}
 
-const items = [
-  { href: "/pipeline/oportunidades", label: "Oportunidades" },
-  { href: "/pipeline/embudo", label: "Embudo" },
-]
-
-export function PipelineSubnav() {
-  const pathname = usePathname()
+export function DealsPage({ deals }: DealsPageProps) {
+  const { code: currencyCode, format } = useCurrency()
 
   return (
-    <nav aria-label="Submenú Ventas" className="w-full">
-      <ul className="flex items-center gap-2 border-b pb-2">
-        {items.map((item) => {
-          const isActive =
-            pathname === item.href || (item.href !== "/pipeline/embudo" && pathname?.startsWith(item.href))
-          return (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                className={cn(
-                  "inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                  "hover:bg-gray-100",
-                  isActive ? "text-gray-900 bg-gray-100" : "text-gray-600",
-                )}
-                aria-current={isActive ? "page" : undefined}
-              >
-                {item.label}
-              </Link>
-            </li>
-          )
-        })}
-      </ul>
-    </nav>
+    <div>
+      {deals.map((deal) => (
+        <div key={deal.id}>
+          <span>{format(deal.value)}</span>
+          {/* ** rest of code here ** */}
+        </div>
+      ))}
+      {/* ** rest of code here ** */}
+    </div>
+  )
+}
+
+// app/pipeline/embudo/page.tsx
+import React from "react"
+import { useCurrency } from "@/components/providers/currency-provider"
+
+interface EmbudoPageProps {
+  deals: any[]
+}
+
+export function EmbudoPage({ deals }: EmbudoPageProps) {
+  const { code: currencyCode, format } = useCurrency()
+
+  const pipelineStages = deals.map((deal) => ({
+    name: deal.stage,
+    weightedValue: deal.value,
+  }))
+
+  return (
+    <div>
+      {pipelineStages.map((stage) => (
+        <div key={stage.name}>
+          {format(stage.weightedValue as number)}
+          {/* ** rest of code here ** */}
+        </div>
+      ))}
+      {/* ** rest of code here ** */}
+    </div>
+  )
+}
+
+// app/pipeline/oportunidades/page.tsx
+import React from "react"
+import { useCurrency } from "@/components/providers/currency-provider"
+
+interface OportunidadesPageProps {
+  deals: any[]
+}
+
+export function OportunidadesPage({ deals }: OportunidadesPageProps) {
+  const { code: currencyCode, format } = useCurrency()
+
+  return (
+    <div>
+      {deals.map((deal) => (
+        <div key={deal.id}>
+          <span>{format(deal.value)}</span>
+          {/* ** rest of code here ** */}
+        </div>
+      ))}
+      {/* ** rest of code here ** */}
+    </div>
   )
 }

@@ -1,7 +1,7 @@
-'use server'
+"use server"
 
-import { sql, getDataWithFallback, mockContacts, mockDeals, type Contact, type Deal } from '@/lib/database'
-import { revalidatePath } from 'next/cache'
+import { sql, mockContacts, mockDeals, type Contact, type Deal } from "@/lib/database"
+import { revalidatePath } from "next/cache"
 
 interface OpportunityData {
   // Datos de la Oportunidad
@@ -11,7 +11,7 @@ interface OpportunityData {
   probability: string
   expected_close_date: string
   notes: string
-  
+
   // Datos del Contacto
   contact_name: string
   contact_email: string
@@ -19,7 +19,7 @@ interface OpportunityData {
   company: string
   job_title: string
   contact_notes: string
-  
+
   // Datos Adicionales
   lead_source: string
   industry: string
@@ -54,15 +54,15 @@ export async function createOpportunityWithContact(data: OpportunityData) {
   try {
     // Verificar si el contacto ya existe por email
     let existingContact: Contact | null = null
-    
+
     if (sql) {
       const contactResult = await sql`
         SELECT * FROM contacts WHERE email = ${data.contact_email} LIMIT 1
       `
-      existingContact = contactResult[0] as Contact || null
+      existingContact = (contactResult[0] as Contact) || null
     } else {
       // Buscar en datos mock
-      existingContact = mockContacts.find(c => c.email === data.contact_email) || null
+      existingContact = mockContacts.find((c) => c.email === data.contact_email) || null
     }
 
     let contact: Contact
@@ -89,7 +89,7 @@ export async function createOpportunityWithContact(data: OpportunityData) {
     } else {
       // Crear nuevo contacto
       contactCreated = true
-      
+
       if (sql) {
         const contactResult = await sql`
           INSERT INTO contacts (
@@ -113,18 +113,18 @@ export async function createOpportunityWithContact(data: OpportunityData) {
       } else {
         // Crear contacto mock
         contact = {
-          id: Math.max(...mockContacts.map(c => c.id)) + 1,
+          id: Math.max(...mockContacts.map((c) => c.id)) + 1,
           name: data.contact_name,
           email: data.contact_email,
           phone: data.contact_phone || null,
           company: data.company,
           job_title: data.job_title || null,
-          status: 'New',
+          status: "New",
           tags: [],
-          sales_owner: 'Daniel Casañas',
+          sales_owner: "Daniel Casañas",
           avatar_url: null,
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         }
         mockContacts.push(contact)
       }
@@ -132,7 +132,7 @@ export async function createOpportunityWithContact(data: OpportunityData) {
 
     // Crear la oportunidad
     let deal: Deal
-    
+
     if (sql) {
       const dealResult = await sql`
         INSERT INTO deals (
@@ -145,9 +145,9 @@ export async function createOpportunityWithContact(data: OpportunityData) {
           ${data.title},
           ${data.company},
           ${contact.id},
-          ${parseFloat(data.value)},
+          ${Number.parseFloat(data.value)},
           ${data.stage},
-          ${parseInt(data.probability)},
+          ${Number.parseInt(data.probability)},
           ${data.expected_close_date || null},
           ${data.notes || null},
           'Daniel Casañas',
@@ -166,16 +166,16 @@ export async function createOpportunityWithContact(data: OpportunityData) {
     } else {
       // Crear deal mock
       deal = {
-        id: Math.max(...mockDeals.map(d => d.id)) + 1,
+        id: Math.max(...mockDeals.map((d) => d.id)) + 1,
         title: data.title,
         company: data.company,
         contact_id: contact.id,
-        value: parseFloat(data.value),
+        value: Number.parseFloat(data.value),
         stage: data.stage,
-        probability: parseInt(data.probability),
+        probability: Number.parseInt(data.probability),
         expected_close_date: data.expected_close_date || null,
         notes: data.notes || null,
-        sales_owner: 'Daniel Casañas',
+        sales_owner: "Daniel Casañas",
         lead_source: data.lead_source || null,
         industry: data.industry || null,
         company_size: data.company_size || null,
@@ -185,7 +185,7 @@ export async function createOpportunityWithContact(data: OpportunityData) {
         competitors: data.competitors || null,
         next_steps: data.next_steps || null,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       }
       mockDeals.push(deal)
     }
@@ -199,37 +199,36 @@ export async function createOpportunityWithContact(data: OpportunityData) {
         )
         VALUES (
           'opportunity_created',
-          ${'Nueva oportunidad: ' + data.title},
+          ${"Nueva oportunidad: " + data.title},
           ${contact.id},
           ${deal.id},
           ${data.company},
-          ${new Date().toISOString().split('T')[0]},
+          ${new Date().toISOString().split("T")[0]},
           'Completada',
-          ${'Oportunidad creada desde Embudo de Ventas. ' + (contactCreated ? 'Nuevo contacto creado.' : 'Contacto existente vinculado.')},
+          ${"Oportunidad creada desde Embudo de Ventas. " + (contactCreated ? "Nuevo contacto creado." : "Contacto existente vinculado.")},
           'Daniel Casañas'
         )
       `
     }
 
     // Revalidar páginas relacionadas
-    revalidatePath('/pipeline')
-    revalidatePath('/deals')
-    revalidatePath('/contacts')
-    revalidatePath('/dashboard')
-    revalidatePath('/activities')
+    revalidatePath("/pipeline")
+    revalidatePath("/deals")
+    revalidatePath("/contacts")
+    revalidatePath("/dashboard")
+    revalidatePath("/activities")
 
     return {
       success: true,
       deal,
       contact,
-      contactCreated
+      contactCreated,
     }
-
   } catch (error) {
-    console.error('Error creating opportunity with contact:', error)
+    console.error("Error creating opportunity with contact:", error)
     return {
       success: false,
-      error: 'Error al crear la oportunidad y contacto'
+      error: "Error al crear la oportunidad y contacto",
     }
   }
 }
@@ -237,7 +236,7 @@ export async function createOpportunityWithContact(data: OpportunityData) {
 export async function updateOpportunity(dealId: number, data: UpdateOpportunityData) {
   try {
     let deal: Deal
-    
+
     if (sql) {
       const result = await sql`
         UPDATE deals 
@@ -262,7 +261,7 @@ export async function updateOpportunity(dealId: number, data: UpdateOpportunityD
         RETURNING *
       `
       deal = result[0] as Deal
-      
+
       // Crear actividad automática para la actualización
       await sql`
         INSERT INTO activities (
@@ -270,17 +269,17 @@ export async function updateOpportunity(dealId: number, data: UpdateOpportunityD
         )
         VALUES (
           'opportunity_updated',
-          ${'Oportunidad actualizada: ' + data.title},
+          ${"Oportunidad actualizada: " + data.title},
           ${dealId},
-          ${new Date().toISOString().split('T')[0]},
+          ${new Date().toISOString().split("T")[0]},
           'Completada',
-          ${'La oportunidad fue actualizada desde el Embudo de Ventas'},
+          ${"La oportunidad fue actualizada desde el Embudo de Ventas"},
           'Daniel Casañas'
         )
       `
     } else {
       // Actualizar en datos mock
-      const dealIndex = mockDeals.findIndex(d => d.id === dealId)
+      const dealIndex = mockDeals.findIndex((d) => d.id === dealId)
       if (dealIndex !== -1) {
         mockDeals[dealIndex] = {
           ...mockDeals[dealIndex],
@@ -299,24 +298,24 @@ export async function updateOpportunity(dealId: number, data: UpdateOpportunityD
           pain_points: data.pain_points,
           competitors: data.competitors,
           next_steps: data.next_steps,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         }
         deal = mockDeals[dealIndex]
       } else {
-        throw new Error('Deal not found')
+        throw new Error("Deal not found")
       }
     }
-    
+
     // Revalidar páginas relacionadas
-    revalidatePath('/pipeline')
-    revalidatePath('/deals')
-    revalidatePath('/dashboard')
-    revalidatePath('/activities')
-    
+    revalidatePath("/pipeline")
+    revalidatePath("/deals")
+    revalidatePath("/dashboard")
+    revalidatePath("/activities")
+
     return { success: true, deal }
   } catch (error) {
-    console.error('Error updating opportunity:', error)
-    return { success: false, error: 'Error al actualizar la oportunidad' }
+    console.error("Error updating opportunity:", error)
+    return { success: false, error: "Error al actualizar la oportunidad" }
   }
 }
 
@@ -327,16 +326,16 @@ export async function deleteOpportunity(dealId: number) {
       const dealInfo = await sql`
         SELECT title FROM deals WHERE id = ${dealId}
       `
-      
+
       if (dealInfo.length === 0) {
-        return { success: false, error: 'Oportunidad no encontrada' }
+        return { success: false, error: "Oportunidad no encontrada" }
       }
-      
+
       // Eliminar el deal
       await sql`
         DELETE FROM deals WHERE id = ${dealId}
       `
-      
+
       // Crear actividad automática
       await sql`
         INSERT INTO activities (
@@ -344,8 +343,8 @@ export async function deleteOpportunity(dealId: number) {
         )
         VALUES (
           'opportunity_deleted',
-          ${'Oportunidad eliminada: ' + dealInfo[0].title},
-          ${new Date().toISOString().split('T')[0]},
+          ${"Oportunidad eliminada: " + dealInfo[0].title},
+          ${new Date().toISOString().split("T")[0]},
           'Completada',
           'La oportunidad fue eliminada desde el Embudo de Ventas',
           'Daniel Casañas'
@@ -353,24 +352,24 @@ export async function deleteOpportunity(dealId: number) {
       `
     } else {
       // Eliminar de datos mock
-      const dealIndex = mockDeals.findIndex(d => d.id === dealId)
+      const dealIndex = mockDeals.findIndex((d) => d.id === dealId)
       if (dealIndex !== -1) {
         mockDeals.splice(dealIndex, 1)
       } else {
-        return { success: false, error: 'Oportunidad no encontrada' }
+        return { success: false, error: "Oportunidad no encontrada" }
       }
     }
-    
+
     // Revalidar páginas relacionadas
-    revalidatePath('/pipeline')
-    revalidatePath('/deals')
-    revalidatePath('/dashboard')
-    revalidatePath('/activities')
-    
+    revalidatePath("/pipeline")
+    revalidatePath("/deals")
+    revalidatePath("/dashboard")
+    revalidatePath("/activities")
+
     return { success: true }
   } catch (error) {
-    console.error('Error deleting opportunity:', error)
-    return { success: false, error: 'Error al eliminar la oportunidad' }
+    console.error("Error deleting opportunity:", error)
+    return { success: false, error: "Error al eliminar la oportunidad" }
   }
 }
 
@@ -394,7 +393,7 @@ export async function updateDealStage(dealId: number, newStage: string) {
         WHERE id = ${dealId}
         RETURNING *
       `
-      
+
       // Crear actividad automática para el cambio de etapa
       await sql`
         INSERT INTO activities (
@@ -402,57 +401,57 @@ export async function updateDealStage(dealId: number, newStage: string) {
         )
         VALUES (
           'stage_change',
-          ${'Cambio de etapa a: ' + newStage},
+          ${"Cambio de etapa a: " + newStage},
           ${dealId},
-          ${new Date().toISOString().split('T')[0]},
+          ${new Date().toISOString().split("T")[0]},
           'Completada',
-          ${'La oportunidad cambió automáticamente a la etapa: ' + newStage},
+          ${"La oportunidad cambió automáticamente a la etapa: " + newStage},
           'Daniel Casañas'
         )
       `
-      
-      revalidatePath('/pipeline')
-      revalidatePath('/deals')
-      revalidatePath('/dashboard')
-      revalidatePath('/activities')
-      
+
+      revalidatePath("/pipeline")
+      revalidatePath("/deals")
+      revalidatePath("/dashboard")
+      revalidatePath("/activities")
+
       return { success: true, deal: result[0] }
     } else {
       // Actualizar en datos mock
-      const dealIndex = mockDeals.findIndex(d => d.id === dealId)
+      const dealIndex = mockDeals.findIndex((d) => d.id === dealId)
       if (dealIndex !== -1) {
         mockDeals[dealIndex].stage = newStage
         mockDeals[dealIndex].updated_at = new Date().toISOString()
-        
+
         // Actualizar probabilidad basada en la etapa
         switch (newStage) {
-          case 'Ganado':
+          case "Ganado":
             mockDeals[dealIndex].probability = 100
             break
-          case 'Perdido':
+          case "Perdido":
             mockDeals[dealIndex].probability = 0
             break
-          case 'Cierre':
+          case "Cierre":
             mockDeals[dealIndex].probability = 90
             break
-          case 'Negociación':
+          case "Negociación":
             mockDeals[dealIndex].probability = 75
             break
-          case 'Propuesta':
+          case "Propuesta":
             mockDeals[dealIndex].probability = 50
             break
-          case 'Calificación':
+          case "Calificación":
             mockDeals[dealIndex].probability = 25
             break
         }
-        
+
         return { success: true, deal: mockDeals[dealIndex] }
       }
     }
-    
-    return { success: false, error: 'Deal not found' }
+
+    return { success: false, error: "Deal not found" }
   } catch (error) {
-    console.error('Error updating deal stage:', error)
-    return { success: false, error: 'Error al actualizar la etapa' }
+    console.error("Error updating deal stage:", error)
+    return { success: false, error: "Error al actualizar la etapa" }
   }
 }

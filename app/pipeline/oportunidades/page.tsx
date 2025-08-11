@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,26 +19,13 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
-import {
-  Search,
-  Plus,
-  DollarSign,
-  TrendingUp,
-  User,
-  Building,
-  Mail,
-  Phone,
-  Edit,
-  Save,
-  X,
-  Calendar,
-} from "lucide-react"
-import { createOpportunityWithContact, updateOpportunity, deleteOpportunity } from "../actions"
+import { Search, Plus, DollarSign, TrendingUp, User, Building, Mail, Phone, Edit, Save, X } from "lucide-react"
+import { createOpportunityWithContact, updateOpportunity, deleteOpportunity, updateDealStage } from "../actions"
 import { toast } from "@/hooks/use-toast"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet"
 import ProposalTable from "@/components/pipeline/proposal-table"
 import { Separator } from "@/components/ui/separator"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   loadDealsFromStorage,
   mergeUniqueById,
@@ -46,6 +33,11 @@ import {
   upsertDealToStorage,
   type PipelineDeal,
 } from "@/lib/pipeline-sync"
+import { formatEUR } from "@/lib/currency"
+import { useCurrency } from "@/components/providers/currency-provider"
+import { cn } from "@/lib/utils"
+import type { Contact } from "@/lib/database"
+import { formatDateEs } from "@/lib/date"
 
 interface Deal {
   id: number
@@ -95,14 +87,6 @@ function toPipelineDeal(d: Deal): PipelineDeal {
   }
 }
 
-function currency(n: number) {
-  try {
-    return n.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 })
-  } catch {
-    return `$${Math.round(n).toLocaleString()}`
-  }
-}
-
 function initials(name?: string) {
   if (!name) return "?"
   const parts = name.trim().split(" ")
@@ -119,14 +103,30 @@ export default function OportunidadesPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [detailDeal, setDetailDeal] = useState<Deal | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const [detailStage, setDetailStage] = useState<string | null>(null)
+
+  // Contact search state for "Crear Nueva Oportunidad"
+  const [contactQuery, setContactQuery] = useState("")
+  const [contactResults, setContactResults] = useState<Contact[]>([])
+  const [contactOpen, setContactOpen] = useState(false)
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
+  const contactSearchRef = useRef<HTMLDivElement | null>(null)
+  const contactAbort = useRef<AbortController | null>(null)
+
+  const { code } = useCurrency()
+  const currencySymbol = code === "EUR" ? "€" : "$"
 
   function openDetail(deal: Deal) {
     setDetailDeal(deal)
+    setDetailStage(deal.stage)
     setIsDetailOpen(true)
   }
   function closeDetail() {
     setIsDetailOpen(false)
-    setTimeout(() => setDetailDeal(null), 200)
+    setTimeout(() => {
+      setDetailDeal(null)
+      setDetailStage(null)
+    }, 200)
   }
 
   const [deals, setDeals] = useState<Deal[]>([
@@ -396,6 +396,61 @@ export default function OportunidadesPage() {
       (deal.contact_name && deal.contact_name.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
+  // Contact search (debounce)
+  useEffect(() => {
+    const handler = setTimeout(async () => {
+      const q = contactQuery.trim()
+      if (q.length < 2) {
+        setContactResults([])
+        return
+      }
+      try {
+        if (contactAbort.current) contactAbort.current.abort()
+        contactAbort.current = new AbortController()
+        const res = await fetch(`/api/contacts/search?q=${encodeURIComponent(q)}&by=any`, {
+          signal: contactAbort.current.signal,
+        })
+        const data = (await res.json()) as { results: Contact[] }
+        setContactResults(data.results || [])
+        setContactOpen(true)
+      } catch (e) {
+        if ((e as any).name !== "AbortError") {
+          console.error("Search contacts failed", e)
+        }
+      }
+    }, 250)
+    return () => clearTimeout(handler)
+  }, [contactQuery])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (!contactSearchRef.current) return
+      if (!contactSearchRef.current.contains(e.target as Node)) {
+        setContactOpen(false)
+      }
+    }
+    if (contactOpen) {
+      document.addEventListener("mousedown", onClickOutside)
+    }
+    return () => document.removeEventListener("mousedown", onClickOutside)
+  }, [contactOpen])
+
+  const handleSelectContact = (c: Contact) => {
+    setSelectedContact(c)
+    // Auto-fill opportunity fields from selected contact
+    setNewOpportunity((prev) => ({
+      ...prev,
+      contact_name: c.name || "",
+      contact_email: c.email || "",
+      contact_phone: c.phone || "",
+      company: c.company || "",
+      job_title: c.job_title || "",
+    }))
+    setContactQuery(c.name || "")
+    setContactOpen(false)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -432,6 +487,7 @@ export default function OportunidadesPage() {
         upsertDealToStorage(newForPipeline)
         publishNewOpportunity(newForPipeline)
 
+        // Reset form and contact search UI
         setNewOpportunity({
           title: "",
           value: "",
@@ -454,6 +510,10 @@ export default function OportunidadesPage() {
           competitors: "",
           next_steps: "",
         })
+        setSelectedContact(null)
+        setContactQuery("")
+        setContactResults([])
+        setContactOpen(false)
 
         setIsDialogOpen(false)
 
@@ -544,6 +604,28 @@ export default function OportunidadesPage() {
     }
   }
 
+  async function handleChangeStage(dealId: number, newStage: string) {
+    // Optimistic local update
+    setDeals((prev) => prev.map((d) => (d.id === dealId ? { ...d, stage: newStage } : d)))
+    setDetailDeal((dd) => (dd && dd.id === dealId ? { ...dd, stage: newStage } : dd))
+
+    const res = await updateDealStage(dealId, newStage)
+    if (res?.success && res.deal) {
+      setDeals((prev) => prev.map((d) => (d.id === dealId ? { ...d, ...res.deal } : d)))
+      setDetailDeal((dd) => (dd && dd.id === dealId ? { ...dd, ...res.deal } : dd))
+      toast({
+        title: "Etapa actualizada",
+        description: `La oportunidad se movió a "${newStage}".`,
+      })
+    } else {
+      toast({
+        title: "No se pudo actualizar la etapa",
+        description: res?.error || "Intenta nuevamente.",
+        variant: "destructive",
+      })
+    }
+  }
+
   useEffect(() => {
     const stored = loadDealsFromStorage()
     if (stored.length) {
@@ -570,8 +652,21 @@ export default function OportunidadesPage() {
 
   return (
     <div>
+      {/* CTA */}
       <div className="flex justify-end items-center mb-6">
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open)
+            if (!open) {
+              // Reset contact search UI when closing
+              setSelectedContact(null)
+              setContactQuery("")
+              setContactResults([])
+              setContactOpen(false)
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -586,6 +681,7 @@ export default function OportunidadesPage() {
                 de Ventas.
               </DialogDescription>
             </DialogHeader>
+            {/* formulario de creación */}
             <form onSubmit={handleSubmit}>
               <div className="grid gap-6 py-4">
                 <div className="space-y-4">
@@ -606,7 +702,7 @@ export default function OportunidadesPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="value">Valor Estimado ($) *</Label>
+                      <Label htmlFor="value">{`Valor Estimado (${currencySymbol}) *`}</Label>
                       <Input
                         id="value"
                         type="number"
@@ -671,6 +767,7 @@ export default function OportunidadesPage() {
                   </div>
                 </div>
 
+                {/* Información del Contacto con búsqueda vinculada a Contactos */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-3">
                     <User className="h-5 w-5 text-green-600" />
@@ -678,16 +775,85 @@ export default function OportunidadesPage() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                    {/* Campo con búsqueda de Contactos */}
+                    <div className="space-y-2" ref={contactSearchRef}>
                       <Label htmlFor="contact_name">Nombre del Contacto *</Label>
-                      <Input
-                        id="contact_name"
-                        value={newOpportunity.contact_name}
-                        onChange={(e) => setNewOpportunity({ ...newOpportunity, contact_name: e.target.value })}
-                        placeholder="Juan Pérez"
-                        required
-                      />
+                      <div className="relative">
+                        <Input
+                          id="contact_name"
+                          value={contactQuery}
+                          onChange={(e) => {
+                            setContactQuery(e.target.value)
+                            setNewOpportunity({ ...newOpportunity, contact_name: e.target.value })
+                          }}
+                          onFocus={() => contactResults.length > 0 && setContactOpen(true)}
+                          placeholder="Escribe para buscar..."
+                          required
+                          autoComplete="off"
+                        />
+                        {selectedContact && (
+                          <button
+                            type="button"
+                            aria-label="Limpiar contacto seleccionado"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            onClick={() => {
+                              setSelectedContact(null)
+                              setContactQuery("")
+                              setNewOpportunity((p) => ({
+                                ...p,
+                                contact_name: "",
+                                contact_email: "",
+                                contact_phone: "",
+                                company: "",
+                                job_title: "",
+                              }))
+                              setContactOpen(false)
+                              setContactResults([])
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                        {contactOpen && contactResults.length > 0 && (
+                          <div
+                            className={cn(
+                              "absolute left-0 right-0 top-full mt-1 z-50",
+                              "rounded-md border bg-white shadow-md",
+                              "max-h-60 overflow-y-auto overflow-x-hidden",
+                            )}
+                            role="listbox"
+                            aria-label="Resultados de contactos"
+                          >
+                            {contactResults.map((c) => (
+                              <button
+                                type="button"
+                                key={c.id}
+                                onClick={() => handleSelectContact(c)}
+                                className="w-full px-3 py-2 flex items-center gap-3 hover:bg-gray-50 text-left"
+                              >
+                                <Avatar className="h-7 w-7">
+                                  <AvatarImage src={c.avatar_url || ""} alt={c.name || "Contacto"} />
+                                  <AvatarFallback>
+                                    {(c.name || "?")
+                                      .split(" ")
+                                      .map((s) => s[0])
+                                      .slice(0, 2)
+                                      .join("")
+                                      .toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0">
+                                  <div className="text-sm font-medium text-gray-900 truncate">{c.name}</div>
+                                  <div className="text-xs text-gray-600 break-words">{c.company || "Sin empresa"}</div>
+                                  {c.email && <div className="text-xs text-gray-500 break-words">{c.email}</div>}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="contact_email">Email *</Label>
                       <Input
@@ -875,6 +1041,7 @@ export default function OportunidadesPage() {
         </Dialog>
       </div>
 
+      {/* Buscador */}
       <div className="mb-6">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -887,6 +1054,7 @@ export default function OportunidadesPage() {
         </div>
       </div>
 
+      {/* Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredDeals.map((deal) => (
           <Card
@@ -939,7 +1107,7 @@ export default function OportunidadesPage() {
                 )}
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Valor:</span>
-                  <span className="text-lg font-bold text-green-600">{currency(deal.value)}</span>
+                  <span className="text-lg font-bold text-green-600">{formatEUR(deal.value)}</span>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
@@ -951,7 +1119,7 @@ export default function OportunidadesPage() {
                 {deal.expected_close_date && (
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Cierre esperado:</span>
-                    <span className="text-sm">{deal.expected_close_date}</span>
+                    <span className="text-sm">{formatDateEs(deal.expected_close_date)}</span>
                   </div>
                 )}
                 {deal.lead_source && (
@@ -973,14 +1141,201 @@ export default function OportunidadesPage() {
         </div>
       )}
 
-      {/* Edit dialog */}
+      {/* Detail Sheet */}
+      <Sheet
+        open={isDetailOpen}
+        onOpenChange={(open) => {
+          setIsDetailOpen(open)
+          if (!open) closeDetail()
+        }}
+      >
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader className="sticky top-0 z-10 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b">
+            <div className="flex items-start justify-between py-3">
+              <div className="min-w-0">
+                <SheetTitle className="truncate">{detailDeal?.title || "Detalle de oportunidad"}</SheetTitle>
+                {detailDeal?.company ? (
+                  <SheetDescription className="mt-0.5 flex items-center gap-2">
+                    <Building className="h-3.5 w-3.5" />
+                    <span className="truncate">{detailDeal.company}</span>
+                    {detailDeal?.stage && (
+                      <Badge className={`ml-1 ${getStageColor(detailDeal.stage)}`}>{detailDeal.stage}</Badge>
+                    )}
+                  </SheetDescription>
+                ) : (
+                  <SheetDescription>Información de la oportunidad</SheetDescription>
+                )}
+              </div>
+              {detailDeal && (
+                <div className="text-right">
+                  <div className="text-xs text-muted-foreground">Valor</div>
+                  <div className="text-lg font-semibold text-green-600">{formatEUR(detailDeal.value)}</div>
+                </div>
+              )}
+            </div>
+          </SheetHeader>
+
+          {detailDeal && (
+            <div className="mt-4 space-y-6">
+              {/* Controles superiores: Etapa editable */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-md border bg-white p-3 sm:col-span-2">
+                  <div className="text-xs text-muted-foreground">Título</div>
+                  <div className="text-sm font-semibold">{detailDeal.title}</div>
+                </div>
+                <div className="rounded-md border bg-white p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Etapa</div>
+                  <Select
+                    value={detailStage ?? detailDeal.stage}
+                    onValueChange={(v) => {
+                      setDetailStage(v)
+                      if (detailDeal) {
+                        void handleChangeStage(detailDeal.id, v)
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona etapa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stages.map((s) => (
+                        <SelectItem value={s} key={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Info grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-md border bg-white p-4">
+                  <div className="mb-3 text-sm font-medium text-muted-foreground">Probabilidad</div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Avance</span>
+                    <span className="font-medium">{detailDeal.probability}%</span>
+                  </div>
+                  <Progress value={detailDeal.probability} className="h-2 mt-2" />
+                  <Separator className="my-4" />
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Fuente</span>
+                      <span className="font-medium">{detailDeal.lead_source || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Industria</span>
+                      <span className="font-medium">{detailDeal.industry || "—"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-md border bg-white p-4">
+                  <div className="mb-3 text-sm font-medium text-muted-foreground">Contacto</div>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-9 w-9">
+                      <AvatarFallback>{initials(detailDeal.contact_name)}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <div className="font-medium">{detailDeal.contact_name || "—"}</div>
+                      <div className="text-sm text-muted-foreground">{detailDeal.company}</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 space-y-2 text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-muted-foreground inline-flex items-center gap-2">
+                        <Mail className="h-4 w-4" /> Email
+                      </span>
+                      {detailDeal.contact_email ? (
+                        <a
+                          className="font-medium text-primary underline-offset-2 hover:underline break-all"
+                          href={`mailto:${detailDeal.contact_email}`}
+                        >
+                          {detailDeal.contact_email}
+                        </a>
+                      ) : (
+                        <span className="font-medium">—</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-muted-foreground inline-flex items-center gap-2">
+                        <Phone className="h-4 w-4" /> Teléfono
+                      </span>
+                      {detailDeal.contact_phone && detailDeal.contact_phone !== "+ Click to add" ? (
+                        <a
+                          className="font-medium text-primary underline-offset-2 hover:underline"
+                          href={`tel:${detailDeal.contact_phone.replace(/\s+/g, "")}`}
+                        >
+                          {detailDeal.contact_phone}
+                        </a>
+                      ) : (
+                        <span className="font-medium">—</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notas */}
+              {detailDeal.notes && (
+                <div className="rounded-md border bg-white">
+                  <div className="px-4 pt-3 text-sm font-medium text-muted-foreground">Notas</div>
+                  <div className="px-4 pb-4">
+                    <div className="text-sm bg-gray-50 p-3 rounded">{detailDeal.notes}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Próximos pasos */}
+              {detailDeal.next_steps && (
+                <div className="rounded-md border bg-white">
+                  <div className="px-4 pt-3 text-sm font-medium text-muted-foreground">Próximos pasos</div>
+                  <div className="px-4 pb-4">
+                    <div className="text-sm bg-gray-50 p-3 rounded">{detailDeal.next_steps}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Propuesta y acciones */}
+              <div className="border rounded-md bg-white p-4">
+                <h3 className="text-sm font-semibold mb-3">Propuesta y acciones</h3>
+                <ProposalTable
+                  deal={{
+                    id: detailDeal.id,
+                    title: detailDeal.title,
+                    contact_email: detailDeal.contact_email,
+                    contact_id: detailDeal.contact_id,
+                    company: detailDeal.company,
+                  }}
+                />
+              </div>
+
+              <SheetFooter className="flex gap-2">
+                <Button variant="outline" onClick={closeDetail}>
+                  Cerrar
+                </Button>
+                <Button
+                  onClick={() => {
+                    setIsDetailOpen(false)
+                    setIsEditDialogOpen(true)
+                    setEditingDeal(detailDeal)
+                  }}
+                >
+                  Editar
+                </Button>
+              </SheetFooter>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Editar */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Oportunidad</DialogTitle>
             <DialogDescription>
-              Modifica la información de la oportunidad. Los cambios se sincronizarán automáticamente con el Embudo de
-              Ventas.
+              Modifica la información de la oportunidad. El cambio de Etapa se guarda automáticamente.
             </DialogDescription>
           </DialogHeader>
           {editingDeal && (
@@ -1002,7 +1357,7 @@ export default function OportunidadesPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit_value">Valor Estimado ($)</Label>
+                      <Label htmlFor="edit_value">{`Valor Estimado (${currencySymbol})`}</Label>
                       <Input
                         id="edit_value"
                         type="number"
@@ -1019,7 +1374,9 @@ export default function OportunidadesPage() {
                       <Label htmlFor="edit_stage">Etapa</Label>
                       <Select
                         value={editingDeal.stage}
-                        onValueChange={(value) => setEditingDeal({ ...editingDeal, stage: value })}
+                        onValueChange={(value) => {
+                          void handleChangeStage(editingDeal.id, value)
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -1114,7 +1471,6 @@ export default function OportunidadesPage() {
                   </div>
                 </div>
               </div>
-
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                   Cancelar
@@ -1141,184 +1497,6 @@ export default function OportunidadesPage() {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Detail Sheet */}
-      <Sheet
-        open={isDetailOpen}
-        onOpenChange={(open) => {
-          setIsDetailOpen(open)
-          if (!open) closeDetail()
-        }}
-      >
-        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader className="sticky top-0 z-10 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b">
-            <div className="flex items-start justify-between py-3">
-              <div className="min-w-0">
-                <SheetTitle className="truncate">{detailDeal?.title || "Detalle de oportunidad"}</SheetTitle>
-                {detailDeal?.company ? (
-                  <SheetDescription className="mt-0.5 flex items-center gap-2">
-                    <Building className="h-3.5 w-3.5" />
-                    <span className="truncate">{detailDeal.company}</span>
-                    {detailDeal?.stage && (
-                      <Badge className={`ml-1 ${getStageColor(detailDeal.stage)}`}>{detailDeal.stage}</Badge>
-                    )}
-                  </SheetDescription>
-                ) : (
-                  <SheetDescription>Información de la oportunidad</SheetDescription>
-                )}
-              </div>
-              {detailDeal && (
-                <div className="text-right">
-                  <div className="text-xs text-muted-foreground">Valor</div>
-                  <div className="text-lg font-semibold text-green-600">{currency(detailDeal.value)}</div>
-                </div>
-              )}
-            </div>
-          </SheetHeader>
-
-          {detailDeal && (
-            <div className="mt-4 space-y-6">
-              {/* Summary strip */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="rounded-md border bg-white p-3">
-                  <div className="text-xs text-muted-foreground">Valor</div>
-                  <div className="text-base font-semibold text-green-600">{currency(detailDeal.value)}</div>
-                </div>
-                <div className="rounded-md border bg-white p-3">
-                  <div className="text-xs text-muted-foreground">Etapa</div>
-                  <div className="mt-1">
-                    <Badge className={getStageColor(detailDeal.stage)}>{detailDeal.stage}</Badge>
-                  </div>
-                </div>
-                <div className="rounded-md border bg-white p-3">
-                  <div className="text-xs text-muted-foreground">Cierre esperado</div>
-                  <div className="mt-1 inline-flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{detailDeal.expected_close_date || "—"}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Info grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="rounded-md border bg-white p-4">
-                  <div className="mb-3 text-sm font-medium text-muted-foreground">Probabilidad</div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Avance</span>
-                    <span className="font-medium">{detailDeal.probability}%</span>
-                  </div>
-                  <Progress value={detailDeal.probability} className="h-2 mt-2" />
-                  <Separator className="my-4" />
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Fuente</span>
-                      <span className="font-medium">{detailDeal.lead_source || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Industria</span>
-                      <span className="font-medium">{detailDeal.industry || "—"}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-md border bg-white p-4">
-                  <div className="mb-3 text-sm font-medium text-muted-foreground">Contacto</div>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9">
-                      <AvatarFallback>{initials(detailDeal.contact_name)}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <div className="font-medium">{detailDeal.contact_name || "—"}</div>
-                      <div className="text-sm text-muted-foreground">{detailDeal.company}</div>
-                    </div>
-                  </div>
-                  <div className="mt-3 space-y-2 text-sm">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-muted-foreground inline-flex items-center gap-2">
-                        <Mail className="h-4 w-4" /> Email
-                      </span>
-                      {detailDeal.contact_email ? (
-                        <a
-                          className="font-medium text-primary underline-offset-2 hover:underline break-all"
-                          href={`mailto:${detailDeal.contact_email}`}
-                        >
-                          {detailDeal.contact_email}
-                        </a>
-                      ) : (
-                        <span className="font-medium">—</span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-muted-foreground inline-flex items-center gap-2">
-                        <Phone className="h-4 w-4" /> Teléfono
-                      </span>
-                      {detailDeal.contact_phone && detailDeal.contact_phone !== "+ Click to add" ? (
-                        <a
-                          className="font-medium text-primary underline-offset-2 hover:underline"
-                          href={`tel:${detailDeal.contact_phone.replace(/\s+/g, "")}`}
-                        >
-                          {detailDeal.contact_phone}
-                        </a>
-                      ) : (
-                        <span className="font-medium">—</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Notes */}
-              {detailDeal.notes && (
-                <div className="rounded-md border bg-white">
-                  <div className="px-4 pt-3 text-sm font-medium text-muted-foreground">Notas</div>
-                  <div className="px-4 pb-4">
-                    <div className="text-sm bg-gray-50 p-3 rounded">{detailDeal.notes}</div>
-                  </div>
-                </div>
-              )}
-
-              {/* Next steps */}
-              {detailDeal.next_steps && (
-                <div className="rounded-md border bg-white">
-                  <div className="px-4 pt-3 text-sm font-medium text-muted-foreground">Próximos pasos</div>
-                  <div className="px-4 pb-4">
-                    <div className="text-sm bg-gray-50 p-3 rounded">{detailDeal.next_steps}</div>
-                  </div>
-                </div>
-              )}
-
-              {/* Proposal and actions */}
-              <div className="border rounded-md bg-white p-4">
-                <h3 className="text-sm font-semibold mb-3">Propuesta y acciones</h3>
-                <ProposalTable
-                  deal={{
-                    id: detailDeal.id,
-                    title: detailDeal.title,
-                    contact_email: detailDeal.contact_email,
-                    contact_id: detailDeal.contact_id,
-                    company: detailDeal.company,
-                  }}
-                />
-              </div>
-
-              <SheetFooter className="flex gap-2">
-                <Button variant="outline" onClick={closeDetail}>
-                  Cerrar
-                </Button>
-                <Button
-                  onClick={() => {
-                    setIsDetailOpen(false)
-                    setIsEditDialogOpen(true)
-                    setEditingDeal(detailDeal)
-                  }}
-                >
-                  Editar
-                </Button>
-              </SheetFooter>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
     </div>
   )
 }

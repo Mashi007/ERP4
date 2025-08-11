@@ -9,13 +9,14 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CalendarPlus, Paperclip, Send, Trash2 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
+import LeadHistory from "@/components/pipeline/lead-history"
 
 type DealLite = {
   id: number
   title: string
   contact_email?: string
-  contact_id?: number
-  company?: string
+  contact_id?: number | null
+  company?: string | null
 }
 
 interface ProposalTableProps {
@@ -39,19 +40,42 @@ function toLocalDateTimeInputValue(date: Date) {
 }
 
 // Broadcast helper with fallback
-function broadcastAppointmentCreated(payload: any) {
+function broadcastActivityCreated(payload: any) {
   try {
     if (typeof window !== "undefined" && "BroadcastChannel" in window) {
-      const ch = new BroadcastChannel("crm-appointments")
-      ch.postMessage({ type: "created", payload })
+      const ch = new BroadcastChannel("crm-activities")
+      ch.postMessage({ type: "activity:created", payload })
       ch.close()
       return
     }
     if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("appointments:created", { detail: payload }))
+      window.dispatchEvent(new CustomEvent("activities:created", { detail: { type: "activity:created", payload } }))
     }
   } catch {
     // no-op
+  }
+}
+
+async function logActivity(input: { type: "reminder" | "email"; title?: string; notes?: string }, deal: DealLite) {
+  try {
+    const res = await fetch("/api/activities/log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: input.type,
+        title: input.title,
+        notes: input.notes,
+        contact_id: deal.contact_id ?? null,
+        deal_id: deal.id,
+        company: deal.company ?? null,
+      }),
+    })
+    if (!res.ok) throw new Error("No se pudo registrar la actividad")
+    const data = await res.json()
+    broadcastActivityCreated(data.activity)
+  } catch (e) {
+    console.error(e)
+    toast({ title: "No se pudo guardar en histórico", variant: "destructive" })
   }
 }
 
@@ -96,14 +120,20 @@ export default function ProposalTable({ deal }: ProposalTableProps) {
       if (!res.ok) throw new Error("No se pudo crear la cita")
       const data = await res.json()
 
-      // Notificar en vivo a "Citas"
-      broadcastAppointmentCreated(data.appointment)
-
       toast({
         title: "Recordatorio creado",
         description: `Se agregó a Citas para ${new Date(data.appointment.appointment_date).toLocaleString()}`,
       })
       setAction("")
+
+      await logActivity(
+        {
+          type: "reminder",
+          title: "Recordatorio creado",
+          notes: `Recordatorio para ${new Date(followUpAt).toLocaleString()} (oportunidad: ${deal.title})`,
+        },
+        deal,
+      )
     } catch (err) {
       console.error(err)
       toast({ title: "Error al crear recordatorio", variant: "destructive" })
@@ -142,6 +172,17 @@ export default function ProposalTable({ deal }: ProposalTableProps) {
       const data = await res.json()
       toast({ title: "Email enviado", description: `Se envió a ${data.to}` })
       setAction("")
+
+      await logActivity(
+        {
+          type: "email",
+          title: "Email enviado",
+          notes:
+            `Para: ${data.to} | Asunto: Propuesta - ${deal.title}` +
+            (file ? ` | Adjunto: ${file.name} (${(file.size / 1024).toFixed(1)} KB)` : ""),
+        },
+        deal,
+      )
     } catch (err) {
       console.error(err)
       toast({ title: "Error al enviar email", variant: "destructive" })
@@ -243,10 +284,8 @@ export default function ProposalTable({ deal }: ProposalTableProps) {
         </TableBody>
       </Table>
 
-      <p className="text-xs text-gray-500">
-        La fecha se registra automáticamente al adjuntar una propuesta. Las acciones pueden ejecutarse en cualquier
-        momento.
-      </p>
+      {/* Histórico bajo la ficha */}
+      <LeadHistory contactId={deal.contact_id ?? null} dealId={deal.id} />
     </div>
   )
 }

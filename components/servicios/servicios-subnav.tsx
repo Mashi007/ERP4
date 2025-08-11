@@ -1,0 +1,39 @@
+"use client"
+
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
+
+const items = [
+  { href: "/servicios", label: "Catálogo" },
+  { href: "/servicios/propuestas", label: "Propuestas" },
+]
+
+export function ServiciosSubnav() {
+  const pathname = usePathname()
+
+  return (
+    <nav aria-label="Submenú Servicios" className="w-full">
+      <ul className="flex items-center gap-2 border-b pb-2">
+        {items.map((item) => {
+          const isActive = pathname === item.href || (item.href !== "/servicios" && pathname?.startsWith(item.href))
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                className={cn(
+                  "inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  "hover:bg-gray-100",
+                  isActive ? "text-gray-900 bg-gray-100" : "text-gray-600",
+                )}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {item.label}
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </nav>
+  )
+}

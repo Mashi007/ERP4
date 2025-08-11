@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless'
+import { neon } from "@neondatabase/serverless"
 
 // Verificar si DATABASE_URL está disponible, si no, usar datos mock
 const isDatabaseAvailable = !!process.env.DATABASE_URL
@@ -13,6 +13,7 @@ export interface Contact {
   phone: string | null
   company: string | null
   job_title: string | null
+  nif?: string | null
   status: string
   tags: string[]
   sales_owner: string
@@ -32,7 +33,7 @@ export interface Deal {
   expected_close_date: string | null
   notes: string | null
   sales_owner: string
-  
+
   // Campos adicionales
   lead_source?: string | null
   industry?: string | null
@@ -42,7 +43,7 @@ export interface Deal {
   pain_points?: string | null
   competitors?: string | null
   next_steps?: string | null
-  
+
   created_at: string
   updated_at: string
 }
@@ -154,18 +155,15 @@ export interface CommunicationSetting {
 }
 
 // Función helper para obtener datos con fallback a mock
-export async function getDataWithFallback<T>(
-  queryFn: () => Promise<T[]>,
-  mockData: T[]
-): Promise<T[]> {
+export async function getDataWithFallback<T>(queryFn: () => Promise<T[]>, mockData: T[]): Promise<T[]> {
   if (!sql || !process.env.DATABASE_URL) {
     return mockData
   }
-  
+
   try {
     return await queryFn()
   } catch (error) {
-    console.error('Database query failed, using mock data:', error)
+    console.error("Database query failed, using mock data:", error)
     return mockData
   }
 }
@@ -179,12 +177,13 @@ export const mockContacts: Contact[] = [
     phone: "+ Click to add",
     company: "Jet Propulsion Labs",
     job_title: "Manager Customer Relations",
+    nif: "ABC123456",
     status: "New",
     tags: [],
     sales_owner: "Daniel Casañas",
     avatar_url: "",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 2,
@@ -193,12 +192,13 @@ export const mockContacts: Contact[] = [
     phone: "+19266520001",
     company: "Techcave",
     job_title: "Co-founder",
+    nif: "SC-9988",
     status: "Qualified",
     tags: ["Industry Expert"],
     sales_owner: "Daniel Casañas",
     avatar_url: "/professional-man.png",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 3,
@@ -207,12 +207,13 @@ export const mockContacts: Contact[] = [
     phone: "+19266529503",
     company: "Widgetz.io",
     job_title: "CEO",
+    nif: "JS-1234",
     status: "Qualified",
     tags: ["Decision maker"],
     sales_owner: "Daniel Casañas",
     avatar_url: "/professional-woman-diverse.png",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 4,
@@ -221,12 +222,13 @@ export const mockContacts: Contact[] = [
     phone: "+ Click to add",
     company: "Global Learning Solutions",
     job_title: "Chartered Accountant",
+    nif: null,
     status: "New",
     tags: [],
     sales_owner: "Daniel Casañas",
     avatar_url: "",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 5,
@@ -235,12 +237,13 @@ export const mockContacts: Contact[] = [
     phone: "+19266091164",
     company: "Optiscape Inc",
     job_title: "COO",
+    nif: "MJ-5566",
     status: "Won",
     tags: ["High-Value Customer"],
     sales_owner: "Daniel Casañas",
     avatar_url: "/confident-business-woman.png",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 6,
@@ -249,12 +252,13 @@ export const mockContacts: Contact[] = [
     phone: "+15898899911",
     company: "Apex IQ",
     job_title: "VP Marketing",
+    nif: "KJ-7788",
     status: "Won",
     tags: ["Customer Advocate"],
     sales_owner: "Daniel Casañas",
     avatar_url: "/marketing-executive.png",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 7,
@@ -263,12 +267,13 @@ export const mockContacts: Contact[] = [
     phone: "+447456123456",
     company: "Synth Corp",
     job_title: "Project Manager",
+    nif: "SK-8899",
     status: "Qualified",
     tags: ["Influencer"],
     sales_owner: "Daniel Casañas",
     avatar_url: "/project-manager-team.png",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 8,
@@ -277,13 +282,14 @@ export const mockContacts: Contact[] = [
     phone: "+15436946523",
     company: "Pivotal Tech",
     job_title: "Head of IT",
+    nif: "HW-1122",
     status: "Qualified",
     tags: ["Champion"],
     sales_owner: "Daniel Casañas",
     avatar_url: "/it-director.png",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
-  }
+    updated_at: "2024-01-01T00:00:00Z",
+  },
 ]
 
 export const mockDeals: Deal[] = [
@@ -292,7 +298,7 @@ export const mockDeals: Deal[] = [
     title: "Renovación ECorp",
     company: "E Corp",
     contact_id: 1,
-    value: 4000.00,
+    value: 4000.0,
     stage: "Nuevo",
     probability: 25,
     expected_close_date: "2024-08-15",
@@ -307,14 +313,14 @@ export const mockDeals: Deal[] = [
     competitors: "Salesforce, HubSpot",
     next_steps: "Enviar propuesta detallada la próxima semana",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 2,
     title: "Implementación Widgetz.io",
     company: "Widgetz.io",
     contact_id: 3,
-    value: 5600.00,
+    value: 5600.0,
     stage: "Nuevo",
     probability: 30,
     expected_close_date: "2024-10-15",
@@ -329,14 +335,14 @@ export const mockDeals: Deal[] = [
     competitors: "Pipedrive, Zoho",
     next_steps: "Programar demo técnica con equipo de desarrollo",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 3,
     title: "Consultoría Acme Inc",
     company: "Acme Inc",
     contact_id: 2,
-    value: 100.00,
+    value: 100.0,
     stage: "Calificación",
     probability: 15,
     expected_close_date: "2024-08-30",
@@ -351,14 +357,14 @@ export const mockDeals: Deal[] = [
     competitors: "Herramientas gratuitas",
     next_steps: "Evaluar opciones de plan básico",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 4,
     title: "Desarrollo Synth Corp",
     company: "Synth Corp",
     contact_id: 7,
-    value: 4100.00,
+    value: 4100.0,
     stage: "Calificación",
     probability: 40,
     expected_close_date: "2024-08-20",
@@ -373,14 +379,14 @@ export const mockDeals: Deal[] = [
     competitors: "SAP, Oracle",
     next_steps: "Realizar análisis de procesos actuales",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 5,
     title: "Soporte Técnico Techcave",
     company: "Techcave",
     contact_id: 2,
-    value: 3200.00,
+    value: 3200.0,
     stage: "Negociación",
     probability: 75,
     expected_close_date: "2024-08-10",
@@ -395,14 +401,14 @@ export const mockDeals: Deal[] = [
     competitors: "Ninguno identificado",
     next_steps: "Finalizar términos de renovación",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 6,
     title: "Renovación Techcave",
     company: "Techcave",
     contact_id: 2,
-    value: 3000.00,
+    value: 3000.0,
     stage: "Ganado",
     probability: 100,
     expected_close_date: "2024-08-10",
@@ -417,14 +423,14 @@ export const mockDeals: Deal[] = [
     competitors: "N/A",
     next_steps: "Implementar nuevas funcionalidades",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 7,
     title: "Consultoría Optiscape",
     company: "Optiscape Inc",
     contact_id: 5,
-    value: 2100.00,
+    value: 2100.0,
     stage: "Ganado",
     probability: 100,
     expected_close_date: "2024-08-05",
@@ -439,14 +445,14 @@ export const mockDeals: Deal[] = [
     competitors: "N/A",
     next_steps: "Comenzar implementación",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 8,
     title: "Marketing Digital Apex IQ",
     company: "Apex IQ",
     contact_id: 6,
-    value: 4200.00,
+    value: 4200.0,
     stage: "Ganado",
     probability: 100,
     expected_close_date: "2024-07-15",
@@ -461,14 +467,14 @@ export const mockDeals: Deal[] = [
     competitors: "N/A",
     next_steps: "Proyecto completado exitosamente",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 9,
     title: "Soluciones Globales",
     company: "Global Learning Solutions",
     contact_id: 4,
-    value: 3000.00,
+    value: 3000.0,
     stage: "Ganado",
     probability: 100,
     expected_close_date: "2024-06-20",
@@ -483,8 +489,8 @@ export const mockDeals: Deal[] = [
     competitors: "N/A",
     next_steps: "Renovación automática configurada",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
-  }
+    updated_at: "2024-01-01T00:00:00Z",
+  },
 ]
 
 export const mockActivities: Activity[] = [
@@ -502,7 +508,7 @@ export const mockActivities: Activity[] = [
     notes: "Discutimos los requerimientos del proyecto CRM",
     sales_owner: "Daniel Casañas",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 2,
@@ -518,7 +524,7 @@ export const mockActivities: Activity[] = [
     notes: "Propuesta enviada con detalles de servicios",
     sales_owner: "Daniel Casañas",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 3,
@@ -534,7 +540,7 @@ export const mockActivities: Activity[] = [
     notes: "Presentación de soluciones para startup",
     sales_owner: "Daniel Casañas",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 4,
@@ -550,7 +556,7 @@ export const mockActivities: Activity[] = [
     notes: "Finalizar detalles del contrato anual",
     sales_owner: "Daniel Casañas",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 5,
@@ -566,8 +572,8 @@ export const mockActivities: Activity[] = [
     notes: "Demostración completa de la plataforma",
     sales_owner: "Daniel Casañas",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
-  }
+    updated_at: "2024-01-01T00:00:00Z",
+  },
 ]
 
 export const mockAppointments: Appointment[] = [
@@ -586,7 +592,7 @@ export const mockAppointments: Appointment[] = [
     notes: "Revisar progreso de implementación y próximos pasos",
     sales_owner: "Daniel Casañas",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 2,
@@ -603,7 +609,7 @@ export const mockAppointments: Appointment[] = [
     notes: "Demostración de funcionalidades avanzadas",
     sales_owner: "Daniel Casañas",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 3,
@@ -620,7 +626,7 @@ export const mockAppointments: Appointment[] = [
     notes: "Primera reunión para entender necesidades",
     sales_owner: "Daniel Casañas",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 4,
@@ -637,7 +643,7 @@ export const mockAppointments: Appointment[] = [
     notes: "Presentación final de la propuesta comercial",
     sales_owner: "Daniel Casañas",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
+    updated_at: "2024-01-01T00:00:00Z",
   },
   {
     id: 5,
@@ -654,8 +660,8 @@ export const mockAppointments: Appointment[] = [
     notes: "Cerrar detalles finales del contrato",
     sales_owner: "Daniel Casañas",
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z"
-  }
+    updated_at: "2024-01-01T00:00:00Z",
+  },
 ]
 
 export const mockMarketingLists: MarketingList[] = [
@@ -667,7 +673,7 @@ export const mockMarketingLists: MarketingList[] = [
     tags: ["Clientes", "Activos"],
     contact_count: 1250,
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-15T10:00:00Z"
+    updated_at: "2024-01-15T10:00:00Z",
   },
   {
     id: 2,
@@ -677,7 +683,7 @@ export const mockMarketingLists: MarketingList[] = [
     tags: ["Nuevos", "Suscriptores"],
     contact_count: 340,
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-14T15:30:00Z"
+    updated_at: "2024-01-14T15:30:00Z",
   },
   {
     id: 3,
@@ -687,7 +693,7 @@ export const mockMarketingLists: MarketingList[] = [
     tags: ["VIP", "Premium"],
     contact_count: 89,
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-12T09:20:00Z"
+    updated_at: "2024-01-12T09:20:00Z",
   },
   {
     id: 4,
@@ -697,8 +703,8 @@ export const mockMarketingLists: MarketingList[] = [
     tags: ["Inactivos", "Re-engagement"],
     contact_count: 567,
     created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-08T11:45:00Z"
-  }
+    updated_at: "2024-01-08T11:45:00Z",
+  },
 ]
 
 export const mockMarketingCampaigns: MarketingCampaign[] = [
@@ -719,7 +725,7 @@ export const mockMarketingCampaigns: MarketingCampaign[] = [
     click_rate: 7.1,
     created_by: "Daniel Casañas",
     created_at: "2024-01-10T00:00:00Z",
-    updated_at: "2024-01-15T10:00:00Z"
+    updated_at: "2024-01-15T10:00:00Z",
   },
   {
     id: 2,
@@ -738,7 +744,7 @@ export const mockMarketingCampaigns: MarketingCampaign[] = [
     click_rate: 15.9,
     created_by: "Daniel Casañas",
     created_at: "2024-01-05T00:00:00Z",
-    updated_at: "2024-01-08T14:30:00Z"
+    updated_at: "2024-01-08T14:30:00Z",
   },
   {
     id: 3,
@@ -757,7 +763,7 @@ export const mockMarketingCampaigns: MarketingCampaign[] = [
     click_rate: 0,
     created_by: "Daniel Casañas",
     created_at: "2024-01-12T00:00:00Z",
-    updated_at: "2024-01-12T00:00:00Z"
+    updated_at: "2024-01-12T00:00:00Z",
   },
   {
     id: 4,
@@ -776,8 +782,8 @@ export const mockMarketingCampaigns: MarketingCampaign[] = [
     click_rate: 0,
     created_by: "Daniel Casañas",
     created_at: "2024-01-11T00:00:00Z",
-    updated_at: "2024-01-11T00:00:00Z"
-  }
+    updated_at: "2024-01-11T00:00:00Z",
+  },
 ]
 
 export const mockConversations: Conversation[] = [
@@ -791,7 +797,7 @@ export const mockConversations: Conversation[] = [
     updated_at: "2024-01-15T10:30:00Z",
     contact_name: "Juan Pérez",
     contact_company: "Tech Solutions Inc.",
-    contact_avatar: "/professional-man.png"
+    contact_avatar: "/professional-man.png",
   },
   {
     id: 2,
@@ -803,7 +809,7 @@ export const mockConversations: Conversation[] = [
     updated_at: "2024-01-15T09:15:00Z",
     contact_name: "María García",
     contact_company: "Marketing Pro",
-    contact_avatar: "/professional-woman-diverse.png"
+    contact_avatar: "/professional-woman-diverse.png",
   },
   {
     id: 3,
@@ -815,6 +821,6 @@ export const mockConversations: Conversation[] = [
     updated_at: "2024-01-14T16:45:00Z",
     contact_name: "Carlos López",
     contact_company: "StartupXYZ",
-    contact_avatar: "/young-entrepreneur-casual.png"
-  }
+    contact_avatar: "/young-entrepreneur-casual.png",
+  },
 ]

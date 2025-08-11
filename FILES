@@ -1,0 +1,148 @@
+// components/dashboard-charts.tsx
+import React from "react";
+import { PipelineChart } from "@/components/PipelineChart";
+import { formatEUR } from "@/lib/currency";
+
+const DashboardCharts = () => {
+  const data = {
+    pipeline: [
+      { value: 1000, count: 5 },
+      { value: 5000, count: 10 },
+      { value: 25000, count: 15 },
+      { value: 100000, count: 20 },
+    ],
+  };
+
+  return (
+    <div>
+      <PipelineChart data={data.pipeline} />
+    </div>
+  );
+};
+
+export default DashboardCharts;
+
+// app/dashboard/page.tsx
+import React from "react";
+import { formatEUR } from "@/lib/currency";
+import { KPI } from "@/components/KPI";
+import { getData } from "@/lib/data";
+
+const DashboardPage = () => {
+  const data = getData();
+
+  return (
+    <div>
+      <KPI title="Ingresos (pipeline)" value={formatEUR(data.totals.totalRevenue)} />
+      {/* ** rest of code here ** */}
+    </div>
+  );
+};
+
+export default DashboardPage;
+
+// app/pipeline/embudo/page.tsx
+import React from "react";
+import { formatEUR } from "@/lib/currency";
+import { getDeals } from "@/lib/data";
+import { Label, Input } from "@/components/Form";
+import { DealCard } from "@/components/DealCard";
+
+const EmbudoPage = () => {
+  const deals = getDeals();
+  const budgetRanges = ["< €1,000", "€1,000 - €5,000", "€5,000 - €25,000", "€25,000 - €100,000", "€100,000+"];
+
+  const pipelineStages = deals.map((deal) => {
+    return {
+      name: deal.stage,
+      count: 1,
+      weightedValue: formatEUR(deal.value * deal.probability / 100),
+      deals: [deal],
+    };
+  });
+
+  return (
+    <div>
+      <Label htmlFor="value">Valor Estimado (€) *</Label>
+      <Input id="value" name="value" type="number" />
+      {pipelineStages.map((stage) => (
+        <div key={stage.name}>
+          <h2>{stage.name}</h2>
+          <div>{stage.weightedValue}</div>
+          {stage.deals.map((deal) => (
+            <DealCard key={deal.id}>
+              <span className="text-lg font-bold text-green-600">{formatEUR(deal.value)}</span>
+            </DealCard>
+          ))}
+        </div>
+      ))}
+      {/* ** rest of code here ** */}
+    </div>
+  );
+};
+
+export default EmbudoPage;
+
+// app/pipeline/oportunidades/page.tsx
+import React from "react";
+import { formatEUR } from "@/lib/currency";
+import { getDeals } from "@/lib/data";
+import { Label, Input } from "@/components/Form";
+import { DealCard } from "@/components/DealCard";
+
+function currency(n: number) {
+  return formatEUR(n);
+}
+
+const OportunidadesPage = () => {
+  const deals = getDeals();
+  const budgetRanges = ["< €1,000", "€1,000 - €5,000", "€5,000 - €25,000", "€25,000 - €100,000", "€100,000+"];
+
+  return (
+    <div>
+      <Label htmlFor="value">Valor Estimado (€) *</Label>
+      <Input id="value" name="value" type="number" />
+      {deals.map((deal) => (
+        <DealCard key={deal.id}>
+          <span className="text-lg font-bold text-green-600">{formatEUR(deal.value)}</span>
+        </DealCard>
+      ))}
+      {/* ** rest of code here ** */}
+    </div>
+  );
+};
+
+export default OportunidadesPage;
+
+// app/deals/page.tsx
+import React from "react";
+import { formatEUR } from "@/lib/currency";
+import { getDeals } from "@/lib/data";
+import { Label, Input } from "@/components/Form";
+import { DealCard } from "@/components/DealCard";
+import { KPI } from "@/components/KPI";
+
+const budgetRanges = ["< €1,000", "€1,000 - €5,000", "€5,000 - €25,000", "€25,000 - €100,000", "€100,000+"];
+
+const DealsPage = () => {
+  const deals = getDeals();
+  const totalValue = deals.reduce((sum, deal) => sum + deal.value, 0);
+  const weightedValue = deals.reduce((sum, deal) => sum + (deal.value * deal.probability) / 100, 0);
+  const wonDeals = deals.filter((deal) => deal.status === "won");
+
+  return (
+    <div>
+      <KPI title="Valor Total Pipeline" value={formatEUR(totalValue)} />
+      <KPI title="Valor Ponderado" value={formatEUR(Math.round(weightedValue))} />
+      <KPI title="Deals Ganados" value={`${formatEUR(wonDeals.reduce((sum, deal) => sum + deal.value, 0))} cerrados`} />
+      {deals.map((deal) => (
+        <DealCard key={deal.id}>
+          <span className="text-lg font-bold text-green-600">{formatEUR(deal.value)}</span>
+        </DealCard>
+      ))}
+      {/* ** rest of code here ** */}
+    </div>
+  );
+};
+
+export default DealsPage;

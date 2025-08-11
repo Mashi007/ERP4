@@ -1,189 +1,103 @@
-import type React from "react"
-import {
-  CalendarDays,
-  Handshake,
-  MailOpen,
-  Megaphone,
-  MessagesSquare,
-  Presentation,
-  Users,
-  Workflow,
-} from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import {
-  ActivitiesChart,
-  PipelineChart,
-  RevenueByMonthChart,
-  StageConversionChart,
-  WinLossCard,
-} from "@/components/dashboard-charts"
-import FilterBar from "@/components/dashboard/filter-bar"
-import { getDashboardFullData, generateDashboardReport, getSalesOwners, type DashboardFilters } from "./actions"
-import Link from "next/link"
+import { getDashboardData } from "./actions"
+import { DateFilters } from "@/components/dashboard/date-filters"
+import { RevenueKPIs } from "@/components/dashboard/revenue-kpis"
+import { WonLostPercent, ListCurrency, ListCount, TareasPorPropietario } from "@/components/dashboard/charts"
+import { DbStatusBanner } from "@/components/dashboard/db-status"
+import { getOrgCurrency } from "@/lib/org-settings"
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>
+  searchParams: Record<string, string | string[] | undefined>
 }) {
-  const start = typeof searchParams?.start === "string" ? searchParams.start : undefined
-  const end = typeof searchParams?.end === "string" ? searchParams.end : undefined
-  const owner = typeof searchParams?.owner === "string" ? searchParams.owner : undefined
+  // Asegura moneda cargada en el layout/provider (servidor)
+  await getOrgCurrency("default")
 
-  const filters: DashboardFilters = { start: start ?? undefined, end: end ?? undefined, owner: owner ?? undefined }
+  const from = typeof searchParams.from === "string" ? searchParams.from : undefined
+  const to = typeof searchParams.to === "string" ? searchParams.to : undefined
+  // Nota: industry/source hoy no filtran en el servidor, pero se mantienen en la URL para sincronizar la UI.
+  const industry = typeof searchParams.industry === "string" ? searchParams.industry : undefined
+  const source = typeof searchParams.source === "string" ? searchParams.source : undefined
+  void industry
+  void source
 
-  const [data, report, owners] = await Promise.all([
-    getDashboardFullData(filters),
-    generateDashboardReport(filters),
-    getSalesOwners().catch(() => [] as string[]),
-  ])
+  const data = await getDashboardData({ from, to })
 
-  const { insights } = report
+  // Opciones para selects; usar valores del servidor si existen, de lo contrario valores estáticos
+  const fallbackIndustries = [
+    "Tecnología",
+    "Software",
+    "Startup",
+    "Manufactura",
+    "Consultoría",
+    "Marketing",
+    "Educación",
+  ]
+  const fallbackSources = [
+    "Referido",
+    "Website",
+    "Redes Sociales",
+    "Evento",
+    "Cliente Existente",
+    "Email Marketing",
+    "Llamada Fría",
+    "N/A",
+  ]
+  const industryOptions = (data.filters?.industries ?? []).length ? data.filters.industries : fallbackIndustries
+  const sourceOptions = (data.filters?.sources ?? []).length ? data.filters.sources : fallbackSources
+
+  // Agregar pronóstico por etapa (sumando por etapa los valores de cada trimestre)
+  const forecastTotalsMap = new Map<string, number>()
+  for (const r of data.forecastByQuarterByStage ?? []) {
+    const prev = forecastTotalsMap.get(r.stage) ?? 0
+    forecastTotalsMap.set(r.stage, prev + (r.value ?? 0))
+  }
+  const forecastTotalsRows = Array.from(forecastTotalsMap, ([stage, total]) => ({ stage, total }))
 
   return (
-    <main className="px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      <header className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground text-sm">
-            Resumen en tiempo real de Contactos, Embudo, Actividades, Citas, Marketing y Comunicaciones.
-          </p>
-        </div>
-        <FilterBar owners={owners} initialStart={start} initialEnd={end} initialOwner={owner} />
-      </header>
+    <div className="mx-auto w-full max-w-7xl p-4">
+      <div className="mb-4">
+        <DbStatusBanner />
+      </div>
 
-      {/* KPIs */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={<Users className="h-5 w-5 text-emerald-600" />}
-          title="Contactos"
-          value={data.totals.totalContacts}
-        />
-        <StatCard
-          icon={<Handshake className="h-5 w-5 text-emerald-600" />}
-          title="Oportunidades"
-          value={data.totals.totalDeals}
-        />
-        <StatCard
-          icon={<Workflow className="h-5 w-5 text-emerald-600" />}
-          title="Actividades"
-          value={data.totals.activitiesCount}
-        />
-        <StatCard
-          icon={<CalendarDays className="h-5 w-5 text-emerald-600" />}
-          title="Citas"
-          value={data.totals.appointmentsCount}
-        />
-        <StatCard
-          icon={<Presentation className="h-5 w-5 text-emerald-600" />}
-          title="Ingresos (pipeline)"
-          value={`$${Intl.NumberFormat().format(data.totals.totalRevenue)}`}
-        />
-        <StatCard
-          icon={<Megaphone className="h-5 w-5 text-emerald-600" />}
-          title="Campañas"
-          value={data.totals.campaignsCount}
-        />
-        <StatCard
-          icon={<MessagesSquare className="h-5 w-5 text-emerald-600" />}
-          title="Conversaciones"
-          value={data.totals.conversationsCount}
-        />
-        <StatCard
-          icon={<MailOpen className="h-5 w-5 text-emerald-600" />}
-          title="Avg. Open/Click"
-          value={`${data.marketing.avgOpenRate.toFixed(1)}% / ${data.marketing.avgClickRate.toFixed(1)}%`}
-        />
-      </section>
+      <div className="mb-6">
+        <DateFilters industries={industryOptions} sources={sourceOptions} />
+      </div>
 
-      {/* Gráficos principales */}
-      <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <PipelineChart data={data.dealsByStage} className="xl:col-span-2" />
-        <WinLossCard wonPct={data.winLoss.wonPct} lostPct={data.winLoss.lostPct} />
-      </section>
+      <div className="mb-6">
+        <RevenueKPIs revenueWon={data.kpis.revenueWon ?? 0} revenueLost={data.kpis.revenueLost ?? 0} />
+      </div>
 
-      {/* Actividades, Ingresos por mes y Conversión */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <ActivitiesChart data={data.activitiesByType} className="lg:col-span-1" />
-        <RevenueByMonthChart data={data.revenueByMonth} className="lg:col-span-2" />
-      </section>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <WonLostPercent
+          won={Number(data.winLossPercentage?.wonPct ?? 0)}
+          lost={Number(data.winLossPercentage?.lostPct ?? 0)}
+        />
 
-      <section>
-        <StageConversionChart data={data.stageConversion} />
-      </section>
+        <ListCurrency
+          title="Valor de oportunidades abiertas por etapa"
+          rows={(data.funnelByStage ?? []).map((r) => ({ stage: r.stage, total: r.value ?? 0 }))}
+          labelKey="stage"
+        />
 
-      {/* Próximas citas y Marketing */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              Próximas citas
-              <Badge variant="secondary">{data.upcomingAppointments.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {data.upcomingAppointments.length === 0 && (
-              <div className="text-sm text-muted-foreground">No hay citas próximas.</div>
-            )}
-            {data.upcomingAppointments.map((a) => {
-              const d = new Date(a.appointment_date as any)
-              const time = (a as any).appointment_time ?? ""
-              return (
-                <div
-                  key={(a as any).id ?? `${d.toISOString()}-${a.title}`}
-                  className="flex items-center justify-between border rounded-md px-3 py-2"
-                >
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{a.title}</div>
-                    <div className="text-xs text-muted-foreground truncate">{(a as any).company || "—"}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm">{d.toLocaleDateString()}</div>
-                    <div className="text-xs text-muted-foreground">{time}</div>
-                  </div>
-                </div>
-              )
-            })}
-            <div className="text-right">
-              <Link href="/appointments" className="text-xs underline text-muted-foreground hover:text-foreground">
-                Ver todas
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        <ListCount
+          title="Contactos por propietario de ventas"
+          rows={(data.contactsByOwner ?? []).map((r) => ({ owner: r.owner, count: r.total ?? 0 }))}
+          labelKey="owner"
+          countKey="count"
+        />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Insights IA</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="whitespace-pre-wrap text-sm leading-relaxed">{insights}</div>
-          </CardContent>
-        </Card>
-      </section>
+        {/* Tareas por propietario (usa el componente ya preparado) */}
+        <TareasPorPropietario data={data.tasksByOwner ?? []} />
 
-      <Separator />
-      <footer className="text-xs text-muted-foreground">
-        Usa los filtros para explorar periodos y dueños de ventas. Los datos se recalculan al aplicar cambios.
-      </footer>
-    </main>
-  )
-}
+        <ListCurrency title="Ingresos pronosticados por etapa" rows={forecastTotalsRows} labelKey="stage" />
 
-function StatCard({ icon, title, value }: { icon: React.ReactNode; title: string; value: React.ReactNode }) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-md bg-emerald-50 flex items-center justify-center">{icon}</div>
-          <div className="min-w-0">
-            <div className="text-xs text-muted-foreground">{title}</div>
-            <div className="text-lg font-semibold truncate">{value}</div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        <ListCurrency
+          title="Ingresos ganados por fuente"
+          rows={(data.revenueBySource ?? []).map((r) => ({ source: r.source, total: r.value ?? 0 }))}
+          labelKey="source"
+        />
+      </div>
+    </div>
   )
 }

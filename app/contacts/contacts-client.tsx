@@ -159,14 +159,15 @@ export default function ContactsClient({ initialContacts }: ContactsClientProps)
     e.preventDefault()
     if (!editingContact) return
     const formData = new FormData(e.currentTarget)
-    const payload = {
+    const payload: Partial<Contact> = {
       name: (formData.get("name") as string) || undefined,
       company: (formData.get("company") as string) || undefined,
       job_title: (formData.get("job_title") as string) || undefined,
       email: (formData.get("email") as string) || undefined,
       phone: (formData.get("phone") as string) || undefined,
       status: (formData.get("status") as string) || undefined,
-    } as Partial<Contact>
+      nif: (formData.get("nif") as string) || undefined,
+    }
 
     setIsUpdating(true)
     try {
@@ -307,6 +308,12 @@ export default function ContactsClient({ initialContacts }: ContactsClientProps)
                         Cargo
                       </Label>
                       <Input id="job_title" name="job_title" className="col-span-3" placeholder="Título del puesto" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="nif" className="text-right">
+                        NIF
+                      </Label>
+                      <Input id="nif" name="nif" className="col-span-3" placeholder="Número de identificación fiscal" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="email" className="text-right">
@@ -575,6 +582,18 @@ export default function ContactsClient({ initialContacts }: ContactsClientProps)
                     name="job_title"
                     className="col-span-3"
                     defaultValue={editingContact.job_title ?? ""}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-nif" className="text-right">
+                    NIF
+                  </Label>
+                  <Input
+                    id="edit-nif"
+                    name="nif"
+                    className="col-span-3"
+                    defaultValue={editingContact.nif ?? ""}
+                    placeholder="Número de identificación fiscal"
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
