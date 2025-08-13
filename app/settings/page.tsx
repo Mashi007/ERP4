@@ -1,10 +1,38 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Users, Mail, Calendar, Phone, Building, Zap } from "lucide-react"
 import Link from "next/link"
+
+const useEmailConfigStatus = () => {
+  const [emailStatus, setEmailStatus] = useState("pending")
+
+  useEffect(() => {
+    const checkEmailConfig = () => {
+      const gmailConnected = localStorage.getItem("gmail_connected") === "true"
+      const outlookConnected = localStorage.getItem("outlook_connected") === "true"
+      const smtpConfigured = localStorage.getItem("smtp_configured") === "true"
+
+      if (gmailConnected || outlookConnected || smtpConfigured) {
+        setEmailStatus("configured")
+      } else {
+        setEmailStatus("pending")
+      }
+    }
+
+    checkEmailConfig()
+
+    const handleStorageChange = () => checkEmailConfig()
+    window.addEventListener("storage", handleStorageChange)
+
+    return () => window.removeEventListener("storage", handleStorageChange)
+  }, [])
+
+  return emailStatus
+}
 
 const configurationSections = [
   {
@@ -31,7 +59,7 @@ const configurationSections = [
     description: "Configurar servidores SMTP y plantillas de email",
     icon: Mail,
     href: "/settings/email",
-    status: "pending",
+    status: "dynamic",
     category: "comunicaciones",
   },
   {
@@ -82,8 +110,12 @@ const categories = [
 ]
 
 export default function SettingsPage() {
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const emailStatus = useEmailConfigStatus()
+
+  const getStatusBadge = (status: string, itemId?: string) => {
+    const actualStatus = itemId === "email" ? emailStatus : status
+
+    switch (actualStatus) {
       case "configured":
         return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Configurado</Badge>
       case "pending":
@@ -127,7 +159,7 @@ export default function SettingsPage() {
                           </div>
                           <div className="space-y-1">
                             <CardTitle className="text-base">{item.title}</CardTitle>
-                            {getStatusBadge(item.status)}
+                            {getStatusBadge(item.status, item.id)}
                           </div>
                         </div>
                       </div>

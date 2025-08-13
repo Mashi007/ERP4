@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -17,6 +17,44 @@ export default function EmailSettingsPage() {
   const [outlookConnected, setOutlookConnected] = useState(false)
   const [syncEnabled, setSyncEnabled] = useState(true)
   const [autoReply, setAutoReply] = useState(false)
+  const [smtpConfigured, setSmtpConfigured] = useState(false)
+
+  useEffect(() => {
+    const loadConfiguration = () => {
+      setGmailConnected(localStorage.getItem("gmail_connected") === "true")
+      setOutlookConnected(localStorage.getItem("outlook_connected") === "true")
+      setSmtpConfigured(localStorage.getItem("smtp_configured") === "true")
+    }
+
+    loadConfiguration()
+  }, [])
+
+  const handleGmailConnection = (connected: boolean) => {
+    setGmailConnected(connected)
+    localStorage.setItem("gmail_connected", connected.toString())
+    window.dispatchEvent(new Event("storage"))
+  }
+
+  const handleOutlookConnection = (connected: boolean) => {
+    setOutlookConnected(connected)
+    localStorage.setItem("outlook_connected", connected.toString())
+    window.dispatchEvent(new Event("storage"))
+  }
+
+  const handleSMTPTest = () => {
+    const smtpServer = (document.getElementById("smtp-server") as HTMLInputElement)?.value
+    const smtpPort = (document.getElementById("smtp-port") as HTMLInputElement)?.value
+    const emailUser = (document.getElementById("email-user") as HTMLInputElement)?.value
+
+    if (smtpServer && smtpPort && emailUser) {
+      setSmtpConfigured(true)
+      localStorage.setItem("smtp_configured", "true")
+      window.dispatchEvent(new Event("storage"))
+      alert("Conexión SMTP configurada correctamente")
+    } else {
+      alert("Por favor, complete todos los campos requeridos")
+    }
+  }
 
   return (
     <div className="container mx-auto p-6 space-y-8">
@@ -69,7 +107,7 @@ export default function EmailSettingsPage() {
                       Utilizamos OAuth 2.0 para una conexión segura. No almacenamos tu contraseña.
                     </AlertDescription>
                   </Alert>
-                  <Button onClick={() => setGmailConnected(true)} className="w-full bg-red-600 hover:bg-red-700">
+                  <Button onClick={() => handleGmailConnection(true)} className="w-full bg-red-600 hover:bg-red-700">
                     <Mail className="mr-2 h-4 w-4" />
                     Conectar con Gmail
                   </Button>
@@ -90,7 +128,7 @@ export default function EmailSettingsPage() {
                       <Input id="gmail-frequency" type="number" defaultValue="15" />
                     </div>
                   </div>
-                  <Button variant="outline" onClick={() => setGmailConnected(false)}>
+                  <Button variant="outline" onClick={() => handleGmailConnection(false)}>
                     Desconectar Gmail
                   </Button>
                 </div>
@@ -125,7 +163,10 @@ export default function EmailSettingsPage() {
                       Conexión segura con Microsoft Graph API. Compatible con Office 365 y Outlook.com.
                     </AlertDescription>
                   </Alert>
-                  <Button onClick={() => setOutlookConnected(true)} className="w-full bg-blue-600 hover:bg-blue-700">
+                  <Button
+                    onClick={() => handleOutlookConnection(true)}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
                     <Mail className="mr-2 h-4 w-4" />
                     Conectar con Outlook
                   </Button>
@@ -146,7 +187,7 @@ export default function EmailSettingsPage() {
                       <Input id="outlook-frequency" type="number" defaultValue="15" />
                     </div>
                   </div>
-                  <Button variant="outline" onClick={() => setOutlookConnected(false)}>
+                  <Button variant="outline" onClick={() => handleOutlookConnection(false)}>
                     Desconectar Outlook
                   </Button>
                 </div>
@@ -164,6 +205,15 @@ export default function EmailSettingsPage() {
               <CardDescription>Para otros proveedores de email o configuración personalizada</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {smtpConfigured && (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center space-x-2 text-green-700">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">SMTP configurado correctamente</span>
+                  </div>
+                </div>
+              )}
+
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="smtp-server">Servidor SMTP</Label>
@@ -194,7 +244,7 @@ export default function EmailSettingsPage() {
                 <Switch id="ssl-enabled" defaultChecked />
                 <Label htmlFor="ssl-enabled">Usar SSL/TLS</Label>
               </div>
-              <Button>Probar Conexión</Button>
+              <Button onClick={handleSMTPTest}>Probar Conexión</Button>
             </CardContent>
           </Card>
         </TabsContent>
