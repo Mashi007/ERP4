@@ -38,7 +38,7 @@ INSTRUCCIONES:
       maxTokens: 2048,
     })
 
-    return result.toAIStreamResponse()
+    return result.toTextStreamResponse()
   } catch (error) {
     console.error("Error connecting to Claude AI:", error)
     // Return a clear error response to the client
