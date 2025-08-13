@@ -31,7 +31,7 @@ INSTRUCCIONES:
       model: anthropic("claude-3-5-sonnet-20241022", {
         apiKey:
           process.env.ANTHROPIC_API_KEY ||
-          "sk-ant-api03-pkcVATxb7eZEivbkmYDuS5aGAO-_SKijFIOatODCCzwB9JTb4EIyR2I6AT-h0OXuGkjupKfxjtSsc7qpubBiQA",
+          "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",
       }),
       system: systemPrompt,
       messages,
