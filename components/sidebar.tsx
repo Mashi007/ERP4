@@ -14,10 +14,7 @@ const navigation = [
     name: "Dashboard",
     href: "/dashboard",
     icon: BarChart3,
-    subItems: [
-      { name: "Panel Principal", href: "/dashboard" },
-      { name: "Chat IA", href: "/chat" },
-    ],
+    subItems: [{ name: "Panel Principal", href: "/dashboard" }],
   },
   {
     name: "Clientes",
