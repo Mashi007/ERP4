@@ -115,10 +115,15 @@ export default function EmailSettingsPage() {
 
   const [templateDialog, setTemplateDialog] = useState(false)
   const [sequenceDialog, setSequenceDialog] = useState(false)
+  const [sequenceEditDialog, setSequenceEditDialog] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null)
   const [editingSequence, setEditingSequence] = useState<EmailSequence | null>(null)
   const [newTemplate, setNewTemplate] = useState({ name: "", subject: "", content: "" })
   const [newSequence, setNewSequence] = useState({ name: "", description: "", emails: 1 })
+  const [autoReplyRules, setAutoReplyRules] = useState([
+    { id: "1", condition: "Nuevos contactos", message: "Gracias por contactarnos. Te responderemos pronto." },
+    { id: "2", condition: "Fuera de horario", message: "Recibimos tu mensaje fuera del horario laboral." },
+  ])
 
   useEffect(() => {
     const loadConfiguration = () => {
@@ -233,6 +238,32 @@ export default function EmailSettingsPage() {
       setNewSequence({ name: "", description: "", emails: 1 })
       setSequenceDialog(false)
       alert("Secuencia creada exitosamente")
+    }
+  }
+
+  const handleEditSequence = (sequence: EmailSequence) => {
+    setEditingSequence(sequence)
+    setNewSequence({
+      name: sequence.name,
+      description: sequence.description,
+      emails: sequence.emails,
+    })
+    setSequenceEditDialog(true)
+  }
+
+  const handleUpdateSequence = () => {
+    if (editingSequence && newSequence.name && newSequence.description) {
+      setSequences(
+        sequences.map((s) =>
+          s.id === editingSequence.id
+            ? { ...s, name: newSequence.name, description: newSequence.description, emails: newSequence.emails }
+            : s,
+        ),
+      )
+      setEditingSequence(null)
+      setNewSequence({ name: "", description: "", emails: 1 })
+      setSequenceEditDialog(false)
+      alert("Secuencia actualizada exitosamente")
     }
   }
 
@@ -621,6 +652,7 @@ export default function EmailSettingsPage() {
               <CardDescription>Configura respuestas automáticas y secuencias de email</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Enhanced Auto-Reply Section */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -631,20 +663,73 @@ export default function EmailSettingsPage() {
                 </div>
 
                 {autoReply && (
-                  <div className="space-y-2 pl-4 border-l-2 border-primary">
-                    <Label htmlFor="auto-reply-message">Mensaje de respuesta automática</Label>
-                    <Textarea
-                      id="auto-reply-message"
-                      className="w-full p-3 border rounded-md"
-                      rows={4}
-                      placeholder="Gracias por tu email. Hemos recibido tu mensaje y te responderemos pronto..."
-                    />
+                  <div className="space-y-4 pl-4 border-l-2 border-primary">
+                    <div className="space-y-2">
+                      <Label htmlFor="auto-reply-message">Mensaje de respuesta automática</Label>
+                      <Textarea
+                        id="auto-reply-message"
+                        className="w-full p-3 border rounded-md"
+                        rows={4}
+                        placeholder="Gracias por tu email. Hemos recibido tu mensaje y te responderemos pronto..."
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Reglas de respuesta automática</Label>
+                      {autoReplyRules.map((rule) => (
+                        <div key={rule.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="font-medium text-sm">{rule.condition}</p>
+                            <p className="text-xs text-muted-foreground">{rule.message}</p>
+                          </div>
+                          <div className="space-x-1">
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      <Button variant="outline" size="sm">
+                        <Plus className="mr-2 h-3 w-3" />
+                        Agregar Regla
+                      </Button>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="auto-reply-hours">Horario activo</Label>
+                        <div className="flex space-x-2">
+                          <Input id="auto-reply-start" type="time" defaultValue="09:00" />
+                          <span className="self-center">-</span>
+                          <Input id="auto-reply-end" type="time" defaultValue="18:00" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="auto-reply-days">Días activos</Label>
+                        <div className="flex flex-wrap gap-1">
+                          {["L", "M", "X", "J", "V", "S", "D"].map((day, index) => (
+                            <Button
+                              key={day}
+                              variant={index < 5 ? "default" : "outline"}
+                              size="sm"
+                              className="w-8 h-8 p-0"
+                            >
+                              {day}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
 
               <Separator />
 
+              {/* Enhanced Email Sequences Section */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="font-medium">Secuencias de Email</h3>
@@ -661,7 +746,7 @@ export default function EmailSettingsPage() {
                         Crear Nueva Secuencia
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="max-w-2xl">
                       <DialogHeader>
                         <DialogTitle>Nueva Secuencia de Email</DialogTitle>
                         <DialogDescription>Crea una nueva secuencia automatizada de emails</DialogDescription>
@@ -686,18 +771,41 @@ export default function EmailSettingsPage() {
                             rows={3}
                           />
                         </div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label htmlFor="sequence-emails">Número de emails</Label>
+                            <Input
+                              id="sequence-emails"
+                              type="number"
+                              min="1"
+                              max="10"
+                              value={newSequence.emails}
+                              onChange={(e) =>
+                                setNewSequence({ ...newSequence, emails: Number.parseInt(e.target.value) || 1 })
+                              }
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="sequence-trigger">Disparador</Label>
+                            <select id="sequence-trigger" className="w-full p-2 border rounded-md">
+                              <option>Nuevo contacto creado</option>
+                              <option>Deal cerrado</option>
+                              <option>Cita programada</option>
+                              <option>Email recibido</option>
+                              <option>Manual</option>
+                            </select>
+                          </div>
+                        </div>
                         <div className="space-y-2">
-                          <Label htmlFor="sequence-emails">Número de emails</Label>
-                          <Input
-                            id="sequence-emails"
-                            type="number"
-                            min="1"
-                            max="10"
-                            value={newSequence.emails}
-                            onChange={(e) =>
-                              setNewSequence({ ...newSequence, emails: Number.parseInt(e.target.value) || 1 })
-                            }
-                          />
+                          <Label htmlFor="sequence-delay">Retraso entre emails</Label>
+                          <div className="flex space-x-2">
+                            <Input id="sequence-delay-value" type="number" min="1" defaultValue="1" className="w-20" />
+                            <select className="flex-1 p-2 border rounded-md">
+                              <option>Días</option>
+                              <option>Horas</option>
+                              <option>Semanas</option>
+                            </select>
+                          </div>
                         </div>
                       </div>
                       <DialogFooter>
@@ -709,36 +817,105 @@ export default function EmailSettingsPage() {
                     </DialogContent>
                   </Dialog>
                 </div>
+
+                <Dialog open={sequenceEditDialog} onOpenChange={setSequenceEditDialog}>
+                  <DialogContent className="max-w-3xl">
+                    <DialogHeader>
+                      <DialogTitle>Editar Secuencia: {editingSequence?.name}</DialogTitle>
+                      <DialogDescription>Modifica la configuración de la secuencia</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-sequence-name">Nombre de la secuencia</Label>
+                        <Input
+                          id="edit-sequence-name"
+                          value={newSequence.name}
+                          onChange={(e) => setNewSequence({ ...newSequence, name: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-sequence-description">Descripción</Label>
+                        <Textarea
+                          id="edit-sequence-description"
+                          value={newSequence.description}
+                          onChange={(e) => setNewSequence({ ...newSequence, description: e.target.value })}
+                          rows={3}
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <Label>Emails de la secuencia</Label>
+                        {Array.from({ length: newSequence.emails }, (_, index) => (
+                          <div key={index} className="p-3 border rounded-lg space-y-2">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-medium">Email {index + 1}</h4>
+                              <Badge variant="outline">{index === 0 ? "Inmediato" : `+${index} días`}</Badge>
+                            </div>
+                            <Input placeholder={`Asunto del email ${index + 1}`} />
+                            <Textarea placeholder={`Contenido del email ${index + 1}`} rows={3} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setSequenceEditDialog(false)}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={handleUpdateSequence}>Actualizar Secuencia</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
                 <div className="space-y-3">
                   {sequences.map((sequence) => (
-                    <div key={sequence.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{sequence.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {sequence.emails} emails • {sequence.status}
-                        </p>
+                    <div key={sequence.id} className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <p className="font-medium">{sequence.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {sequence.emails} emails • {sequence.status}
+                          </p>
+                        </div>
+                        <div className="space-x-2">
+                          <Button variant="outline" size="sm" onClick={() => handleEditSequence(sequence)}>
+                            <Edit className="mr-1 h-3 w-3" />
+                            Editar
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleToggleSequence(sequence.id)}>
+                            {sequence.status === "Activa" ? (
+                              <>
+                                <Pause className="mr-1 h-3 w-3" />
+                                Pausar
+                              </>
+                            ) : (
+                              <>
+                                <Play className="mr-1 h-3 w-3" />
+                                Activar
+                              </>
+                            )}
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleDeleteSequence(sequence.id)}>
+                            <Trash2 className="mr-1 h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="space-x-2">
-                        <Button variant="outline" size="sm">
-                          <Edit className="mr-1 h-3 w-3" />
-                          Editar
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleToggleSequence(sequence.id)}>
-                          {sequence.status === "Activa" ? (
-                            <>
-                              <Pause className="mr-1 h-3 w-3" />
-                              Pausar
-                            </>
-                          ) : (
-                            <>
-                              <Play className="mr-1 h-3 w-3" />
-                              Activar
-                            </>
-                          )}
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleDeleteSequence(sequence.id)}>
-                          <Trash2 className="mr-1 h-3 w-3" />
-                        </Button>
+
+                      <div className="grid gap-4 md:grid-cols-4 text-sm">
+                        <div className="text-center p-2 bg-blue-50 rounded">
+                          <p className="font-medium text-blue-600">156</p>
+                          <p className="text-blue-600">Enviados</p>
+                        </div>
+                        <div className="text-center p-2 bg-green-50 rounded">
+                          <p className="font-medium text-green-600">89%</p>
+                          <p className="text-green-600">Abiertos</p>
+                        </div>
+                        <div className="text-center p-2 bg-purple-50 rounded">
+                          <p className="font-medium text-purple-600">34%</p>
+                          <p className="text-purple-600">Clics</p>
+                        </div>
+                        <div className="text-center p-2 bg-orange-50 rounded">
+                          <p className="font-medium text-orange-600">12%</p>
+                          <p className="text-orange-600">Conversión</p>
+                        </div>
                       </div>
                     </div>
                   ))}
