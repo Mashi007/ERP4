@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { BarChart3, Users, Target, Package, Calendar, Settings, Menu, ChevronDown, ChevronRight } from "lucide-react"
-import Image from "next/image"
 
 const navigation = [
   {
@@ -96,13 +95,7 @@ export function Sidebar({ className }: SidebarProps) {
     <div className="flex h-full flex-col">
       <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Image
-            src="/normapymes-logo.jpg"
-            alt="NormaPymes"
-            width={120}
-            height={32}
-            className="h-8 w-auto object-contain"
-          />
+          <img src="/normapymes-logo.jpg" alt="NormaPymes" className="h-8 w-auto object-contain" />
         </Link>
       </div>
       <ScrollArea className="flex-1">
