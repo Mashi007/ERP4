@@ -99,10 +99,7 @@ export function DateFilters({
       </div>
       <div className="grid gap-1">
         <Label htmlFor="to">Hasta</Label>
-        <div className="relative">
-          <Input id="to" type="date" value={to} onChange={(e) => setTo(e.target.value)} className="pr-10" />
-          <Calendar className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-        </div>
+        <Input id="to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
       </div>
       <div className="grid gap-1 min-w-44">
         <Label>Industria</Label>
