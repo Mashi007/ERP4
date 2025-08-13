@@ -1,9 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useRef, useEffect } from "react"
-import { useChat } from "ai/react"
+import { useState, useRef, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,18 +28,26 @@ import {
   PieChart,
 } from "lucide-react"
 
+interface Message {
+  id: string
+  role: "user" | "assistant"
+  content: string
+  createdAt: Date
+}
+
 export default function ChatPage() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error, setMessages } = useChat({
-    api: "/api/chat",
-    initialMessages: [
-      {
-        id: "1",
-        role: "assistant",
-        content:
-          "¡Hola! Soy tu asistente de CRM inteligente potenciado por Claude AI. Puedo ayudarte con análisis detallados de contactos, oportunidades, actividades y métricas de tu pipeline. ¿En qué puedo ayudarte hoy?",
-      },
-    ],
-  })
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "1",
+      role: "assistant",
+      content:
+        "¡Hola! Soy tu asistente de CRM inteligente potenciado por Claude AI. Puedo ayudarte con análisis detallados de contactos, oportunidades, actividades y métricas de tu pipeline. ¿En qué puedo ayudarte hoy?",
+      createdAt: new Date(),
+    },
+  ])
+  const [input, setInput] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -52,6 +58,93 @@ export default function ChatPage() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!input.trim() || isLoading) return
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: input.trim(),
+      createdAt: new Date(),
+    }
+
+    setMessages((prev) => [...prev, userMessage])
+    setInput("")
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMessage].map((msg) => ({
+            role: msg.role,
+            content: msg.content,
+          })),
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`)
+      }
+
+      // Handle streaming response
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error("No response body")
+      }
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "",
+        createdAt: new Date(),
+      }
+
+      setMessages((prev) => [...prev, assistantMessage])
+
+      const decoder = new TextDecoder()
+      let done = false
+
+      while (!done) {
+        const { value, done: readerDone } = await reader.read()
+        done = readerDone
+
+        if (value) {
+          const chunk = decoder.decode(value)
+          const lines = chunk.split("\n")
+
+          for (const line of lines) {
+            if (line.startsWith("0:")) {
+              try {
+                const data = JSON.parse(line.slice(2))
+                if (data.type === "text-delta" && data.textDelta) {
+                  setMessages((prev) =>
+                    prev.map((msg) =>
+                      msg.id === assistantMessage.id ? { ...msg, content: msg.content + data.textDelta } : msg,
+                    ),
+                  )
+                }
+              } catch (e) {
+                // Ignore parsing errors for non-JSON lines
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido")
+      // Remove the assistant message if there was an error
+      setMessages((prev) => prev.filter((msg) => msg.id !== (Date.now() + 1).toString()))
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -66,12 +159,22 @@ export default function ChatPage() {
         id: "1",
         role: "assistant",
         content: "¡Hola! Soy tu asistente de CRM inteligente potenciado por Claude AI. ¿En qué puedo ayudarte hoy?",
+        createdAt: new Date(),
       },
     ])
+    setError(null)
   }
 
   const copyMessage = (content: string) => {
     navigator.clipboard.writeText(content)
+  }
+
+  const handleSuggestedQuestion = (question: string) => {
+    setInput(question)
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value)
   }
 
   const isDatabaseConnected = !!process.env.DATABASE_URL
@@ -172,7 +275,7 @@ export default function ChatPage() {
           {error && (
             <Alert className="border-red-200 bg-red-50">
               <Brain className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">Error de conexión: {error.message}</AlertDescription>
+              <AlertDescription className="text-red-800">Error de conexión: {error}</AlertDescription>
             </Alert>
           )}
         </div>
@@ -206,11 +309,7 @@ export default function ChatPage() {
                         <div className="flex-1">
                           <div className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</div>
                           <div className="flex items-center justify-between mt-2">
-                            <span className="text-xs opacity-70">
-                              {message.createdAt
-                                ? new Date(message.createdAt).toLocaleTimeString()
-                                : new Date().toLocaleTimeString()}
-                            </span>
+                            <span className="text-xs opacity-70">{message.createdAt.toLocaleTimeString()}</span>
                             <div className="flex space-x-1">
                               <Button
                                 variant="ghost"
@@ -275,7 +374,7 @@ export default function ChatPage() {
                 <form onSubmit={handleSubmit} className="flex space-x-2">
                   <Input
                     value={input}
-                    onChange={handleInputChange}
+                    onChange={(e) => setInput(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Pregunta sobre tu CRM..."
                     disabled={isLoading}
@@ -308,7 +407,7 @@ export default function ChatPage() {
                       key={index}
                       variant="ghost"
                       className="w-full text-left justify-start h-auto py-3 px-4 bg-white/70 hover:bg-white hover:shadow-md transition-all duration-200 border border-white/50 hover:border-blue-200 rounded-xl group"
-                      onClick={() => handleInputChange({ target: { value: item.question } } as any)}
+                      onClick={() => handleSuggestedQuestion(item.question)}
                     >
                       <div className="flex items-start space-x-3 w-full">
                         <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
