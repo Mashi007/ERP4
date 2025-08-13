@@ -8,15 +8,15 @@ importers:
 
   .:
     dependencies:
+      '@ai-sdk/anthropic':
+        specifier: latest
+        version: 2.0.2(zod@3.25.67)
       '@ai-sdk/react':
         specifier: latest
         version: 2.0.11(react@19.0.0)(zod@3.25.67)
       '@ai-sdk/xai':
         specifier: latest
         version: 2.0.6(zod@3.25.67)
-      '@anthropic-ai/sdk':
-        specifier: latest
-        version: 0.59.0
       '@hookform/resolvers':
         specifier: ^3.10.0
         version: 3.10.0(react-hook-form@7.60.0(react@19.0.0))
@@ -207,6 +207,12 @@ importers:
 
 packages:
 
+  '@ai-sdk/anthropic@2.0.2':
+    resolution: {integrity: sha512-R3xmEbbntgdKo/S3TDuW77RYALpo/OKQm4oSjQmryDAFiVGB6X6guZAr7FWt48C4fKGROScAu+y1MJTbzisfOQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4
+
   '@ai-sdk/gateway@1.0.5':
     resolution: {integrity: sha512-GOhxiHm2nfuS618Ia13AWxEIhCsj5+tFaw6sjSO7pvMZT03QgFAJyX4xBYj+3i3mfIvw+yJOvyhVu1fI+pAHQA==}
     engines: {node: '>=18'}
@@ -252,10 +258,6 @@ packages:
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
-
-  '@anthropic-ai/sdk@0.59.0':
-    resolution: {integrity: sha512-m9w9tC+N+GUNprwEOhU3VKKSYwXA1fIevRCe7kOFonV4xu5vxqmqyoLy+dkdVvc5W1F4WUTVE/7I4criaF9gnw==}
-    hasBin: true
 
   '@babel/runtime@7.28.2':
     resolution: {integrity: sha512-KHp2IflsnGywDjBWDkR9iEqiWSpc8GIi0lgTT3mOElT0PP1tG26P4tmFI2YvAdzgq9RGyoHZQEIEdZy6Ec5xCA==}
@@ -2150,6 +2152,12 @@ packages:
 
 snapshots:
 
+  '@ai-sdk/anthropic@2.0.2(zod@3.25.67)':
+    dependencies:
+      '@ai-sdk/provider': 2.0.0
+      '@ai-sdk/provider-utils': 3.0.2(zod@3.25.67)
+      zod: 3.25.67
+
   '@ai-sdk/gateway@1.0.5(zod@3.25.67)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
@@ -2197,8 +2205,6 @@ snapshots:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.12
       '@jridgewell/trace-mapping': 0.3.29
-
-  '@anthropic-ai/sdk@0.59.0': {}
 
   '@babel/runtime@7.28.2': {}
 

@@ -1,13 +1,6 @@
-import { AnthropicStream, StreamingTextResponse } from "ai"
-import Anthropic from "@anthropic-ai/sdk"
+import { streamText } from "ai"
+import { anthropic } from "@ai-sdk/anthropic"
 import { getCRMContext } from "@/lib/chat-ai"
-
-// Create Anthropic client using the API key from environment variables
-const anthropic = new Anthropic({
-  apiKey:
-    process.env.ANTHROPIC_API_KEY ||
-    "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",
-})
 
 // Enable edge runtime for faster responses
 export const runtime = "edge"
@@ -34,22 +27,20 @@ INSTRUCCIONES:
 - Proporciona recomendaciones basadas en mejores prácticas de CRM y ventas
 - Ayuda con análisis de datos, seguimiento de oportunidades, y gestión de contactos`
 
-    // Request chat completion from Anthropic API in streaming mode
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022", // Latest Claude model
-      stream: true,
-      max_tokens: 2048,
+    const result = await streamText({
+      model: anthropic("claude-3-5-sonnet-20241022", {
+        apiKey:
+          process.env.ANTHROPIC_API_KEY ||
+          "sk-ant-api03-pkcVATxb7eZEivbkmYDuS5aGAO-_SKijFIOatODCCzwB9JTb4EIyR2I6AT-h0OXuGkjupKfxjtSsc7qpubBiQA",
+      }),
       system: systemPrompt,
-      messages: messages,
+      messages,
+      maxTokens: 2048,
     })
 
-    // Convert response to a friendly text stream
-    const stream = AnthropicStream(response)
-
-    // Respond with the stream so the frontend can consume it
-    return new StreamingTextResponse(stream)
+    return result.toDataStreamResponse()
   } catch (error) {
-    console.error("Error connecting to Anthropic:", error)
+    console.error("Error connecting to Claude AI:", error)
     // Return a clear error response to the client
     return new Response("Error al conectar con el servicio de IA Claude.", { status: 500 })
   }
