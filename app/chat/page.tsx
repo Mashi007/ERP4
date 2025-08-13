@@ -338,9 +338,11 @@ export default function ChatPage() {
                         <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
                           <IconComponent className="h-4 w-4 text-blue-600" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-gray-900 leading-tight mb-1">{item.question}</div>
-                          <div className="text-xs text-blue-600 font-medium">{item.category}</div>
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <div className="text-sm font-medium text-gray-900 leading-tight mb-1 break-words hyphens-auto">
+                            {item.question}
+                          </div>
+                          <div className="text-xs text-blue-600 font-medium truncate">{item.category}</div>
                         </div>
                       </div>
                     </Button>
