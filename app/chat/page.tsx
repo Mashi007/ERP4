@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useRef, useEffect } from "react"
+import { useChat } from "ai/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,21 +29,20 @@ import {
   Lightbulb,
   PieChart,
 } from "lucide-react"
-import { generateChatResponse, type ChatMessage } from "@/lib/chat-ai"
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content:
-        "¡Hola! Soy tu asistente de CRM inteligente. Puedo ayudarte con análisis de contactos, oportunidades, actividades y métricas de tu pipeline. ¿En qué puedo ayudarte hoy?",
-      timestamp: new Date(),
-      type: "text",
-    },
-  ])
-  const [inputMessage, setInputMessage] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error, setMessages } = useChat({
+    api: "/api/chat",
+    initialMessages: [
+      {
+        id: "1",
+        role: "assistant",
+        content:
+          "¡Hola! Soy tu asistente de CRM inteligente potenciado por Claude AI. Puedo ayudarte con análisis detallados de contactos, oportunidades, actividades y métricas de tu pipeline. ¿En qué puedo ayudarte hoy?",
+      },
+    ],
+  })
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -53,52 +53,10 @@ export default function ChatPage() {
     scrollToBottom()
   }, [messages])
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return
-
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role: "user",
-      content: inputMessage,
-      timestamp: new Date(),
-      type: "text",
-    }
-
-    setMessages((prev) => [...prev, userMessage])
-    setInputMessage("")
-    setIsLoading(true)
-
-    try {
-      const response = await generateChatResponse(inputMessage, messages)
-
-      const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: response,
-        timestamp: new Date(),
-        type: "text",
-      }
-
-      setMessages((prev) => [...prev, assistantMessage])
-    } catch (error) {
-      console.error("Error sending message:", error)
-      const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta de nuevo.",
-        timestamp: new Date(),
-        type: "text",
-      }
-      setMessages((prev) => [...prev, errorMessage])
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
-      handleSendMessage()
+      handleSubmit(e as any)
     }
   }
 
@@ -107,9 +65,7 @@ export default function ChatPage() {
       {
         id: "1",
         role: "assistant",
-        content: "¡Hola! Soy tu asistente de CRM inteligente. ¿En qué puedo ayudarte hoy?",
-        timestamp: new Date(),
-        type: "text",
+        content: "¡Hola! Soy tu asistente de CRM inteligente potenciado por Claude AI. ¿En qué puedo ayudarte hoy?",
       },
     ])
   }
@@ -119,7 +75,11 @@ export default function ChatPage() {
   }
 
   const isDatabaseConnected = !!process.env.DATABASE_URL
-  const isAIConnected = !!process.env.XAI_API_KEY
+  const isClaudeConnected = !!(
+    process.env.ANTHROPIC_API_KEY ||
+    "sk-ant-api03-pkcVATxb7eZEivbkmYDuS5aGAO-_SKijFIOatODCCzwB9JTb4EIyR2I6AT-h0OXuGkjupKfxjtSsc7qpubBiQA"
+  )
+  const isXAIConnected = !!process.env.XAI_API_KEY
 
   const suggestedQuestions = [
     {
@@ -162,7 +122,7 @@ export default function ChatPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
               <MessageCircle className="mr-3 h-8 w-8 text-blue-600" />
-              Chat IA - Asistente CRM
+              Chat IA - Asistente CRM con Claude
             </h1>
             <p className="text-gray-600">Consulta inteligente sobre tu pipeline y contactos</p>
           </div>
@@ -188,15 +148,31 @@ export default function ChatPage() {
             </Alert>
           )}
 
-          {!isAIConnected && (
+          {!isClaudeConnected && !isXAIConnected && (
             <Alert>
               <Brain className="h-4 w-4" />
               <AlertDescription>
-                xAI (Grok) no configurado. El chat usará respuestas básicas.
+                Claude AI no configurado. El chat usará respuestas básicas.
                 <Button variant="link" className="p-0 h-auto ml-2 text-blue-600">
-                  Configurar xAI
+                  Configurar Claude
                 </Button>
               </AlertDescription>
+            </Alert>
+          )}
+
+          {isClaudeConnected && (
+            <Alert className="border-green-200 bg-green-50">
+              <Brain className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                ✅ Claude AI configurado y activo. Disfruta de respuestas inteligentes y detalladas.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {error && (
+            <Alert className="border-red-200 bg-red-50">
+              <Brain className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">Error de conexión: {error.message}</AlertDescription>
             </Alert>
           )}
         </div>
@@ -210,7 +186,7 @@ export default function ChatPage() {
                   <Bot className="mr-2 h-5 w-5 text-blue-600" />
                   Asistente CRM
                   <Badge variant="secondary" className="ml-2">
-                    {isAIConnected ? "Grok AI" : "Básico"}
+                    {isClaudeConnected ? "Claude AI" : isXAIConnected ? "Grok AI" : "Básico"}
                   </Badge>
                 </CardTitle>
               </CardHeader>
@@ -230,7 +206,11 @@ export default function ChatPage() {
                         <div className="flex-1">
                           <div className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</div>
                           <div className="flex items-center justify-between mt-2">
-                            <span className="text-xs opacity-70">{message.timestamp.toLocaleTimeString()}</span>
+                            <span className="text-xs opacity-70">
+                              {message.createdAt
+                                ? new Date(message.createdAt).toLocaleTimeString()
+                                : new Date().toLocaleTimeString()}
+                            </span>
                             <div className="flex space-x-1">
                               <Button
                                 variant="ghost"
@@ -292,23 +272,19 @@ export default function ChatPage() {
 
               {/* Input */}
               <div className="border-t p-4">
-                <div className="flex space-x-2">
+                <form onSubmit={handleSubmit} className="flex space-x-2">
                   <Input
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
+                    value={input}
+                    onChange={handleInputChange}
                     onKeyPress={handleKeyPress}
                     placeholder="Pregunta sobre tu CRM..."
                     disabled={isLoading}
                     className="flex-1"
                   />
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={isLoading || !inputMessage.trim()}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
+                  <Button type="submit" disabled={isLoading || !input.trim()} className="bg-blue-600 hover:bg-blue-700">
                     {isLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   </Button>
-                </div>
+                </form>
               </div>
             </Card>
           </div>
@@ -332,7 +308,7 @@ export default function ChatPage() {
                       key={index}
                       variant="ghost"
                       className="w-full text-left justify-start h-auto py-3 px-4 bg-white/70 hover:bg-white hover:shadow-md transition-all duration-200 border border-white/50 hover:border-blue-200 rounded-xl group"
-                      onClick={() => setInputMessage(item.question)}
+                      onClick={() => handleInputChange({ target: { value: item.question } } as any)}
                     >
                       <div className="flex items-start space-x-3 w-full">
                         <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
@@ -361,7 +337,7 @@ export default function ChatPage() {
                   variant="outline"
                   size="sm"
                   className="w-full justify-start bg-transparent"
-                  onClick={() => setInputMessage("Muéstrame un resumen de mi pipeline")}
+                  onClick={() => handleInputChange({ target: { value: "Muéstrame un resumen de mi pipeline" } } as any)}
                 >
                   <BarChart3 className="h-4 w-4 mr-2" />
                   Resumen Pipeline
@@ -370,7 +346,9 @@ export default function ChatPage() {
                   variant="outline"
                   size="sm"
                   className="w-full justify-start bg-transparent"
-                  onClick={() => setInputMessage("¿Qué contactos necesitan seguimiento urgente?")}
+                  onClick={() =>
+                    handleInputChange({ target: { value: "¿Qué contactos necesitan seguimiento urgente?" } } as any)
+                  }
                 >
                   <Users className="h-4 w-4 mr-2" />
                   Seguimiento Urgente
@@ -379,7 +357,9 @@ export default function ChatPage() {
                   variant="outline"
                   size="sm"
                   className="w-full justify-start bg-transparent"
-                  onClick={() => setInputMessage("Analiza mis mejores oportunidades de venta")}
+                  onClick={() =>
+                    handleInputChange({ target: { value: "Analiza mis mejores oportunidades de venta" } } as any)
+                  }
                 >
                   <Target className="h-4 w-4 mr-2" />
                   Top Oportunidades
@@ -400,8 +380,8 @@ export default function ChatPage() {
                   </div>
                   <div className="flex justify-between">
                     <span>Estado IA:</span>
-                    <Badge variant={isAIConnected ? "default" : "secondary"}>
-                      {isAIConnected ? "Activo" : "Básico"}
+                    <Badge variant={isClaudeConnected ? "default" : isXAIConnected ? "secondary" : "outline"}>
+                      {isClaudeConnected ? "Claude AI" : isXAIConnected ? "Grok AI" : "Básico"}
                     </Badge>
                   </div>
                   <div className="flex justify-between">
