@@ -12,6 +12,12 @@ export async function POST(req: Request) {
     // Get CRM context for better responses
     const crmContext = await getCRMContext()
 
+    const anthropicProvider = anthropic({
+      apiKey:
+        process.env.ANTHROPIC_API_KEY ||
+        "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",
+    })
+
     // Build system prompt with CRM context
     const systemPrompt = `Eres un asistente de CRM inteligente especializado en ventas y gestión de relaciones con clientes.
 
@@ -28,11 +34,7 @@ INSTRUCCIONES:
 - Ayuda con análisis de datos, seguimiento de oportunidades, y gestión de contactos`
 
     const result = await streamText({
-      model: anthropic("claude-3-5-sonnet-20241022", {
-        apiKey:
-          process.env.ANTHROPIC_API_KEY ||
-          "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",
-      }),
+      model: anthropicProvider("claude-3-5-sonnet-20241022"),
       system: systemPrompt,
       messages,
       maxTokens: 2048,
