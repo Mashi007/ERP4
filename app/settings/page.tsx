@@ -1,97 +1,152 @@
-import type React from "react"
+"use client"
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Users, Mail, Calendar, Phone, Building, Zap } from "lucide-react"
 import Link from "next/link"
-import { Card } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
-import { Users, PanelsTopLeft, Database, PlugZap, SettingsIcon, ChevronRight, Banknote } from "lucide-react"
 
-type SettingItem = {
-  title: string
-  description: string
-  href: string
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
-}
-
-const items: SettingItem[] = [
+const configurationSections = [
   {
-    title: "Prospectos, Contactos y Cuentas",
-    description: "Administra las personas y empresas con las que trabajas",
-    href: "/settings/leads-contacts-accounts",
+    id: "contacts",
+    title: "Contactos y Clientes",
+    description: "Gestión de campos personalizados y configuración de contactos",
     icon: Users,
+    href: "/settings/contacts",
+    status: "configured",
+    category: "principal",
   },
   {
+    id: "deals-pipelines",
     title: "Negocios y Embudos",
-    description: "Gestiona tus productos, servicios y procesos de venta",
+    description: "Configuración de pipeline de ventas y gestión de oportunidades",
+    icon: Building,
     href: "/settings/deals-pipelines",
-    icon: PanelsTopLeft,
+    status: "configured",
+    category: "principal",
   },
   {
-    title: "Datos e Importación",
-    description: "Importa información desde archivos u otros CRMs",
-    href: "/settings/data-import",
-    icon: Database,
+    id: "email",
+    title: "Configuración de Email",
+    description: "Configurar servidores SMTP y plantillas de email",
+    icon: Mail,
+    href: "/settings/email",
+    status: "pending",
+    category: "comunicaciones",
   },
   {
-    title: "Aplicaciones e Integraciones",
-    description: "Extiende el CRM con sistemas y aplicaciones externas",
-    href: "/settings/integrations",
-    icon: PlugZap,
+    id: "calendar",
+    title: "Calendario",
+    description: "Integración con calendarios externos y configuración de citas",
+    icon: Calendar,
+    href: "/settings/calendar",
+    status: "pending",
+    category: "comunicaciones",
   },
   {
-    title: "Ajustes de la cuenta",
-    description: "Configura opciones globales, facturación y suscripciones",
-    href: "/settings/account",
-    icon: SettingsIcon,
+    id: "phone",
+    title: "Telefonía",
+    description: "Configuración de VoIP y registro de llamadas",
+    icon: Phone,
+    href: "/settings/phone",
+    status: "pending",
+    category: "comunicaciones",
   },
   {
-    title: "Moneda",
-    description: "Configura la moneda de trabajo (EUR, USD, MXN) que afecta a todos los módulos",
-    href: "/settings/moneda",
-    icon: Banknote,
+    id: "integrations",
+    title: "Integraciones",
+    description: "Conectar con herramientas externas y APIs",
+    icon: Zap,
+    href: "/integrations",
+    status: "configured",
+    category: "empresa",
   },
 ]
 
-export default function ConfiguracionInicio() {
+const categories = [
+  {
+    id: "principal",
+    title: "Configuración Principal",
+    description: "Configuraciones básicas del sistema",
+  },
+  {
+    id: "comunicaciones",
+    title: "Comunicaciones",
+    description: "Email, teléfono y calendario",
+  },
+  {
+    id: "empresa",
+    title: "Empresa",
+    description: "Configuraciones empresariales y de seguridad",
+  },
+]
+
+export default function SettingsPage() {
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "configured":
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Configurado</Badge>
+      case "pending":
+        return <Badge variant="secondary">Pendiente</Badge>
+      case "error":
+        return <Badge variant="destructive">Error</Badge>
+      default:
+        return <Badge variant="outline">No configurado</Badge>
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-white">
-      <div className="px-6 py-6">
-        <header className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
-          <p className="text-gray-600">Administra tu CRM: personas, embudos, integraciones y cuenta.</p>
-        </header>
-
-        <Card className="p-2 md:p-4">
-          <ul role="list" aria-label="Secciones de configuración" className="divide-y">
-            {items.map((item) => {
-              const Icon = item.icon
-              return (
-                <li key={item.href} role="listitem">
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "flex items-start gap-4 rounded-lg px-4 py-4 transition-colors md:px-5",
-                      "hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
-                    )}
-                  >
-                    <div
-                      className="mt-1 flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white"
-                      aria-hidden="true"
-                    >
-                      <Icon className="h-5 w-5 text-gray-700" />
-                    </div>
-
-                    <div className="flex-1">
-                      <h2 className="text-base font-semibold text-gray-900">{item.title}</h2>
-                      <p className="mt-1 text-sm text-gray-600">{item.description}</p>
-                    </div>
-
-                    <ChevronRight className="mt-1 h-5 w-5 text-gray-400" aria-hidden="true" />
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </Card>
+    <div className="container mx-auto p-6 space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Configuración</h1>
+        <p className="text-muted-foreground text-lg">Personaliza tu CRM según las necesidades de tu empresa</p>
       </div>
+
+      {categories.map((category) => {
+        const categoryItems = configurationSections.filter((item) => item.category === category.id)
+
+        if (categoryItems.length === 0) return null
+
+        return (
+          <div key={category.id} className="space-y-4">
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold">{category.title}</h2>
+              <p className="text-muted-foreground">{category.description}</p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {categoryItems.map((item) => {
+                const IconComponent = item.icon
+                return (
+                  <Card key={item.id} className="hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-primary/10 rounded-lg">
+                            <IconComponent className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="space-y-1">
+                            <CardTitle className="text-base">{item.title}</CardTitle>
+                            {getStatusBadge(item.status)}
+                          </div>
+                        </div>
+                      </div>
+                      <CardDescription className="text-sm">{item.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <Link href={item.href}>
+                        <Button className="w-full bg-transparent" variant="outline">
+                          Configurar
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

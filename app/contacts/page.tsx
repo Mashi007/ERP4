@@ -1,23 +1,26 @@
-import { Suspense } from 'react'
-import { getDataWithFallback, mockContacts, sql, type Contact } from '@/lib/database'
-import ContactsClient from './contacts-client'
+import { Suspense } from "react"
+import ContactsClient from "./contacts-client"
 
-async function getContacts(): Promise<Contact[]> {
-  return await getDataWithFallback(
-    async () => {
-      if (!sql) throw new Error('Database not configured')
-      return await sql`SELECT * FROM contacts ORDER BY created_at DESC`
-    },
-    mockContacts
+export default function ContactsPage() {
+  return (
+    <Suspense fallback={<ContactsPageSkeleton />}>
+      <ContactsClient />
+    </Suspense>
   )
 }
 
-export default async function ContactsPage() {
-  const contacts = await getContacts()
-
+function ContactsPageSkeleton() {
   return (
-    <Suspense fallback={<div>Cargando contactos...</div>}>
-      <ContactsClient initialContacts={contacts} />
-    </Suspense>
+    <div className="container mx-auto p-6">
+      <div className="animate-pulse space-y-4">
+        <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+        <div className="h-10 bg-gray-200 rounded w-full"></div>
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-16 bg-gray-200 rounded"></div>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }

@@ -1,58 +1,78 @@
 "use server"
 
-/**
- * Returns whether AI is configured and a list of AI-enabled features
- * with their current status (active/fallback).
- *
- * Note: In a "use server" file you can ONLY export async functions.
- * Keep any constants/types unexported.
- */
+export async function testXaiConnection() {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/health/xai`)
+    const data = await response.json()
+    return { success: response.ok, data }
+  } catch (error) {
+    return { success: false, error: "Connection failed" }
+  }
+}
+
+export async function testNeonConnection() {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/health/neon`)
+    const data = await response.json()
+    return { success: response.ok, data }
+  } catch (error) {
+    return { success: false, error: "Connection failed" }
+  }
+}
+
+export async function aiHealthCheck() {
+  try {
+    const [xaiResult, neonResult] = await Promise.all([testXaiConnection(), testNeonConnection()])
+
+    return {
+      xai: xaiResult,
+      neon: neonResult,
+      overall: xaiResult.success && neonResult.success,
+      timestamp: new Date().toISOString(),
+    }
+  } catch (error) {
+    return {
+      xai: { success: false, error: "Connection failed" },
+      neon: { success: false, error: "Connection failed" },
+      overall: false,
+      timestamp: new Date().toISOString(),
+    }
+  }
+}
+
 export async function getAICoverage() {
-  const isConfigured = Boolean(process.env.XAI_API_KEY)
-  const status: "active" | "fallback" = isConfigured ? "active" : "fallback"
+  const isConfigured = !!process.env.XAI_API_KEY
 
   const features = [
     {
-      key: "pipeline-insights",
-      title: "Insights de Pipeline",
-      file: "lib/ai-enhanced.ts",
-      fn: "enhanceWithAI",
-      status,
+      key: "chat-ai",
+      title: "Chat con IA",
+      file: "app/chat/actions.ts",
+      fn: "sendMessage",
+      status: isConfigured ? "active" : "fallback",
     },
     {
       key: "ai-reports",
       title: "Reportes con IA",
       file: "lib/ai-reports.ts",
-      fn: "generateSalesReport",
-      status,
+      fn: "generateInsights",
+      status: isConfigured ? "active" : "fallback",
     },
     {
-      key: "chat-ai",
-      title: "Asistente de Chat",
-      file: "lib/chat-ai.ts",
-      fn: "chat",
-      status,
-    },
-    {
-      key: "cliente-ai",
-      title: "Preguntas sobre el cliente",
+      key: "client-ai-ask",
+      title: "Consultas de clientes",
       file: "components/clients/client-ai-ask.tsx",
-      fn: "ClientAIAsk",
-      status,
+      fn: "askAboutClient",
+      status: isConfigured ? "active" : "fallback",
     },
-  ] as const
+    {
+      key: "pipeline-sync",
+      title: "Sincronización pipeline",
+      file: "lib/pipeline-sync.ts",
+      fn: "syncPipelineData",
+      status: isConfigured ? "active" : "fallback",
+    },
+  ]
 
-  return { isConfigured, features: features.map((f) => ({ ...f })) }
-}
-
-/**
- * Optional helper to verify connectivity, useful for a "Probar conexión" button.
- * Not currently used by the page, but kept async to comply with "use server".
- */
-export async function probeAI() {
-  return {
-    ok: Boolean(process.env.XAI_API_KEY),
-    provider: "xAI",
-    testedAt: new Date().toISOString(),
-  }
+  return { isConfigured, features }
 }

@@ -1,7 +1,7 @@
 import type React from "react"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
-import { DollarSign, ClipboardList, LayoutGrid, Target, LineChart, Package, ChevronRight } from "lucide-react"
+import { DollarSign, ClipboardList, LayoutGrid, Package, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type Tile = {
@@ -31,18 +31,6 @@ const tiles: Tile[] = [
     description: "Define etapas, probabilidades y flujos de tu pipeline",
     href: "/settings/deals-pipelines/pipelines",
     icon: LayoutGrid,
-  },
-  {
-    title: "Metas de actividad",
-    description: "Establece objetivos de actividad para tu equipo",
-    href: "/settings/deals-pipelines/activity-goals",
-    icon: Target,
-  },
-  {
-    title: "Cuotas y pronósticos",
-    description: "Asigna cuotas y proyecta el desempeño de ventas",
-    href: "/settings/deals-pipelines/quotas-forecasting",
-    icon: LineChart,
   },
   {
     title: "Catálogo de productos",

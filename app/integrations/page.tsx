@@ -1,89 +1,111 @@
+import { HealthTester } from "./health-tester"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Bot, Database } from "lucide-react"
-import HealthTester from "./health-tester"
+import { Database, Zap, AlertCircle } from "lucide-react"
 
-export default function IntegrationsStatusPage() {
-  const hasNeonEnv = !!process.env.DATABASE_URL
-  const hasXaiEnv = !!process.env.XAI_API_KEY
+export const metadata = {
+  title: "Integraciones",
+  description: "Estado y configuración de integraciones del sistema",
+}
+
+export default function IntegrationsPage() {
+  const isDatabaseConfigured = !!process.env.DATABASE_URL
+  const isXaiConfigured = !!process.env.XAI_API_KEY
 
   return (
-    <main className="mx-auto max-w-3xl p-6 space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold">Estado de Integraciones</h1>
-        <p className="text-sm text-muted-foreground">Verifica la instalación y conectividad de Neon y xAI Grok.</p>
-      </header>
+    <div className="mx-auto max-w-4xl space-y-6 p-6">
+      <div className="flex items-center gap-3">
+        <Database className="h-6 w-6 text-muted-foreground" />
+        <h1 className="text-2xl font-semibold">Integraciones</h1>
+      </div>
 
+      {/* Neon Database Section */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-3 text-lg">
             <Database className="h-5 w-5" />
             Neon (Postgres)
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="text-sm">
-              Instalación: <span className="font-medium">Detectada por importaciones del proyecto</span>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <div className="text-sm font-medium text-muted-foreground mb-1">Instalación:</div>
+              <div className="text-sm">Detectada por importaciones del proyecto</div>
             </div>
-            <Badge variant="secondary">Package: @neondatabase/serverless</Badge>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="text-sm">
-              Configuración:{" "}
-              {hasNeonEnv ? (
-                <span className="font-medium text-emerald-600">OK (DATABASE_URL presente)</span>
-              ) : (
-                <span className="font-medium text-red-600">Faltan variables</span>
-              )}
+            <div>
+              <div className="text-sm font-medium text-muted-foreground mb-1">Package:</div>
+              <div className="text-sm font-mono">@neondatabase/serverless</div>
             </div>
-            <Badge variant={hasNeonEnv ? "default" : "destructive"}>
-              {hasNeonEnv ? "DATABASE_URL" : "Sin DATABASE_URL"}
-            </Badge>
           </div>
-          <Separator />
-          <HealthTester kind="neon" />
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground">Configuración:</span>
+            {isDatabaseConfigured ? (
+              <>
+                <span className="text-sm text-green-600 font-medium">OK (DATABASE_URL presente)</span>
+                <Badge variant="secondary" className="text-xs">
+                  DATABASE_URL
+                </Badge>
+              </>
+            ) : (
+              <>
+                <span className="text-sm text-red-600 font-medium">ERROR (DATABASE_URL faltante)</span>
+                <AlertCircle className="h-4 w-4 text-red-500" />
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
 
+      {/* xAI Section */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bot className="h-5 w-5" />
-            xAI Grok (AI SDK)
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-3 text-lg">
+            <Zap className="h-5 w-5" />
+            xAI (Grok)
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="text-sm">
-              Instalación: <span className="font-medium">Detectada por importaciones del proyecto</span>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <div className="text-sm font-medium text-muted-foreground mb-1">Instalación:</div>
+              <div className="text-sm">Integración nativa del sistema</div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">Package: @ai-sdk/xai</Badge>
-              <Badge variant="secondary">Package: ai</Badge>
+            <div>
+              <div className="text-sm font-medium text-muted-foreground mb-1">Modelo:</div>
+              <div className="text-sm font-mono">grok-3</div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="text-sm">
-              Configuración:{" "}
-              {hasXaiEnv ? (
-                <span className="font-medium text-emerald-600">OK (XAI_API_KEY presente)</span>
-              ) : (
-                <span className="font-medium text-red-600">Faltan variables</span>
-              )}
-            </div>
-            <Badge variant={hasXaiEnv ? "default" : "destructive"}>
-              {hasXaiEnv ? "XAI_API_KEY" : "Sin XAI_API_KEY"}
-            </Badge>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground">Configuración:</span>
+            {isXaiConfigured ? (
+              <>
+                <span className="text-sm text-green-600 font-medium">OK (XAI_API_KEY presente)</span>
+                <Badge variant="secondary" className="text-xs">
+                  XAI_API_KEY
+                </Badge>
+              </>
+            ) : (
+              <>
+                <span className="text-sm text-red-600 font-medium">ERROR (XAI_API_KEY faltante)</span>
+                <AlertCircle className="h-4 w-4 text-red-500" />
+              </>
+            )}
           </div>
-          <Separator />
-          <HealthTester kind="xai" />
-          <p className="text-xs text-muted-foreground">
-            El proveedor xAI usa XAI_API_KEY y se invoca con xai("grok-3") usando el AI SDK (generateText). [^1]
-          </p>
         </CardContent>
       </Card>
-    </main>
+
+      {/* Health Testing Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Comprobación de Integraciones</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <HealthTester />
+        </CardContent>
+      </Card>
+    </div>
   )
 }
