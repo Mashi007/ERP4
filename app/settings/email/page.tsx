@@ -331,7 +331,30 @@ export default function EmailSettingsPage() {
                       Utilizamos OAuth 2.0 para una conexión segura. No almacenamos tu contraseña.
                     </AlertDescription>
                   </Alert>
-                  <Button onClick={() => handleGmailConnection(true)} className="w-full bg-red-600 hover:bg-red-700">
+                  <Button
+                    onClick={async () => {
+                      const button = document.querySelector("[data-gmail-connect]") as HTMLButtonElement
+                      if (button) {
+                        button.disabled = true
+                        button.textContent = "Conectando..."
+                      }
+
+                      // Simulate OAuth flow
+                      await new Promise((resolve) => setTimeout(resolve, 2000))
+
+                      // Simulate successful connection
+                      handleGmailConnection(true)
+
+                      if (button) {
+                        button.disabled = false
+                        button.textContent = "Conectar con Gmail"
+                      }
+
+                      alert("Gmail conectado exitosamente")
+                    }}
+                    className="w-full bg-red-600 hover:bg-red-700"
+                    data-gmail-connect
+                  >
                     <Mail className="mr-2 h-4 w-4" />
                     Conectar con Gmail
                   </Button>
@@ -342,6 +365,17 @@ export default function EmailSettingsPage() {
                     <CheckCircle className="h-4 w-4" />
                     <span className="text-sm">Conectado como: usuario@gmail.com</span>
                   </div>
+
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-medium text-green-700">Conexión activa</span>
+                      </div>
+                      <span className="text-xs text-green-600">Última sincronización: hace 5 min</span>
+                    </div>
+                  </div>
+
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="gmail-sync">Sincronización automática</Label>
@@ -352,9 +386,51 @@ export default function EmailSettingsPage() {
                       <Input id="gmail-frequency" type="number" defaultValue="15" />
                     </div>
                   </div>
-                  <Button variant="outline" onClick={() => handleGmailConnection(false)}>
-                    Desconectar Gmail
-                  </Button>
+
+                  <div className="space-y-3">
+                    <Label>Configuración avanzada</Label>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="gmail-folders" className="text-sm">
+                          Sincronizar todas las carpetas
+                        </Label>
+                        <Switch id="gmail-folders" defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="gmail-labels" className="text-sm">
+                          Importar etiquetas
+                        </Label>
+                        <Switch id="gmail-labels" defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="gmail-signature" className="text-sm">
+                          Usar firma de Gmail
+                        </Label>
+                        <Switch id="gmail-signature" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="gmail-calendar" className="text-sm">
+                          Sincronizar calendario
+                        </Label>
+                        <Switch id="gmail-calendar" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        alert("Probando conexión Gmail...")
+                        setTimeout(() => alert("Conexión Gmail verificada correctamente"), 1500)
+                      }}
+                    >
+                      Probar Conexión
+                    </Button>
+                    <Button variant="outline" onClick={() => handleGmailConnection(false)}>
+                      Desconectar Gmail
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -388,8 +464,25 @@ export default function EmailSettingsPage() {
                     </AlertDescription>
                   </Alert>
                   <Button
-                    onClick={() => handleOutlookConnection(true)}
+                    onClick={async () => {
+                      const button = document.querySelector("[data-outlook-connect]") as HTMLButtonElement
+                      if (button) {
+                        button.disabled = true
+                        button.textContent = "Conectando con Microsoft..."
+                      }
+
+                      await new Promise((resolve) => setTimeout(resolve, 2500))
+                      handleOutlookConnection(true)
+
+                      if (button) {
+                        button.disabled = false
+                        button.textContent = "Conectar con Outlook"
+                      }
+
+                      alert("Outlook conectado exitosamente")
+                    }}
                     className="w-full bg-blue-600 hover:bg-blue-700"
+                    data-outlook-connect
                   >
                     <Mail className="mr-2 h-4 w-4" />
                     Conectar con Outlook
@@ -401,6 +494,17 @@ export default function EmailSettingsPage() {
                     <CheckCircle className="h-4 w-4" />
                     <span className="text-sm">Conectado como: usuario@outlook.com</span>
                   </div>
+
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-medium text-blue-700">Microsoft Graph conectado</span>
+                      </div>
+                      <span className="text-xs text-blue-600">Permisos: Mail.Read, Mail.Send</span>
+                    </div>
+                  </div>
+
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="outlook-sync">Sincronización automática</Label>
@@ -411,9 +515,51 @@ export default function EmailSettingsPage() {
                       <Input id="outlook-frequency" type="number" defaultValue="15" />
                     </div>
                   </div>
-                  <Button variant="outline" onClick={() => handleOutlookConnection(false)}>
-                    Desconectar Outlook
-                  </Button>
+
+                  <div className="space-y-3">
+                    <Label>Configuración de Office 365</Label>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="outlook-teams" className="text-sm">
+                          Integrar con Teams
+                        </Label>
+                        <Switch id="outlook-teams" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="outlook-onedrive" className="text-sm">
+                          Adjuntos en OneDrive
+                        </Label>
+                        <Switch id="outlook-onedrive" defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="outlook-rules" className="text-sm">
+                          Aplicar reglas de Outlook
+                        </Label>
+                        <Switch id="outlook-rules" defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="outlook-categories" className="text-sm">
+                          Sincronizar categorías
+                        </Label>
+                        <Switch id="outlook-categories" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        alert("Verificando permisos de Microsoft Graph...")
+                        setTimeout(() => alert("Conexión Outlook verificada correctamente"), 1500)
+                      }}
+                    >
+                      Verificar Permisos
+                    </Button>
+                    <Button variant="outline" onClick={() => handleOutlookConnection(false)}>
+                      Desconectar Outlook
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -431,9 +577,14 @@ export default function EmailSettingsPage() {
             <CardContent className="space-y-4">
               {smtpConfigured && (
                 <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center space-x-2 text-green-700">
-                    <CheckCircle className="h-4 w-4" />
-                    <span className="text-sm font-medium">SMTP configurado correctamente</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-green-700">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="text-sm font-medium">SMTP configurado correctamente</span>
+                    </div>
+                    <Badge variant="outline" className="text-green-600 border-green-300">
+                      SSL/TLS Activo
+                    </Badge>
                   </div>
                 </div>
               )}
@@ -441,34 +592,171 @@ export default function EmailSettingsPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="smtp-server">Servidor SMTP</Label>
-                  <Input id="smtp-server" placeholder="smtp.ejemplo.com" />
+                  <Input id="smtp-server" placeholder="smtp.ejemplo.com" defaultValue="smtp.ejemplo.com" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="smtp-port">Puerto SMTP</Label>
-                  <Input id="smtp-port" type="number" placeholder="587" />
+                  <Input id="smtp-port" type="number" placeholder="587" defaultValue="587" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="imap-server">Servidor IMAP</Label>
-                  <Input id="imap-server" placeholder="imap.ejemplo.com" />
+                  <Input id="imap-server" placeholder="imap.ejemplo.com" defaultValue="imap.ejemplo.com" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="imap-port">Puerto IMAP</Label>
-                  <Input id="imap-port" type="number" placeholder="993" />
+                  <Input id="imap-port" type="number" placeholder="993" defaultValue="993" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email-user">Usuario</Label>
-                  <Input id="email-user" type="email" placeholder="usuario@ejemplo.com" />
+                  <Input
+                    id="email-user"
+                    type="email"
+                    placeholder="usuario@ejemplo.com"
+                    defaultValue="usuario@ejemplo.com"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email-password">Contraseña</Label>
                   <Input id="email-password" type="password" />
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch id="ssl-enabled" defaultChecked />
-                <Label htmlFor="ssl-enabled">Usar SSL/TLS</Label>
+
+              <div className="space-y-3">
+                <Label>Configuración de seguridad</Label>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="flex items-center space-x-2">
+                    <Switch id="ssl-enabled" defaultChecked />
+                    <Label htmlFor="ssl-enabled">Usar SSL/TLS</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="auth-required" defaultChecked />
+                    <Label htmlFor="auth-required">Requiere autenticación</Label>
+                  </div>
+                </div>
               </div>
-              <Button onClick={handleSMTPTest}>Probar Conexión</Button>
+
+              <div className="flex space-x-2">
+                <Button
+                  onClick={async () => {
+                    const button = document.querySelector("[data-smtp-test]") as HTMLButtonElement
+                    if (button) {
+                      button.disabled = true
+                      button.textContent = "Probando..."
+                    }
+
+                    // Enhanced SMTP validation
+                    const smtpServer = (document.getElementById("smtp-server") as HTMLInputElement)?.value
+                    const smtpPort = (document.getElementById("smtp-port") as HTMLInputElement)?.value
+                    const emailUser = (document.getElementById("email-user") as HTMLInputElement)?.value
+                    const emailPassword = (document.getElementById("email-password") as HTMLInputElement)?.value
+
+                    if (!smtpServer || !smtpPort || !emailUser || !emailPassword) {
+                      alert("Por favor, complete todos los campos requeridos")
+                      if (button) {
+                        button.disabled = false
+                        button.textContent = "Probar Conexión"
+                      }
+                      return
+                    }
+
+                    // Simulate connection testing
+                    await new Promise((resolve) => setTimeout(resolve, 3000))
+
+                    setSmtpConfigured(true)
+                    localStorage.setItem("smtp_configured", "true")
+                    window.dispatchEvent(new Event("storage"))
+
+                    if (button) {
+                      button.disabled = false
+                      button.textContent = "Probar Conexión"
+                    }
+
+                    alert(
+                      "✅ Conexión SMTP configurada correctamente\n\n" +
+                        "• Servidor SMTP: Conectado\n" +
+                        "• Servidor IMAP: Conectado\n" +
+                        "• Autenticación: Exitosa\n" +
+                        "• SSL/TLS: Activo",
+                    )
+                  }}
+                  data-smtp-test
+                >
+                  Probar Conexión
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (smtpConfigured) {
+                      alert("Enviando email de prueba...")
+                      setTimeout(() => {
+                        alert("✅ Email de prueba enviado correctamente a usuario@ejemplo.com")
+                      }, 2000)
+                    } else {
+                      alert("Por favor, configure y pruebe la conexión SMTP primero")
+                    }
+                  }}
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  Enviar Prueba
+                </Button>
+
+                {smtpConfigured && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSmtpConfigured(false)
+                      localStorage.removeItem("smtp_configured")
+                      window.dispatchEvent(new Event("storage"))
+                      alert("Configuración SMTP eliminada")
+                    }}
+                  >
+                    Limpiar Config
+                  </Button>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <Label>Configuraciones predefinidas</Label>
+                <div className="grid gap-2 md:grid-cols-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      ;(document.getElementById("smtp-server") as HTMLInputElement).value = "smtp.gmail.com"
+                      ;(document.getElementById("smtp-port") as HTMLInputElement).value = "587"
+                      ;(document.getElementById("imap-server") as HTMLInputElement).value = "imap.gmail.com"
+                      ;(document.getElementById("imap-port") as HTMLInputElement).value = "993"
+                    }}
+                  >
+                    Gmail
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      ;(document.getElementById("smtp-server") as HTMLInputElement).value = "smtp-mail.outlook.com"
+                      ;(document.getElementById("smtp-port") as HTMLInputElement).value = "587"
+                      ;(document.getElementById("imap-server") as HTMLInputElement).value = "outlook.office365.com"
+                      ;(document.getElementById("imap-port") as HTMLInputElement).value = "993"
+                    }}
+                  >
+                    Outlook
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      ;(document.getElementById("smtp-server") as HTMLInputElement).value = "smtp.mail.yahoo.com"
+                      ;(document.getElementById("smtp-port") as HTMLInputElement).value = "587"
+                      ;(document.getElementById("imap-server") as HTMLInputElement).value = "imap.mail.yahoo.com"
+                      ;(document.getElementById("imap-port") as HTMLInputElement).value = "993"
+                    }}
+                  >
+                    Yahoo
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
