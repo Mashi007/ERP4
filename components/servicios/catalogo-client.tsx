@@ -389,11 +389,11 @@ export default function CatalogoClient() {
                     <TableCell className="font-medium">{it.name}</TableCell>
                     <TableCell className="max-w-[360px] truncate">{it.description}</TableCell>
                     <TableCell className="text-right">
-                      {it.base_price.toFixed(2)} {it.currency}
+                      {Number(it.base_price || 0).toFixed(2)} {it.currency}
                     </TableCell>
-                    <TableCell className="text-right">{it.tax_rate.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{Number(it.tax_rate || 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right">
-                      {calcTotal(it.base_price, it.tax_rate).toFixed(2)} {it.currency}
+                      {calcTotal(Number(it.base_price || 0), Number(it.tax_rate || 0)).toFixed(2)} {it.currency}
                     </TableCell>
                     <TableCell>{formatDateEs(it.created_at)}</TableCell>
                     <TableCell>
