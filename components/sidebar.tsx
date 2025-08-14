@@ -23,7 +23,6 @@ const navigation = [
     subItems: [
       { name: "Contactos", href: "/contacts" },
       { name: "Directorio", href: "/clientes" },
-      { name: "Conversaciones", href: "/communications/conversations" },
       { name: "Calendario", href: "/communications/calendar" },
       { name: "Configuración", href: "/communications/configuration" },
       { name: "Vincular WhatsApp", href: "/communications/whatsapp" },
