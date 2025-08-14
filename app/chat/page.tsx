@@ -178,11 +178,11 @@ export default function ChatPage() {
   }
 
   const isDatabaseConnected = !!process.env.DATABASE_URL
+  const isGrokConnected = !!process.env.XAI_API_KEY
   const isClaudeConnected = !!(
     process.env.ANTHROPIC_API_KEY ||
     "sk-ant-api03-pkcVATxb7eZEivbkmYDuS5aGAO-_SKijFIOatODCCzwB9JTb4EIyR2I6AT-h0OXuGkjupKfxjtSsc7qpubBiQA"
   )
-  const isXAIConnected = !!process.env.XAI_API_KEY
 
   const suggestedQuestions = [
     {
@@ -251,23 +251,23 @@ export default function ChatPage() {
             </Alert>
           )}
 
-          {!isClaudeConnected && !isXAIConnected && (
+          {!isGrokConnected && !isClaudeConnected && (
             <Alert>
               <Brain className="h-4 w-4" />
               <AlertDescription>
-                Claude AI no configurado. El chat usará respuestas básicas.
+                Grok AI no configurado. El chat usará respuestas básicas.
                 <Button variant="link" className="p-0 h-auto ml-2 text-blue-600">
-                  Configurar Claude
+                  Configurar Grok
                 </Button>
               </AlertDescription>
             </Alert>
           )}
 
-          {isClaudeConnected && (
+          {isGrokConnected && (
             <Alert className="border-green-200 bg-green-50">
               <Brain className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-800">
-                ✅ Claude AI configurado y activo. Disfruta de respuestas inteligentes y detalladas.
+                ✅ Grok AI configurado y activo. Disfruta de respuestas inteligentes y detalladas.
               </AlertDescription>
             </Alert>
           )}
@@ -289,7 +289,7 @@ export default function ChatPage() {
                   <Bot className="mr-2 h-5 w-5 text-blue-600" />
                   Asistente CRM
                   <Badge variant="secondary" className="ml-2">
-                    {isClaudeConnected ? "Claude AI" : isXAIConnected ? "Grok AI" : "Básico"}
+                    {isGrokConnected ? "Grok AI" : isClaudeConnected ? "Claude AI" : "Básico"}
                   </Badge>
                 </CardTitle>
               </CardHeader>
@@ -479,8 +479,8 @@ export default function ChatPage() {
                   </div>
                   <div className="flex justify-between">
                     <span>Estado IA:</span>
-                    <Badge variant={isClaudeConnected ? "default" : isXAIConnected ? "secondary" : "outline"}>
-                      {isClaudeConnected ? "Claude AI" : isXAIConnected ? "Grok AI" : "Básico"}
+                    <Badge variant={isGrokConnected ? "default" : isClaudeConnected ? "secondary" : "outline"}>
+                      {isGrokConnected ? "Grok AI" : isClaudeConnected ? "Claude AI" : "Básico"}
                     </Badge>
                   </div>
                   <div className="flex justify-between">
