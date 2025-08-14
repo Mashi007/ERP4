@@ -2,7 +2,15 @@ import { neon } from "@neondatabase/serverless"
 
 export type CurrencyCode = "EUR" | "USD" | "MXN"
 
-const sql = neon(process.env.DATABASE_URL as string)
+const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL
+
+if (!databaseUrl) {
+  throw new Error(
+    "No database connection string found. Please set DATABASE_URL, POSTGRES_URL, or POSTGRES_PRISMA_URL environment variable.",
+  )
+}
+
+const sql = neon(databaseUrl)
 
 async function ensureTables() {
   await sql /*sql*/`
