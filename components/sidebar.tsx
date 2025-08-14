@@ -21,6 +21,7 @@ const navigation = [
     href: "/clientes",
     icon: Users,
     subItems: [
+      { name: "Contactos", href: "/contacts" },
       { name: "Lista de Clientes", href: "/clientes" },
       { name: "Conversaciones", href: "/communications/conversations" },
       { name: "Calendario", href: "/communications/calendar" },
