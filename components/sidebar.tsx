@@ -22,7 +22,7 @@ const navigation = [
     icon: Users,
     subItems: [
       { name: "Contactos", href: "/contacts" },
-      { name: "Lista de Clientes", href: "/clientes" },
+      { name: "Directorio", href: "/clientes" },
       { name: "Conversaciones", href: "/communications/conversations" },
       { name: "Calendario", href: "/communications/calendar" },
       { name: "Configuración", href: "/communications/configuration" },
