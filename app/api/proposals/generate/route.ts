@@ -47,7 +47,11 @@ Formato la propuesta de manera profesional con secciones claramente definidas.
 `
 
     const result = await streamText({
-      model: anthropicProvider("claude-3-5-sonnet-20241022"),
+      model: anthropic({
+        apiKey:
+          process.env.ANTHROPIC_API_KEY ||
+          "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",
+      })("claude-3-5-sonnet-20241022"),
       prompt,
       maxTokens: 2000,
       temperature: 0.7,
