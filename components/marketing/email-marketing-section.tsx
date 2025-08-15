@@ -38,9 +38,19 @@ export default function EmailMarketingSection() {
     try {
       const response = await fetch("/api/contacts")
       const data = await response.json()
-      setContacts(data)
+
+      if (Array.isArray(data)) {
+        setContacts(data)
+      } else if (data && Array.isArray(data.contacts)) {
+        setContacts(data.contacts)
+      } else {
+        console.error("API response is not an array:", data)
+        setContacts([])
+        toast.error("Error: formato de datos de contactos incorrecto")
+      }
     } catch (error) {
       console.error("Error fetching contacts:", error)
+      setContacts([])
       toast.error("Error al cargar contactos")
     } finally {
       setIsLoadingContacts(false)
@@ -152,11 +162,13 @@ export default function EmailMarketingSection() {
   }
 
   const selectAllContacts = () => {
-    const filteredContacts = contacts.filter(
-      (contact) =>
-        contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.email.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
+    const filteredContacts = Array.isArray(contacts)
+      ? contacts.filter(
+          (contact) =>
+            contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            contact.email.toLowerCase().includes(searchTerm.toLowerCase()),
+        )
+      : []
     setSelectedContacts(filteredContacts.map((contact) => contact.id))
   }
 
@@ -164,12 +176,14 @@ export default function EmailMarketingSection() {
     setSelectedContacts([])
   }
 
-  const filteredContacts = contacts.filter(
-    (contact) =>
-      contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (contact.company && contact.company.toLowerCase().includes(searchTerm.toLowerCase())),
-  )
+  const filteredContacts = Array.isArray(contacts)
+    ? contacts.filter(
+        (contact) =>
+          contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (contact.company && contact.company.toLowerCase().includes(searchTerm.toLowerCase())),
+      )
+    : []
 
   const emailPrompts = [
     "Crear un email promocional para nuevos productos con descuento especial",
