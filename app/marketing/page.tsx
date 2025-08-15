@@ -342,34 +342,34 @@ export default function MarketingPage() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="assistant" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 max-w-lg bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
+          <TabsList className="grid w-full grid-cols-4 max-w-2xl bg-white border border-gray-200 rounded-xl p-1.5 shadow-sm mb-8">
             <TabsTrigger
               value="assistant"
-              className="flex items-center data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md px-3 py-2 text-sm font-medium hover:bg-gray-50 data-[state=active]:hover:bg-blue-700"
+              className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
             >
-              <Bot className="h-4 w-4 mr-2" />
-              Asistente IA
+              <Bot className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span className="truncate">Asistente IA</span>
             </TabsTrigger>
             <TabsTrigger
               value="email-marketing"
-              className="flex items-center data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md px-3 py-2 text-sm font-medium hover:bg-gray-50 data-[state=active]:hover:bg-blue-700"
+              className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
             >
-              <Mail className="h-4 w-4 mr-2" />
-              Email Marketing
+              <Mail className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span className="truncate">Email Marketing</span>
             </TabsTrigger>
             <TabsTrigger
               value="contacts"
-              className="flex items-center data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md px-3 py-2 text-sm font-medium hover:bg-gray-50 data-[state=active]:hover:bg-blue-700"
+              className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
             >
-              <Users className="h-4 w-4 mr-2" />
-              Contactos
+              <Users className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span className="truncate">Contactos</span>
             </TabsTrigger>
             <TabsTrigger
               value="campaigns"
-              className="flex items-center data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-200 rounded-md px-3 py-2 text-sm font-medium hover:bg-gray-50 data-[state=active]:hover:bg-blue-700"
+              className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
             >
-              <Send className="h-4 w-4 mr-2" />
-              Campañas
+              <Send className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span className="truncate">Campañas</span>
             </TabsTrigger>
           </TabsList>
 
