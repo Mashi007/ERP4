@@ -209,30 +209,32 @@ export default function ConfigurationPage() {
   }
 
   const ProviderCard = ({ provider, type, onToggleFavorite, onConnect, onDisconnect }: any) => (
-    <Card className={`relative transition-all duration-200 hover:shadow-lg ${provider.color} border-2`}>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="text-3xl">{provider.icon}</div>
-            <div>
-              <h3 className="font-semibold text-gray-900">{provider.name}</h3>
-              {provider.account && <p className="text-sm text-gray-600 font-medium">{provider.account}</p>}
+    <Card className={`relative transition-all duration-200 hover:shadow-lg ${provider.color} border-2 overflow-hidden`}>
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex items-start justify-between mb-4 gap-3">
+          <div className="flex items-center space-x-3 min-w-0 flex-1">
+            <div className="text-2xl sm:text-3xl flex-shrink-0">{provider.icon}</div>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{provider.name}</h3>
+              {provider.account && (
+                <p className="text-xs sm:text-sm text-gray-600 font-medium truncate mt-1">{provider.account}</p>
+              )}
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col items-end space-y-2 flex-shrink-0">
             {provider.isFavorite && (
-              <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
+              <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs whitespace-nowrap">
                 <Star className="h-3 w-3 mr-1" />
                 Favorito
               </Badge>
             )}
             <Badge
               variant={provider.status === "connected" ? "default" : "secondary"}
-              className={
+              className={`text-xs whitespace-nowrap ${
                 provider.status === "connected"
                   ? "bg-green-100 text-green-800 border-green-300"
                   : "bg-gray-100 text-gray-600 border-gray-300"
-              }
+              }`}
             >
               {provider.status === "connected" ? (
                 <>
@@ -249,29 +251,33 @@ export default function ConfigurationPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Switch checked={provider.isFavorite} onCheckedChange={() => onToggleFavorite(type, provider.id)} />
-            <Label className="text-sm font-medium">Proveedor favorito</Label>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center space-x-2 min-w-0">
+            <Switch
+              checked={provider.isFavorite}
+              onCheckedChange={() => onToggleFavorite(type, provider.id)}
+              className="flex-shrink-0"
+            />
+            <Label className="text-xs sm:text-sm font-medium text-gray-700 truncate">Proveedor favorito</Label>
           </div>
 
-          <div className="flex space-x-2">
+          <div className="flex-shrink-0 w-full sm:w-auto">
             {provider.status === "connected" ? (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onDisconnect(type, provider.id)}
                 disabled={isLoading}
-                className="border-red-300 text-red-700 hover:bg-red-50"
+                className="w-full sm:w-auto border-red-300 text-red-700 hover:bg-red-50 text-xs sm:text-sm"
               >
-                Desconectar
+                {isLoading ? "Desconectando..." : "Desconectar"}
               </Button>
             ) : (
               <Button
                 size="sm"
                 onClick={() => onConnect(type, provider.id)}
                 disabled={isLoading}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm"
               >
                 {isLoading ? "Conectando..." : "Conectar"}
               </Button>
@@ -378,8 +384,8 @@ export default function ConfigurationPage() {
                   Conecta y configura tus proveedores de correo electrónico favoritos
                 </p>
               </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <CardContent className="p-4 sm:p-6">
+                <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
                   {providers.email.map((provider) => (
                     <ProviderCard
                       key={provider.id}
