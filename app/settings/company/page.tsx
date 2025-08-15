@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { Building, Phone, Globe, MapPin, Save, Upload, ImageIcon } from "lucide-react"
 
@@ -472,29 +471,6 @@ export default function CompanyDataPage() {
                 <Upload className="h-4 w-4 mr-2" />
                 {uploading ? "Subiendo..." : "Subir Logo"}
               </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Usage Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Uso de la Información</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center space-x-2">
-              <Badge variant="outline">Campañas de Marketing</Badge>
-              <span className="text-sm text-muted-foreground">Datos de remitente</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Badge variant="outline">Propuestas Comerciales</Badge>
-              <span className="text-sm text-muted-foreground">Información corporativa</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Badge variant="outline">Emails Automáticos</Badge>
-              <span className="text-sm text-muted-foreground">Firma y contacto</span>
             </div>
           </div>
         </CardContent>
