@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -36,6 +38,7 @@ export default function CompanyDataPage() {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [companyData, setCompanyData] = useState<CompanyData>({
     name: "",
     legal_name: "",
@@ -116,6 +119,61 @@ export default function CompanyDataPage() {
       ...prev,
       [field]: value,
     }))
+  }
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Error",
+        description: "Por favor selecciona un archivo de imagen válido.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "El archivo es demasiado grande. Máximo 5MB.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch("/api/upload/logo", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (response.ok) {
+        const { url } = await response.json()
+        handleInputChange("logo_url", url)
+        toast({
+          title: "Logo subido",
+          description: "El logo se ha subido correctamente.",
+        })
+      } else {
+        throw new Error("Error uploading logo")
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo subir el logo. Inténtalo de nuevo.",
+        variant: "destructive",
+      })
+    } finally {
+      setUploading(false)
+    }
   }
 
   if (loading) {
@@ -402,10 +460,19 @@ export default function CompanyDataPage() {
               />
               <p className="text-sm text-muted-foreground mt-1">Ingresa la URL del logo o sube una imagen</p>
             </div>
-            <Button variant="outline">
-              <Upload className="h-4 w-4 mr-2" />
-              Subir Logo
-            </Button>
+            <div className="relative">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleLogoUpload}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={uploading}
+              />
+              <Button variant="outline" disabled={uploading}>
+                <Upload className="h-4 w-4 mr-2" />
+                {uploading ? "Subiendo..." : "Subir Logo"}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
