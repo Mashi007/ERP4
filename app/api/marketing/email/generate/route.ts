@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 import { streamText } from "ai"
 import { xai } from "@ai-sdk/xai"
 
@@ -6,15 +6,19 @@ export async function POST(request: NextRequest) {
   try {
     const { prompt, selectedContacts, context } = await request.json()
 
-    const result = await streamText({
-      model: xai("grok-4"),
-      messages: [
-        {
-          role: "system",
-          content: `Eres un experto en email marketing y redacción comercial. Tu tarea es crear emails profesionales y efectivos para campañas de marketing.
+    if (!prompt) {
+      return new Response("Prompt is required", { status: 400 })
+    }
 
-Contexto: ${context}
-Número de contactos seleccionados: ${selectedContacts}
+    const result = streamText({
+      model: xai("grok-4", {
+        apiKey: process.env.XAI_API_KEY,
+      }),
+      prompt: prompt,
+      system: `Eres un experto en email marketing y redacción comercial. Tu tarea es crear emails profesionales y efectivos para campañas de marketing.
+
+Contexto: ${context || "Campaña de email marketing general"}
+Número de contactos seleccionados: ${selectedContacts || 0}
 
 Instrucciones:
 - Crea un email profesional y atractivo
@@ -30,12 +34,6 @@ Formato de respuesta:
   "subject": "Asunto del email",
   "content": "Contenido completo del email con saludo, cuerpo y despedida"
 }`,
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
       temperature: 0.7,
       maxTokens: 1000,
     })
@@ -43,6 +41,6 @@ Formato de respuesta:
     return result.toTextStreamResponse()
   } catch (error) {
     console.error("Error generating email:", error)
-    return NextResponse.json({ error: "Error generating email with AI" }, { status: 500 })
+    return new Response("Failed to generate email with Grok AI", { status: 500 })
   }
 }
