@@ -114,7 +114,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
-      <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+      <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 mt-10">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <img
             src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20Norma.jpg-YPDdPAzITwhmyNAXSwzvRsneG7Uhf4.jpeg"
