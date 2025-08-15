@@ -116,7 +116,11 @@ export function Sidebar({ className }: SidebarProps) {
     <div className="flex h-full flex-col">
       <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <img src="/normapymes-logo.jpg" alt="NormaPymes" className="h-8 w-auto object-contain" />
+          <img
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20Norma.jpg-YPDdPAzITwhmyNAXSwzvRsneG7Uhf4.jpeg"
+            alt="NormaPymes"
+            className="h-8 w-auto object-contain"
+          />
         </Link>
       </div>
       <ScrollArea className="flex-1">
