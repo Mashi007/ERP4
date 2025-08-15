@@ -31,6 +31,7 @@ import {
   Copy,
   Loader2,
 } from "lucide-react"
+import EmailMarketingSection from "@/components/marketing/email-marketing-section"
 
 export default function MarketingPage() {
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null)
@@ -341,10 +342,14 @@ export default function MarketingPage() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="assistant" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
+          <TabsList className="grid w-full grid-cols-4 max-w-lg">
             <TabsTrigger value="assistant" className="flex items-center">
               <Bot className="h-4 w-4 mr-2" />
               Asistente IA
+            </TabsTrigger>
+            <TabsTrigger value="email-marketing" className="flex items-center">
+              <Mail className="h-4 w-4 mr-2" />
+              Email Marketing
             </TabsTrigger>
             <TabsTrigger value="contacts" className="flex items-center">
               <Users className="h-4 w-4 mr-2" />
@@ -550,6 +555,11 @@ export default function MarketingPage() {
                 </Card>
               </div>
             </div>
+          </TabsContent>
+
+          {/* Email Marketing Tab */}
+          <TabsContent value="email-marketing" className="mt-6">
+            <EmailMarketingSection />
           </TabsContent>
 
           {/* Contacts Tab */}
