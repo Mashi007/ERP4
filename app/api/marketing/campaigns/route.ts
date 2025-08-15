@@ -52,12 +52,13 @@ export async function POST(request: NextRequest) {
     const result = await sql`
       INSERT INTO marketing_campaigns (
         name, type, subject, content, list_id, 
-        scheduled_at, status, created_at
+        scheduled_at, status, created_by, created_at
       ) VALUES (
         ${name}, ${type}, ${subject}, ${content}, 
         ${listId ? Number.parseInt(listId) : null}, 
         ${scheduledAt || null}, 
         ${scheduledAt ? "scheduled" : "draft"}, 
+        1,
         CURRENT_TIMESTAMP
       )
       RETURNING id
