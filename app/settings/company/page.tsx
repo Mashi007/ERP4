@@ -68,7 +68,11 @@ export default function CompanyDataPage() {
       const response = await fetch("/api/settings/company")
       if (response.ok) {
         const data = await response.json()
-        setCompanyData(data)
+        const sanitizedData = Object.keys(data).reduce((acc, key) => {
+          acc[key as keyof CompanyData] = data[key] || ""
+          return acc
+        }, {} as CompanyData)
+        setCompanyData(sanitizedData)
       }
     } catch (error) {
       console.error("Error loading company data:", error)
