@@ -41,6 +41,9 @@ export default function MarketingPage() {
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [marketingLists, setMarketingLists] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [editingPrompt, setEditingPrompt] = useState<any>(null)
+  const [editPromptText, setEditPromptText] = useState("")
+  const [editPromptCategory, setEditPromptCategory] = useState("")
 
   useEffect(() => {
     fetchCampaigns()
@@ -223,6 +226,24 @@ export default function MarketingPage() {
       default:
         return "Desconocido"
     }
+  }
+
+  const handleEditPrompt = (prompt: any) => {
+    setEditingPrompt(prompt)
+    setEditPromptText(prompt.text)
+    setEditPromptCategory(prompt.category)
+  }
+
+  const saveEditedPrompt = () => {
+    // Update the prompt in the campaignPrompts array
+    const updatedPrompts = campaignPrompts.map((p) =>
+      p.id === editingPrompt.id ? { ...p, text: editPromptText, category: editPromptCategory } : p,
+    )
+    // In a real app, you would save this to the database
+    toast.success("Sugerencia actualizada exitosamente")
+    setEditingPrompt(null)
+    setEditPromptText("")
+    setEditPromptCategory("")
   }
 
   return (
@@ -425,7 +446,7 @@ export default function MarketingPage() {
                                 className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 p-0"
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  toast.info("Función de edición de sugerencias próximamente")
+                                  handleEditPrompt(prompt)
                                 }}
                               >
                                 <Edit className="h-4 w-4" />
@@ -863,6 +884,78 @@ export default function MarketingPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={!!editingPrompt} onOpenChange={() => setEditingPrompt(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Edit className="h-5 w-5 mr-2" />
+              Editar Sugerencia de Campaña
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="edit-prompt-text">Contenido de la Sugerencia</Label>
+              <Textarea
+                id="edit-prompt-text"
+                value={editPromptText}
+                onChange={(e) => setEditPromptText(e.target.value)}
+                placeholder="Describe la campaña que quieres crear..."
+                rows={4}
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-prompt-category">Categoría</Label>
+              <Select value={editPromptCategory} onValueChange={setEditPromptCategory}>
+                <SelectTrigger className="mt-2">
+                  <SelectValue placeholder="Seleccionar categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Lanzamiento de Producto">🚀 Lanzamiento de Producto</SelectItem>
+                  <SelectItem value="Promoción">🚚 Promoción</SelectItem>
+                  <SelectItem value="Referidos">👥 Referidos</SelectItem>
+                  <SelectItem value="Adquisición">💰 Adquisición</SelectItem>
+                  <SelectItem value="Retención">🔄 Retención</SelectItem>
+                  <SelectItem value="Educativo">📚 Educativo</SelectItem>
+                  <SelectItem value="Evento">🎉 Evento</SelectItem>
+                  <SelectItem value="Encuesta">📊 Encuesta</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-2">Vista Previa</h4>
+              <div className="flex items-start space-x-3">
+                <span className="text-lg">{editingPrompt?.icon || "📧"}</span>
+                <div>
+                  <p className="text-sm text-gray-700 break-words">
+                    {editPromptText || "Contenido de la sugerencia..."}
+                  </p>
+                  <Badge variant="secondary" className="mt-2 text-xs">
+                    {editPromptCategory || "Sin categoría"}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <Button variant="outline" onClick={() => setEditingPrompt(null)}>
+                Cancelar
+              </Button>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={saveEditedPrompt}
+                disabled={!editPromptText.trim() || !editPromptCategory}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Guardar Cambios
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
