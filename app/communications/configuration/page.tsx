@@ -32,6 +32,37 @@ import {
 export default function ConfigurationPage() {
   const [activeTab, setActiveTab] = useState("connect-email")
   const [isLoading, setIsLoading] = useState(false)
+
+  const [conferenceProviders, setConferenceProviders] = useState([
+    {
+      id: "zoom",
+      name: "Zoom",
+      icon: "🎥",
+      status: "disconnected",
+      account: null,
+      isFavorite: false,
+      color: "bg-blue-50 border-blue-200",
+    },
+    {
+      id: "google-meet",
+      name: "Google Meet",
+      icon: "📹",
+      status: "connected",
+      account: "gd.casanas@gmail.com",
+      isFavorite: true,
+      color: "bg-green-50 border-green-200",
+    },
+    {
+      id: "microsoft-teams",
+      name: "Microsoft Teams",
+      icon: "💼",
+      status: "disconnected",
+      account: null,
+      isFavorite: false,
+      color: "bg-purple-50 border-purple-200",
+    },
+  ])
+
   const [providers, setProviders] = useState({
     email: [
       {
@@ -205,6 +236,71 @@ export default function ConfigurationPage() {
     toast({
       title: "Configuración guardada",
       description: "Los cambios se aplicaron correctamente",
+    })
+  }
+
+  const handleConferenceConnect = async (providerId: string) => {
+    setIsLoading(true)
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
+      setConferenceProviders((prev) =>
+        prev.map((provider) =>
+          provider.id === providerId ? { ...provider, status: "connected", account: "user@example.com" } : provider,
+        ),
+      )
+
+      toast({
+        title: "Plataforma conectada",
+        description: `${conferenceProviders.find((p) => p.id === providerId)?.name} se conectó correctamente`,
+      })
+    } catch (error) {
+      toast({
+        title: "Error de conexión",
+        description: "No se pudo conectar la plataforma de conferencias",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleConferenceDisconnect = async (providerId: string) => {
+    setIsLoading(true)
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      setConferenceProviders((prev) =>
+        prev.map((provider) =>
+          provider.id === providerId ? { ...provider, status: "disconnected", account: null } : provider,
+        ),
+      )
+
+      toast({
+        title: "Plataforma desconectada",
+        description: "La conexión se cerró correctamente",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo desconectar la plataforma",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleConferenceToggleFavorite = (providerId: string) => {
+    setConferenceProviders((prev) =>
+      prev.map((provider) =>
+        provider.id === providerId ? { ...provider, isFavorite: !provider.isFavorite } : provider,
+      ),
+    )
+
+    toast({
+      title: "Favorito actualizado",
+      description: "La configuración se guardó correctamente",
     })
   }
 
@@ -475,37 +571,112 @@ export default function ConfigurationPage() {
                 </div>
 
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border-2 border-blue-100">
-                  <h4 className="font-semibold text-blue-900 mb-4 flex items-center">
+                  <h4 className="font-semibold text-blue-900 mb-6 flex items-center text-lg">
                     <Zap className="h-5 w-5 mr-2" />
                     Configuración de Conferencias
                   </h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                      <span className="font-medium">Zoom</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-blue-300 text-blue-700 hover:bg-blue-50 bg-transparent"
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {conferenceProviders.map((provider) => (
+                      <Card
+                        key={provider.id}
+                        className={`transition-all duration-200 hover:shadow-md ${provider.color} border-2`}
                       >
-                        Conectar
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                      <span className="font-medium">Google Meet</span>
-                      <Badge className="bg-green-100 text-green-800 border-green-300">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Conectado
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                      <span className="font-medium">Microsoft Teams</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-blue-300 text-blue-700 hover:bg-blue-50 bg-transparent"
-                      >
-                        Conectar
-                      </Button>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center space-x-3 min-w-0 flex-1">
+                              <div className="text-2xl flex-shrink-0">{provider.icon}</div>
+                              <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold text-gray-900 text-sm truncate">{provider.name}</h3>
+                                {provider.account && (
+                                  <p className="text-xs text-gray-600 font-medium truncate mt-1">{provider.account}</p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end space-y-1 flex-shrink-0">
+                              {provider.isFavorite && (
+                                <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">
+                                  <Star className="h-3 w-3 mr-1" />
+                                  Favorito
+                                </Badge>
+                              )}
+                              <Badge
+                                variant={provider.status === "connected" ? "default" : "secondary"}
+                                className={`text-xs ${
+                                  provider.status === "connected"
+                                    ? "bg-green-100 text-green-800 border-green-300"
+                                    : "bg-gray-100 text-gray-600 border-gray-300"
+                                }`}
+                              >
+                                {provider.status === "connected" ? (
+                                  <>
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Conectado
+                                  </>
+                                ) : (
+                                  <>
+                                    <AlertCircle className="h-3 w-3 mr-1" />
+                                    Desconectado
+                                  </>
+                                )}
+                              </Badge>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col space-y-3">
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                checked={provider.isFavorite}
+                                onCheckedChange={() => handleConferenceToggleFavorite(provider.id)}
+                                className="flex-shrink-0"
+                              />
+                              <Label className="text-xs font-medium text-gray-700 truncate">Plataforma favorita</Label>
+                            </div>
+
+                            <div className="w-full">
+                              {provider.status === "connected" ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleConferenceDisconnect(provider.id)}
+                                  disabled={isLoading}
+                                  className="w-full border-red-300 text-red-700 hover:bg-red-50 text-xs"
+                                >
+                                  {isLoading ? "Desconectando..." : "Desconectar"}
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleConferenceConnect(provider.id)}
+                                  disabled={isLoading}
+                                  className="w-full bg-blue-600 hover:bg-blue-700 text-xs"
+                                >
+                                  {isLoading ? "Conectando..." : "Conectar"}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-blue-200">
+                    <h5 className="font-medium text-blue-900 mb-3">Configuraciones Adicionales</h5>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-blue-200">
+                        <div>
+                          <Label className="font-medium text-gray-900 text-sm">Auto-grabación</Label>
+                          <p className="text-xs text-gray-600">Grabar reuniones automáticamente</p>
+                        </div>
+                        <Switch />
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-blue-200">
+                        <div>
+                          <Label className="font-medium text-gray-900 text-sm">Sala de espera</Label>
+                          <p className="text-xs text-gray-600">Activar sala de espera por defecto</p>
+                        </div>
+                        <Switch defaultChecked />
+                      </div>
                     </div>
                   </div>
                 </div>
