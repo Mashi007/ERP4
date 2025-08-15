@@ -119,7 +119,7 @@ export function Sidebar({ className }: SidebarProps) {
           <img
             src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20Norma.jpg-YPDdPAzITwhmyNAXSwzvRsneG7Uhf4.jpeg"
             alt="NormaPymes"
-            className="h-24 w-auto object-contain"
+            className="h-72 w-auto object-contain"
           />
         </Link>
       </div>
