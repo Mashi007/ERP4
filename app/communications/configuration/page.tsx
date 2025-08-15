@@ -1,5 +1,13 @@
 "use client"
 
+import { DialogDescription } from "@/components/ui/dialog"
+
+import { DialogTitle } from "@/components/ui/dialog"
+
+import { DialogHeader } from "@/components/ui/dialog"
+
+import { DialogContent } from "@/components/ui/dialog"
+
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -27,9 +35,10 @@ import {
   Star,
   Zap,
   Globe,
+  DoorOpenIcon as Dialog,
 } from "lucide-react"
 
-export default function ConfigurationPage() {
+export default function CommunicationsConfiguration() {
   const [activeTab, setActiveTab] = useState("connect-email")
   const [isLoading, setIsLoading] = useState(false)
 
@@ -161,6 +170,58 @@ export default function ConfigurationPage() {
     contactSyncOutlook: false,
     bidirectionalSync: true,
   })
+
+  const [configDialogOpen, setConfigDialogOpen] = useState(false)
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null)
+  const [providerConfigs, setProviderConfigs] = useState({
+    zoom: {
+      defaultDuration: 60,
+      autoRecord: true,
+      waitingRoom: true,
+      muteOnEntry: false,
+      allowScreenShare: true,
+      maxParticipants: 100,
+      meetingPassword: true,
+      chatEnabled: true,
+    },
+    "google-meet": {
+      defaultDuration: 60,
+      autoRecord: false,
+      allowExternalGuests: true,
+      muteOnEntry: true,
+      allowScreenShare: true,
+      maxParticipants: 250,
+      chatEnabled: true,
+      liveStreamEnabled: false,
+    },
+    "microsoft-teams": {
+      defaultDuration: 60,
+      autoRecord: true,
+      waitingRoom: true,
+      muteOnEntry: false,
+      allowScreenShare: true,
+      maxParticipants: 300,
+      chatEnabled: true,
+      allowAnonymous: false,
+    },
+  })
+
+  const openConfigDialog = (providerId: string) => {
+    setSelectedProvider(providerId)
+    setConfigDialogOpen(true)
+  }
+
+  const saveProviderConfig = (providerId: string, config: any) => {
+    setProviderConfigs((prev) => ({
+      ...prev,
+      [providerId]: config,
+    }))
+    toast({
+      title: "Configuración guardada",
+      description: `La configuración de ${conferenceProviders.find((p) => p.id === providerId)?.name} se guardó correctamente`,
+    })
+    setConfigDialogOpen(false)
+  }
 
   const handleProviderConnect = async (type: string, providerId: string) => {
     setIsLoading(true)
@@ -632,6 +693,18 @@ export default function ConfigurationPage() {
                               <Label className="text-xs font-medium text-gray-700 truncate">Plataforma favorita</Label>
                             </div>
 
+                            {provider.status === "connected" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openConfigDialog(provider.id)}
+                                className="w-full border-blue-300 text-blue-700 hover:bg-blue-50 text-xs mb-2"
+                              >
+                                <Settings className="h-3 w-3 mr-1" />
+                                Configurar
+                              </Button>
+                            )}
+
                             <div className="w-full">
                               {provider.status === "connected" ? (
                                 <Button
@@ -1000,6 +1073,381 @@ export default function ConfigurationPage() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center space-x-2">
+                <Settings className="h-5 w-5" />
+                <span>
+                  Configurar {selectedProvider && conferenceProviders.find((p) => p.id === selectedProvider)?.name}
+                </span>
+              </DialogTitle>
+              <DialogDescription>Personaliza la configuración de tu plataforma de conferencias</DialogDescription>
+            </DialogHeader>
+
+            {selectedProvider && (
+              <div className="space-y-6 py-4">
+                {/* Zoom Configuration */}
+                {selectedProvider === "zoom" && (
+                  <ZoomConfigForm
+                    config={providerConfigs.zoom}
+                    onSave={(config) => saveProviderConfig("zoom", config)}
+                    onCancel={() => setConfigDialogOpen(false)}
+                  />
+                )}
+
+                {/* Google Meet Configuration */}
+                {selectedProvider === "google-meet" && (
+                  <GoogleMeetConfigForm
+                    config={providerConfigs["google-meet"]}
+                    onSave={(config) => saveProviderConfig("google-meet", config)}
+                    onCancel={() => setConfigDialogOpen(false)}
+                  />
+                )}
+
+                {/* Microsoft Teams Configuration */}
+                {selectedProvider === "microsoft-teams" && (
+                  <TeamsConfigForm
+                    config={providerConfigs["microsoft-teams"]}
+                    onSave={(config) => saveProviderConfig("microsoft-teams", config)}
+                    onCancel={() => setConfigDialogOpen(false)}
+                  />
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  )
+}
+
+function ZoomConfigForm({
+  config,
+  onSave,
+  onCancel,
+}: { config: any; onSave: (config: any) => void; onCancel: () => void }) {
+  const [formData, setFormData] = useState(config)
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label className="text-sm font-medium">Duración por defecto (minutos)</Label>
+          <Input
+            type="number"
+            value={formData.defaultDuration}
+            onChange={(e) => setFormData({ ...formData, defaultDuration: Number.parseInt(e.target.value) })}
+            className="mt-1"
+          />
+        </div>
+        <div>
+          <Label className="text-sm font-medium">Máximo de participantes</Label>
+          <Input
+            type="number"
+            value={formData.maxParticipants}
+            onChange={(e) => setFormData({ ...formData, maxParticipants: Number.parseInt(e.target.value) })}
+            className="mt-1"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Auto-grabación</Label>
+            <p className="text-xs text-gray-600">Grabar reuniones automáticamente</p>
+          </div>
+          <Switch
+            checked={formData.autoRecord}
+            onCheckedChange={(checked) => setFormData({ ...formData, autoRecord: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Sala de espera</Label>
+            <p className="text-xs text-gray-600">Activar sala de espera por defecto</p>
+          </div>
+          <Switch
+            checked={formData.waitingRoom}
+            onCheckedChange={(checked) => setFormData({ ...formData, waitingRoom: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Silenciar al entrar</Label>
+            <p className="text-xs text-gray-600">Silenciar participantes automáticamente</p>
+          </div>
+          <Switch
+            checked={formData.muteOnEntry}
+            onCheckedChange={(checked) => setFormData({ ...formData, muteOnEntry: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Compartir pantalla</Label>
+            <p className="text-xs text-gray-600">Permitir compartir pantalla</p>
+          </div>
+          <Switch
+            checked={formData.allowScreenShare}
+            onCheckedChange={(checked) => setFormData({ ...formData, allowScreenShare: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Contraseña de reunión</Label>
+            <p className="text-xs text-gray-600">Requerir contraseña para unirse</p>
+          </div>
+          <Switch
+            checked={formData.meetingPassword}
+            onCheckedChange={(checked) => setFormData({ ...formData, meetingPassword: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Chat habilitado</Label>
+            <p className="text-xs text-gray-600">Permitir chat durante la reunión</p>
+          </div>
+          <Switch
+            checked={formData.chatEnabled}
+            onCheckedChange={(checked) => setFormData({ ...formData, chatEnabled: checked })}
+          />
+        </div>
+      </div>
+
+      <div className="flex space-x-2 pt-4">
+        <Button onClick={onCancel} variant="outline" className="flex-1 bg-transparent">
+          Cancelar
+        </Button>
+        <Button onClick={() => onSave(formData)} className="flex-1">
+          Guardar Configuración
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function GoogleMeetConfigForm({
+  config,
+  onSave,
+  onCancel,
+}: { config: any; onSave: (config: any) => void; onCancel: () => void }) {
+  const [formData, setFormData] = useState(config)
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label className="text-sm font-medium">Duración por defecto (minutos)</Label>
+          <Input
+            type="number"
+            value={formData.defaultDuration}
+            onChange={(e) => setFormData({ ...formData, defaultDuration: Number.parseInt(e.target.value) })}
+            className="mt-1"
+          />
+        </div>
+        <div>
+          <Label className="text-sm font-medium">Máximo de participantes</Label>
+          <Input
+            type="number"
+            value={formData.maxParticipants}
+            onChange={(e) => setFormData({ ...formData, maxParticipants: Number.parseInt(e.target.value) })}
+            className="mt-1"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Auto-grabación</Label>
+            <p className="text-xs text-gray-600">Grabar reuniones automáticamente</p>
+          </div>
+          <Switch
+            checked={formData.autoRecord}
+            onCheckedChange={(checked) => setFormData({ ...formData, autoRecord: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Invitados externos</Label>
+            <p className="text-xs text-gray-600">Permitir invitados fuera de la organización</p>
+          </div>
+          <Switch
+            checked={formData.allowExternalGuests}
+            onCheckedChange={(checked) => setFormData({ ...formData, allowExternalGuests: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Silenciar al entrar</Label>
+            <p className="text-xs text-gray-600">Silenciar participantes automáticamente</p>
+          </div>
+          <Switch
+            checked={formData.muteOnEntry}
+            onCheckedChange={(checked) => setFormData({ ...formData, muteOnEntry: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Compartir pantalla</Label>
+            <p className="text-xs text-gray-600">Permitir compartir pantalla</p>
+          </div>
+          <Switch
+            checked={formData.allowScreenShare}
+            onCheckedChange={(checked) => setFormData({ ...formData, allowScreenShare: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Chat habilitado</Label>
+            <p className="text-xs text-gray-600">Permitir chat durante la reunión</p>
+          </div>
+          <Switch
+            checked={formData.chatEnabled}
+            onCheckedChange={(checked) => setFormData({ ...formData, chatEnabled: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Transmisión en vivo</Label>
+            <p className="text-xs text-gray-600">Habilitar transmisión en vivo</p>
+          </div>
+          <Switch
+            checked={formData.liveStreamEnabled}
+            onCheckedChange={(checked) => setFormData({ ...formData, liveStreamEnabled: checked })}
+          />
+        </div>
+      </div>
+
+      <div className="flex space-x-2 pt-4">
+        <Button onClick={onCancel} variant="outline" className="flex-1 bg-transparent">
+          Cancelar
+        </Button>
+        <Button onClick={() => onSave(formData)} className="flex-1">
+          Guardar Configuración
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function TeamsConfigForm({
+  config,
+  onSave,
+  onCancel,
+}: { config: any; onSave: (config: any) => void; onCancel: () => void }) {
+  const [formData, setFormData] = useState(config)
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label className="text-sm font-medium">Duración por defecto (minutos)</Label>
+          <Input
+            type="number"
+            value={formData.defaultDuration}
+            onChange={(e) => setFormData({ ...formData, defaultDuration: Number.parseInt(e.target.value) })}
+            className="mt-1"
+          />
+        </div>
+        <div>
+          <Label className="text-sm font-medium">Máximo de participantes</Label>
+          <Input
+            type="number"
+            value={formData.maxParticipants}
+            onChange={(e) => setFormData({ ...formData, maxParticipants: Number.parseInt(e.target.value) })}
+            className="mt-1"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Auto-grabación</Label>
+            <p className="text-xs text-gray-600">Grabar reuniones automáticamente</p>
+          </div>
+          <Switch
+            checked={formData.autoRecord}
+            onCheckedChange={(checked) => setFormData({ ...formData, autoRecord: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Sala de espera</Label>
+            <p className="text-xs text-gray-600">Activar sala de espera por defecto</p>
+          </div>
+          <Switch
+            checked={formData.waitingRoom}
+            onCheckedChange={(checked) => setFormData({ ...formData, waitingRoom: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Silenciar al entrar</Label>
+            <p className="text-xs text-gray-600">Silenciar participantes automáticamente</p>
+          </div>
+          <Switch
+            checked={formData.muteOnEntry}
+            onCheckedChange={(checked) => setFormData({ ...formData, muteOnEntry: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Compartir pantalla</Label>
+            <p className="text-xs text-gray-600">Permitir compartir pantalla</p>
+          </div>
+          <Switch
+            checked={formData.allowScreenShare}
+            onCheckedChange={(checked) => setFormData({ ...formData, allowScreenShare: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Chat habilitado</Label>
+            <p className="text-xs text-gray-600">Permitir chat durante la reunión</p>
+          </div>
+          <Switch
+            checked={formData.chatEnabled}
+            onCheckedChange={(checked) => setFormData({ ...formData, chatEnabled: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Usuarios anónimos</Label>
+            <p className="text-xs text-gray-600">Permitir usuarios sin cuenta</p>
+          </div>
+          <Switch
+            checked={formData.allowAnonymous}
+            onCheckedChange={(checked) => setFormData({ ...formData, allowAnonymous: checked })}
+          />
+        </div>
+      </div>
+
+      <div className="flex space-x-2 pt-4">
+        <Button onClick={onCancel} variant="outline" className="flex-1 bg-transparent">
+          Cancelar
+        </Button>
+        <Button onClick={() => onSave(formData)} className="flex-1">
+          Guardar Configuración
+        </Button>
       </div>
     </div>
   )
