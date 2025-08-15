@@ -1,6 +1,13 @@
 "use client"
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -28,11 +35,32 @@ import {
   Globe,
   Edit,
   Plus,
+  Key,
+  User,
+  Server,
+  Video,
 } from "lucide-react"
 
 export default function CommunicationsConfiguration() {
   const [activeTab, setActiveTab] = useState("connect-email")
   const [isLoading, setIsLoading] = useState(false)
+
+  const [credentialDialog, setCredentialDialog] = useState({
+    isOpen: false,
+    providerId: null,
+    providerType: null,
+    providerName: "",
+  })
+
+  const [credentials, setCredentials] = useState({
+    username: "",
+    password: "",
+    apiKey: "",
+    clientId: "",
+    clientSecret: "",
+    serverUrl: "",
+    port: "",
+  })
 
   const [conferenceProviders, setConferenceProviders] = useState([
     {
@@ -357,29 +385,81 @@ export default function CommunicationsConfiguration() {
     })
   }
 
-  const ProviderCard = ({ provider, type, onToggleFavorite, onConnect, onDisconnect }: any) => (
-    <Card className={`relative transition-all duration-200 hover:shadow-lg ${provider.color} border-2 overflow-hidden`}>
-      <CardContent className="p-4 sm:p-6">
-        <div className="flex items-start justify-between mb-4 gap-3">
+  const openCredentialDialog = (providerId, providerType, providerName) => {
+    setCredentialDialog({
+      isOpen: true,
+      providerId,
+      providerType,
+      providerName,
+    })
+    // Load existing credentials if any
+    setCredentials({
+      username: "",
+      password: "",
+      apiKey: "",
+      clientId: "",
+      clientSecret: "",
+      serverUrl: "",
+      port: "",
+    })
+  }
+
+  const saveCredentials = async () => {
+    try {
+      setIsLoading(true)
+
+      // Simulate API call to save credentials
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      toast({
+        title: "Credenciales guardadas",
+        description: `Configuración de ${credentialDialog.providerName} actualizada correctamente.`,
+      })
+
+      setCredentialDialog({ isOpen: false, providerId: null, providerType: null, providerName: "" })
+      setCredentials({
+        username: "",
+        password: "",
+        apiKey: "",
+        clientId: "",
+        clientSecret: "",
+        serverUrl: "",
+        port: "",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudieron guardar las credenciales.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const ProviderCard = ({ provider, type, onToggleFavorite, onConnect, onDisconnect }) => (
+    <Card className={`transition-all duration-200 hover:shadow-md ${provider.color} border-2`}>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3 min-w-0 flex-1">
-            <div className="text-2xl sm:text-3xl flex-shrink-0">{provider.icon}</div>
+            <div className="text-2xl flex-shrink-0">{provider.icon}</div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{provider.name}</h3>
+              <h3 className="font-semibold text-gray-900 text-sm truncate">{provider.name}</h3>
               {provider.account && (
-                <p className="text-xs sm:text-sm text-gray-600 font-medium truncate mt-1">{provider.account}</p>
+                <p className="text-xs text-gray-600 font-medium truncate mt-1">{provider.account}</p>
               )}
             </div>
           </div>
-          <div className="flex flex-col items-end space-y-2 flex-shrink-0">
+          <div className="flex flex-col items-end space-y-1 flex-shrink-0">
             {provider.isFavorite && (
-              <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs whitespace-nowrap">
+              <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">
                 <Star className="h-3 w-3 mr-1" />
                 Favorito
               </Badge>
             )}
             <Badge
               variant={provider.status === "connected" ? "default" : "secondary"}
-              className={`text-xs whitespace-nowrap ${
+              className={`text-xs ${
                 provider.status === "connected"
                   ? "bg-green-100 text-green-800 border-green-300"
                   : "bg-gray-100 text-gray-600 border-gray-300"
@@ -400,33 +480,43 @@ export default function CommunicationsConfiguration() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center space-x-2 min-w-0">
+        <div className="flex flex-col space-y-3">
+          <div className="flex items-center space-x-2">
             <Switch
               checked={provider.isFavorite}
-              onCheckedChange={() => onToggleFavorite(type, provider.id)}
+              onCheckedChange={() => onToggleFavorite(provider.id, type)}
               className="flex-shrink-0"
             />
-            <Label className="text-xs sm:text-sm font-medium text-gray-700 truncate">Proveedor favorito</Label>
+            <Label className="text-xs font-medium text-gray-700 truncate">Proveedor favorito</Label>
           </div>
 
-          <div className="flex-shrink-0 w-full sm:w-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => openCredentialDialog(provider.id, type, provider.name)}
+            className="w-full border-purple-300 text-purple-700 hover:bg-purple-50 text-xs mb-2"
+          >
+            <Key className="h-3 w-3 mr-1" />
+            Configurar Credenciales
+          </Button>
+
+          <div className="w-full">
             {provider.status === "connected" ? (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onDisconnect(type, provider.id)}
+                onClick={() => onDisconnect(provider.id, type)}
                 disabled={isLoading}
-                className="w-full sm:w-auto border-red-300 text-red-700 hover:bg-red-50 text-xs sm:text-sm"
+                className="w-full border-red-300 text-red-700 hover:bg-red-50 text-xs"
               >
                 {isLoading ? "Desconectando..." : "Desconectar"}
               </Button>
             ) : (
               <Button
                 size="sm"
-                onClick={() => onConnect(type, provider.id)}
+                onClick={() => onConnect(provider.id, type)}
                 disabled={isLoading}
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-xs"
               >
                 {isLoading ? "Conectando..." : "Conectar"}
               </Button>
@@ -684,6 +774,16 @@ export default function CommunicationsConfiguration() {
                               />
                               <Label className="text-xs font-medium text-gray-700 truncate">Plataforma favorita</Label>
                             </div>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openCredentialDialog(provider.id, "conference", provider.name)}
+                              className="w-full border-purple-300 text-purple-700 hover:bg-purple-50 text-xs mb-2"
+                            >
+                              <Key className="h-3 w-3 mr-1" />
+                              Configurar Credenciales
+                            </Button>
 
                             {provider.status === "connected" && (
                               <Button
@@ -1066,48 +1166,229 @@ export default function CommunicationsConfiguration() {
           </TabsContent>
         </Tabs>
 
-        <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
+        <Dialog
+          open={credentialDialog.isOpen}
+          onOpenChange={(open) =>
+            !open && setCredentialDialog({ isOpen: false, providerId: null, providerType: null, providerName: "" })
+          }
+        >
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center space-x-2">
-                <Settings className="h-5 w-5" />
-                <span>
-                  Configurar {selectedProvider && conferenceProviders.find((p) => p.id === selectedProvider)?.name}
-                </span>
+              <DialogTitle className="flex items-center text-xl">
+                <Key className="h-5 w-5 mr-2 text-purple-600" />
+                Configurar Credenciales - {credentialDialog.providerName}
               </DialogTitle>
-              <DialogDescription>Personaliza la configuración de tu plataforma de conferencias</DialogDescription>
+              <DialogDescription>
+                Configure las credenciales y parámetros de conexión para {credentialDialog.providerName}
+              </DialogDescription>
             </DialogHeader>
 
-            {selectedProvider && (
-              <div className="space-y-6 py-4">
-                {/* Zoom Configuration */}
-                {selectedProvider === "zoom" && (
-                  <ZoomConfigForm
-                    config={providerConfigs.zoom}
-                    onSave={(config) => saveProviderConfig("zoom", config)}
-                    onCancel={() => setConfigDialogOpen(false)}
-                  />
-                )}
-
-                {/* Google Meet Configuration */}
-                {selectedProvider === "google-meet" && (
-                  <GoogleMeetConfigForm
-                    config={providerConfigs["google-meet"]}
-                    onSave={(config) => saveProviderConfig("google-meet", config)}
-                    onCancel={() => setConfigDialogOpen(false)}
-                  />
-                )}
-
-                {/* Microsoft Teams Configuration */}
-                {selectedProvider === "microsoft-teams" && (
-                  <TeamsConfigForm
-                    config={providerConfigs["microsoft-teams"]}
-                    onSave={(config) => saveProviderConfig("microsoft-teams", config)}
-                    onCancel={() => setConfigDialogOpen(false)}
-                  />
-                )}
+            <div className="space-y-6 py-4">
+              {/* Basic Authentication */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-gray-900 flex items-center">
+                  <User className="h-4 w-4 mr-2" />
+                  Autenticación Básica
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="username" className="text-sm font-medium">
+                      Usuario/Email
+                    </Label>
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="usuario@ejemplo.com"
+                      value={credentials.username}
+                      onChange={(e) => setCredentials((prev) => ({ ...prev, username: e.target.value }))}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="password" className="text-sm font-medium">
+                      Contraseña
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={credentials.password}
+                      onChange={(e) => setCredentials((prev) => ({ ...prev, password: e.target.value }))}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
               </div>
-            )}
+
+              {/* API Configuration */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-gray-900 flex items-center">
+                  <Code className="h-4 w-4 mr-2" />
+                  Configuración API
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="apiKey" className="text-sm font-medium">
+                      API Key
+                    </Label>
+                    <Input
+                      id="apiKey"
+                      type="password"
+                      placeholder="sk-..."
+                      value={credentials.apiKey}
+                      onChange={(e) => setCredentials((prev) => ({ ...prev, apiKey: e.target.value }))}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="clientId" className="text-sm font-medium">
+                      Client ID
+                    </Label>
+                    <Input
+                      id="clientId"
+                      type="text"
+                      placeholder="client_id_123"
+                      value={credentials.clientId}
+                      onChange={(e) => setCredentials((prev) => ({ ...prev, clientId: e.target.value }))}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label htmlFor="clientSecret" className="text-sm font-medium">
+                      Client Secret
+                    </Label>
+                    <Input
+                      id="clientSecret"
+                      type="password"
+                      placeholder="••••••••••••••••"
+                      value={credentials.clientSecret}
+                      onChange={(e) => setCredentials((prev) => ({ ...prev, clientSecret: e.target.value }))}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Server Configuration */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-gray-900 flex items-center">
+                  <Server className="h-4 w-4 mr-2" />
+                  Configuración del Servidor
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-2">
+                    <Label htmlFor="serverUrl" className="text-sm font-medium">
+                      URL del Servidor
+                    </Label>
+                    <Input
+                      id="serverUrl"
+                      type="url"
+                      placeholder="https://api.ejemplo.com"
+                      value={credentials.serverUrl}
+                      onChange={(e) => setCredentials((prev) => ({ ...prev, serverUrl: e.target.value }))}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="port" className="text-sm font-medium">
+                      Puerto
+                    </Label>
+                    <Input
+                      id="port"
+                      type="number"
+                      placeholder="443"
+                      value={credentials.port}
+                      onChange={(e) => setCredentials((prev) => ({ ...prev, port: e.target.value }))}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Provider-specific settings */}
+              {credentialDialog.providerType === "email" && (
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-gray-900 flex items-center">
+                    <Mail className="h-4 w-4 mr-2" />
+                    Configuración de Email
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch id="smtp-ssl" />
+                      <Label htmlFor="smtp-ssl" className="text-sm">
+                        Usar SSL/TLS
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch id="auto-sync" />
+                      <Label htmlFor="auto-sync" className="text-sm">
+                        Sincronización automática
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {credentialDialog.providerType === "calendar" && (
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-gray-900 flex items-center">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Configuración de Calendario
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch id="sync-events" />
+                      <Label htmlFor="sync-events" className="text-sm">
+                        Sincronizar eventos
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch id="notifications" />
+                      <Label htmlFor="notifications" className="text-sm">
+                        Notificaciones
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {credentialDialog.providerType === "conference" && (
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-gray-900 flex items-center">
+                    <Video className="h-4 w-4 mr-2" />
+                    Configuración de Conferencias
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch id="auto-record" />
+                      <Label htmlFor="auto-record" className="text-sm">
+                        Grabación automática
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch id="waiting-room" />
+                      <Label htmlFor="waiting-room" className="text-sm">
+                        Sala de espera
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() =>
+                  setCredentialDialog({ isOpen: false, providerId: null, providerType: null, providerName: "" })
+                }
+              >
+                Cancelar
+              </Button>
+              <Button onClick={saveCredentials} disabled={isLoading} className="bg-purple-600 hover:bg-purple-700">
+                {isLoading ? "Guardando..." : "Guardar Credenciales"}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
