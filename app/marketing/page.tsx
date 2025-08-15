@@ -386,17 +386,17 @@ export default function MarketingPage() {
                             <Button
                               key={prompt.id}
                               variant="outline"
-                              className="w-full text-left justify-start p-4 h-auto hover:bg-blue-50 hover:border-blue-300 bg-transparent"
+                              className="w-full text-left justify-start p-4 h-auto hover:bg-blue-50 hover:border-blue-300 bg-transparent overflow-hidden"
                               onClick={() => generateCampaignWithAI(prompt.text)}
                               disabled={isGenerating}
                             >
-                              <div className="flex items-start space-x-3 w-full min-w-0">
-                                <span className="text-lg flex-shrink-0">{prompt.icon}</span>
-                                <div className="flex-1 min-w-0 text-left">
-                                  <p className="text-sm font-medium text-gray-900 break-words hyphens-auto leading-relaxed">
+                              <div className="flex items-start space-x-3 w-full min-w-0 max-w-full">
+                                <span className="text-lg flex-shrink-0 mt-0.5">{prompt.icon}</span>
+                                <div className="flex-1 min-w-0 max-w-full text-left overflow-hidden">
+                                  <p className="text-sm font-medium text-gray-900 break-words hyphens-auto leading-relaxed overflow-wrap-anywhere">
                                     {prompt.text}
                                   </p>
-                                  <Badge variant="secondary" className="mt-2 text-xs">
+                                  <Badge variant="secondary" className="mt-2 text-xs inline-block">
                                     {prompt.category}
                                   </Badge>
                                 </div>
