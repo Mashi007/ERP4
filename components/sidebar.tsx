@@ -7,7 +7,18 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { BarChart3, Users, Target, Package, Calendar, Settings, Menu, ChevronDown, ChevronRight } from "lucide-react"
+import {
+  BarChart3,
+  Users,
+  Target,
+  Package,
+  Calendar,
+  Settings,
+  Menu,
+  ChevronDown,
+  ChevronRight,
+  Megaphone,
+} from "lucide-react"
 
 const navigation = [
   {
@@ -47,6 +58,17 @@ const navigation = [
     name: "Citas",
     href: "/appointments",
     icon: Calendar,
+  },
+  {
+    name: "Marketing",
+    href: "/marketing",
+    icon: Megaphone,
+    subItems: [
+      { name: "Campañas", href: "/marketing" },
+      { name: "Email Marketing", href: "/marketing/email" },
+      { name: "Leads", href: "/marketing/leads" },
+      { name: "Reportes", href: "/marketing/reportes" },
+    ],
   },
   {
     name: "Configuración",
