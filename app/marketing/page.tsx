@@ -400,25 +400,37 @@ export default function MarketingPage() {
 
                         <div className="space-y-3">
                           {campaignPrompts.map((prompt) => (
-                            <Button
-                              key={prompt.id}
-                              variant="outline"
-                              className="w-full text-left justify-start p-4 h-auto hover:bg-blue-50 hover:border-blue-300 bg-transparent overflow-hidden"
-                              onClick={() => generateCampaignWithAI(prompt.text)}
-                              disabled={isGenerating}
-                            >
-                              <div className="flex items-start space-x-3 w-full min-w-0 max-w-full">
-                                <span className="text-lg flex-shrink-0 mt-0.5">{prompt.icon}</span>
-                                <div className="flex-1 min-w-0 max-w-full text-left overflow-hidden">
-                                  <p className="text-sm font-medium text-gray-900 break-words hyphens-auto leading-relaxed overflow-wrap-anywhere">
-                                    {prompt.text}
-                                  </p>
-                                  <Badge variant="secondary" className="mt-2 text-xs inline-block">
-                                    {prompt.category}
-                                  </Badge>
+                            <div key={prompt.id} className="relative group">
+                              <Button
+                                variant="outline"
+                                className="w-full text-left justify-start p-4 h-auto hover:bg-blue-50 hover:border-blue-300 bg-transparent overflow-hidden pr-12"
+                                onClick={() => generateCampaignWithAI(prompt.text)}
+                                disabled={isGenerating}
+                              >
+                                <div className="flex items-start space-x-3 w-full min-w-0 max-w-full">
+                                  <span className="text-lg flex-shrink-0 mt-0.5">{prompt.icon}</span>
+                                  <div className="flex-1 min-w-0 max-w-full text-left overflow-hidden">
+                                    <p className="text-sm font-medium text-gray-900 break-words hyphens-auto leading-relaxed overflow-wrap-anywhere">
+                                      {prompt.text}
+                                    </p>
+                                    <Badge variant="secondary" className="mt-2 text-xs inline-block">
+                                      {prompt.category}
+                                    </Badge>
+                                  </div>
                                 </div>
-                              </div>
-                            </Button>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  toast.info("Función de edición de sugerencias próximamente")
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </div>
                           ))}
                         </div>
 
@@ -563,6 +575,56 @@ export default function MarketingPage() {
                       <Settings className="h-4 w-4 mr-2" />
                       Configuración
                     </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Etiquetas de Clasificación</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Badge
+                        variant="outline"
+                        className="cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                        onClick={() => toast.info("Filtrar por Lanzamiento de Producto")}
+                      >
+                        🚀 Lanzamiento
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className="cursor-pointer hover:bg-green-50 hover:border-green-300 transition-colors"
+                        onClick={() => toast.info("Filtrar por Promoción")}
+                      >
+                        🚚 Promoción
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className="cursor-pointer hover:bg-purple-50 hover:border-purple-300 transition-colors"
+                        onClick={() => toast.info("Filtrar por Referidos")}
+                      >
+                        👥 Referidos
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className="cursor-pointer hover:bg-yellow-50 hover:border-yellow-300 transition-colors"
+                        onClick={() => toast.info("Filtrar por Adquisición")}
+                      >
+                        💰 Adquisición
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className="cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
+                        onClick={() => toast.info("Filtrar por Retención")}
+                      >
+                        🔄 Retención
+                      </Badge>
+                    </div>
+                    <div className="pt-2 border-t">
+                      <p className="text-xs text-gray-500">
+                        Haz clic en una etiqueta para filtrar campañas por categoría
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
