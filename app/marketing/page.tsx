@@ -44,6 +44,10 @@ export default function MarketingPage() {
   const [editTagName, setEditTagName] = useState("")
   const [editTagIcon, setEditTagIcon] = useState("")
   const [editTagDescription, setEditTagDescription] = useState("")
+  const [editingList, setEditingList] = useState<any>(null)
+  const [editListName, setEditListName] = useState("")
+  const [editListDescription, setEditListDescription] = useState("")
+  const [editListTags, setEditListTags] = useState("")
 
   useEffect(() => {
     fetchCampaigns()
@@ -158,6 +162,47 @@ export default function MarketingPage() {
     } catch (error) {
       console.error("Error creating list:", error)
       toast.error("Error al crear lista")
+    }
+  }
+
+  const handleEditList = (list: any) => {
+    setEditingList(list)
+    setEditListName(list.name || "")
+    setEditListDescription(list.description || "")
+    setEditListTags((list.tags || []).join(", "))
+  }
+
+  const saveEditedList = async () => {
+    if (!editingList) return
+
+    try {
+      const response = await fetch(`/api/marketing/lists/${editingList.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editListName.trim(),
+          description: editListDescription.trim(),
+          tags: editListTags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+        }),
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        toast.success("Lista actualizada exitosamente")
+        fetchMarketingLists()
+        setEditingList(null)
+        setEditListName("")
+        setEditListDescription("")
+        setEditListTags("")
+      } else {
+        toast.error("Error al actualizar la lista")
+      }
+    } catch (error) {
+      console.error("Error updating list:", error)
+      toast.error("Error al actualizar la lista")
     }
   }
 
@@ -726,7 +771,7 @@ export default function MarketingPage() {
                         <Badge className={`${getStatusColor(list.status)} border text-xs`}>
                           {getStatusLabel(list.status)}
                         </Badge>
-                        <Button variant="ghost" size="sm" onClick={() => toast.info("Función de edición próximamente")}>
+                        <Button variant="ghost" size="sm" onClick={() => handleEditList(list)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                       </div>
@@ -913,6 +958,89 @@ export default function MarketingPage() {
                 className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                 onClick={saveEditedTag}
                 disabled={!editTagName.trim() || !editTagIcon.trim()}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Guardar Cambios
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingList} onOpenChange={() => setEditingList(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Edit className="h-5 w-5 mr-2" />
+              Editar Lista de Contactos
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="edit-list-name">Nombre de la Lista</Label>
+              <Input
+                id="edit-list-name"
+                value={editListName}
+                onChange={(e) => setEditListName(e.target.value)}
+                placeholder="Nombre de la lista..."
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-list-description">Descripción</Label>
+              <Textarea
+                id="edit-list-description"
+                value={editListDescription}
+                onChange={(e) => setEditListDescription(e.target.value)}
+                placeholder="Descripción de la lista..."
+                rows={3}
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-list-tags">Etiquetas (separadas por comas)</Label>
+              <Input
+                id="edit-list-tags"
+                value={editListTags}
+                onChange={(e) => setEditListTags(e.target.value)}
+                placeholder="premium, activos, vip"
+                className="mt-2"
+              />
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-2">Vista Previa</h4>
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900">{editListName || "Nombre de la lista"}</h3>
+                  <p className="text-sm text-gray-600">{editListDescription || "Descripción de la lista"}</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {editListTags.split(",").map(
+                      (tag, index) =>
+                        tag.trim() && (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {tag.trim()}
+                          </Badge>
+                        ),
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <Button variant="outline" onClick={() => setEditingList(null)}>
+                Cancelar
+              </Button>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={saveEditedList}
+                disabled={!editListName.trim()}
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Guardar Cambios
