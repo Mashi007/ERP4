@@ -390,11 +390,13 @@ export default function MarketingPage() {
                               onClick={() => generateCampaignWithAI(prompt.text)}
                               disabled={isGenerating}
                             >
-                              <div className="flex items-start space-x-3">
-                                <span className="text-lg">{prompt.icon}</span>
-                                <div className="flex-1 text-left">
-                                  <p className="text-sm font-medium text-gray-900">{prompt.text}</p>
-                                  <Badge variant="secondary" className="mt-1 text-xs">
+                              <div className="flex items-start space-x-3 w-full min-w-0">
+                                <span className="text-lg flex-shrink-0">{prompt.icon}</span>
+                                <div className="flex-1 min-w-0 text-left">
+                                  <p className="text-sm font-medium text-gray-900 break-words hyphens-auto leading-relaxed">
+                                    {prompt.text}
+                                  </p>
+                                  <Badge variant="secondary" className="mt-2 text-xs">
                                     {prompt.category}
                                   </Badge>
                                 </div>
