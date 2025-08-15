@@ -24,10 +24,7 @@ import {
   Eye,
   MousePointer,
   Sparkles,
-  Play,
   Edit,
-  Trash2,
-  Copy,
   Loader2,
 } from "lucide-react"
 import EmailMarketingSection from "@/components/marketing/email-marketing-section"
@@ -437,7 +434,7 @@ export default function MarketingPage() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="assistant" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 max-w-2xl bg-white border border-gray-200 rounded-xl p-1.5 shadow-sm mb-8">
+          <TabsList className="grid w-full grid-cols-3 max-w-2xl bg-white border border-gray-200 rounded-xl p-1.5 shadow-sm mb-8">
             <TabsTrigger
               value="assistant"
               className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
@@ -458,13 +455,6 @@ export default function MarketingPage() {
             >
               <Users className="h-4 w-4 mr-2 flex-shrink-0" />
               <span className="truncate text-center">Contactos</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="campaigns"
-              className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
-            >
-              <Send className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="truncate text-center">Campañas</span>
             </TabsTrigger>
           </TabsList>
 
@@ -743,141 +733,6 @@ export default function MarketingPage() {
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Campaigns Tab */}
-          <TabsContent value="campaigns" className="mt-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Todas las Campañas</CardTitle>
-                  <div className="flex items-center space-x-2">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                      <Input placeholder="Buscar campañas..." className="pl-10 w-64" />
-                    </div>
-                    <Button variant="outline">
-                      <Filter className="h-4 w-4 mr-2" />
-                      Filtros
-                    </Button>
-                    <Button className="bg-blue-600 hover:bg-blue-700">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Nueva Campaña
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {campaigns.map((campaign) => (
-                      <div key={campaign.id} className="p-4 border rounded-lg hover:shadow-sm transition-shadow">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                              <Mail className="h-5 w-5 text-purple-600" />
-                            </div>
-                            <div>
-                              <h3 className="font-medium text-gray-900">{campaign.name}</h3>
-                              <p className="text-sm text-gray-600">
-                                {campaign.type} • Creada el {campaign.created_at}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                            <Badge className={`${getStatusColor(campaign.status)} border text-xs`}>
-                              {getStatusLabel(campaign.status)}
-                            </Badge>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toast.info("Función de copia próximamente")}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toast.info("Función de edición próximamente")}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toast.info("Función de eliminación próximamente")}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        {campaign.status !== "draft" && (
-                          <div className="grid grid-cols-4 gap-4 mt-4">
-                            <div className="text-center">
-                              <div className="text-lg font-bold text-gray-900">
-                                {(campaign.sent_count || 0).toLocaleString()}
-                              </div>
-                              <div className="text-xs text-gray-500">Enviados</div>
-                            </div>
-                            <div className="text-center">
-                              <div className="text-lg font-bold text-blue-600">
-                                {(campaign.opened_count || 0).toLocaleString()}
-                              </div>
-                              <div className="text-xs text-gray-500">Abiertos ({campaign.open_rate || 0}%)</div>
-                            </div>
-                            <div className="text-center">
-                              <div className="text-lg font-bold text-green-600">
-                                {(campaign.clicked_count || 0).toLocaleString()}
-                              </div>
-                              <div className="text-xs text-gray-500">Clics ({campaign.click_rate || 0}%)</div>
-                            </div>
-                            <div className="text-center">
-                              {campaign.scheduled_at ? (
-                                <>
-                                  <div className="text-sm font-medium text-yellow-600">{campaign.scheduled_at}</div>
-                                  <div className="text-xs text-gray-500">Programada</div>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="text-lg font-bold text-purple-600">
-                                    {Math.round(
-                                      ((campaign.clicked_count || 0) / (campaign.sent_count || 1)) * 100 * 2.5,
-                                    )}
-                                  </div>
-                                  <div className="text-xs text-gray-500">Conversiones</div>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {campaign.status === "draft" && (
-                          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                            <p className="text-sm text-gray-600 mb-2">Esta campaña está en borrador</p>
-                            <div className="flex space-x-2">
-                              <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                                <Edit className="h-4 w-4 mr-2" />
-                                Editar
-                              </Button>
-                              <Button size="sm" variant="outline">
-                                <Play className="h-4 w-4 mr-2" />
-                                Enviar Prueba
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
               </CardContent>
             </Card>
           </TabsContent>
