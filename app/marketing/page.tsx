@@ -348,28 +348,28 @@ export default function MarketingPage() {
               className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
             >
               <Bot className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="truncate">Asistente IA</span>
+              <span className="truncate text-center">Asistente IA</span>
             </TabsTrigger>
             <TabsTrigger
               value="email-marketing"
               className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
             >
               <Mail className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="truncate">Email Marketing</span>
+              <span className="truncate text-center">Email Marketing</span>
             </TabsTrigger>
             <TabsTrigger
               value="contacts"
               className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
             >
               <Users className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="truncate">Contactos</span>
+              <span className="truncate text-center">Contactos</span>
             </TabsTrigger>
             <TabsTrigger
               value="campaigns"
               className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
             >
               <Send className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="truncate">Campañas</span>
+              <span className="truncate text-center">Campañas</span>
             </TabsTrigger>
           </TabsList>
 
