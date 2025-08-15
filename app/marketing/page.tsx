@@ -1030,14 +1030,14 @@ export default function MarketingPage() {
       </Dialog>
 
       <Dialog open={!!editingTag} onOpenChange={() => setEditingTag(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center">
               <Edit className="h-5 w-5 mr-2" />
               Editar Etiqueta de Clasificación
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-6">
+          <div className="space-y-6 p-1">
             <div>
               <Label htmlFor="edit-tag-name">Nombre de la Etiqueta</Label>
               <Input
@@ -1045,13 +1045,13 @@ export default function MarketingPage() {
                 value={editTagName}
                 onChange={(e) => setEditTagName(e.target.value)}
                 placeholder="Nombre de la etiqueta..."
-                className="mt-2"
+                className="mt-2 w-full"
               />
             </div>
 
             <div>
               <Label htmlFor="edit-tag-icon">Icono/Emoji</Label>
-              <div className="flex space-x-2 mt-2">
+              <div className="space-y-3 mt-2">
                 <Input
                   id="edit-tag-icon"
                   value={editTagIcon}
@@ -1059,13 +1059,13 @@ export default function MarketingPage() {
                   placeholder="🚀"
                   className="w-20 text-center"
                 />
-                <div className="flex space-x-1">
+                <div className="grid grid-cols-5 gap-2 max-w-full">
                   {["🚀", "🚚", "👥", "💰", "🔄", "📧", "🎯", "📊", "🎉", "📚"].map((emoji) => (
                     <Button
                       key={emoji}
                       variant="outline"
                       size="sm"
-                      className="w-10 h-10 p-0 bg-transparent"
+                      className="w-10 h-10 p-0 bg-transparent flex-shrink-0"
                       onClick={() => setEditTagIcon(emoji)}
                     >
                       {emoji}
@@ -1083,13 +1083,13 @@ export default function MarketingPage() {
                 onChange={(e) => setEditTagDescription(e.target.value)}
                 placeholder="Describe el propósito y uso de esta etiqueta..."
                 rows={3}
-                className="mt-2"
+                className="mt-2 w-full resize-none"
               />
             </div>
 
             <div>
               <Label>Color de la Etiqueta</Label>
-              <div className="flex space-x-2 mt-2">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-2">
                 {[
                   { name: "Azul", value: "blue", class: "bg-blue-100 border-blue-300" },
                   { name: "Verde", value: "green", class: "bg-green-100 border-green-300" },
@@ -1101,7 +1101,7 @@ export default function MarketingPage() {
                     key={color.value}
                     variant="outline"
                     size="sm"
-                    className={`w-16 h-8 ${color.class} ${editingTag?.color === color.value ? "ring-2 ring-offset-2 ring-blue-500" : ""}`}
+                    className={`h-8 text-xs ${color.class} ${editingTag?.color === color.value ? "ring-2 ring-offset-2 ring-blue-500" : ""}`}
                     onClick={() => setEditingTag({ ...editingTag, color: color.value })}
                   >
                     {color.name}
@@ -1112,18 +1112,23 @@ export default function MarketingPage() {
 
             <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="font-medium text-gray-900 mb-2">Vista Previa</h4>
-              <Badge variant="outline" className={`${getTagColorClasses(editingTag?.color || "blue")} cursor-pointer`}>
+              <Badge
+                variant="outline"
+                className={`${getTagColorClasses(editingTag?.color || "blue")} cursor-pointer break-words`}
+              >
                 {editTagIcon || "🏷️"} {editTagName || "Nombre de etiqueta"}
               </Badge>
-              <p className="text-sm text-gray-600 mt-2">{editTagDescription || "Descripción de la etiqueta..."}</p>
+              <p className="text-sm text-gray-600 mt-2 break-words">
+                {editTagDescription || "Descripción de la etiqueta..."}
+              </p>
             </div>
 
-            <div className="flex justify-end space-x-3">
-              <Button variant="outline" onClick={() => setEditingTag(null)}>
+            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
+              <Button variant="outline" onClick={() => setEditingTag(null)} className="w-full sm:w-auto">
                 Cancelar
               </Button>
               <Button
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                 onClick={saveEditedTag}
                 disabled={!editTagName.trim() || !editTagIcon.trim()}
               >
