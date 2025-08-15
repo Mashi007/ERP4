@@ -36,6 +36,15 @@ const useEmailConfigStatus = () => {
 
 const configurationSections = [
   {
+    id: "company",
+    title: "Datos de la Empresa",
+    description: "Información corporativa para campañas, propuestas y comunicaciones",
+    icon: Building,
+    href: "/settings/company",
+    status: "pending",
+    category: "empresa",
+  },
+  {
     id: "contacts",
     title: "Contactos y Clientes",
     description: "Gestión de campos personalizados y configuración de contactos",
