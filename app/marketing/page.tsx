@@ -24,7 +24,6 @@ import {
   Eye,
   MousePointer,
   Sparkles,
-  Settings,
   Play,
   Edit,
   Trash2,
@@ -605,122 +604,50 @@ export default function MarketingPage() {
               </div>
 
               {/* Quick Stats */}
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Rendimiento Reciente</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Emails enviados</span>
-                      <span className="font-medium">2,230</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Tasa de apertura</span>
-                      <span className="font-medium text-green-600">39.3%</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Clics totales</span>
-                      <span className="font-medium">245</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Conversiones</span>
-                      <span className="font-medium text-blue-600">34</span>
-                    </div>
-                  </CardContent>
-                </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Acciones Rápidas</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start bg-transparent"
-                      onClick={() => window.open("/communications", "_blank")}
-                    >
-                      <Mail className="h-4 w-4 mr-2" />
-                      Crear Email
+              {/* Etiquetas de Clasificación */}
+              <Card className="bg-white border border-gray-200 shadow-sm">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm">Etiquetas de Clasificación</CardTitle>
+                    <Button variant="ghost" size="sm" onClick={() => toast.info("Agregar nueva etiqueta próximamente")}>
+                      <Plus className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start bg-transparent"
-                      onClick={() => document.querySelector('[value="contacts"]')?.click()}
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      Gestionar Listas
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start bg-transparent"
-                      onClick={() => window.open("/analytics", "_blank")}
-                    >
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      Ver Reportes
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start bg-transparent"
-                      onClick={() => window.open("/settings", "_blank")}
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Configuración
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm">Etiquetas de Clasificación</CardTitle>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toast.info("Agregar nueva etiqueta próximamente")}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex flex-wrap gap-2">
-                      {classificationTags.map((tag) => (
-                        <div key={tag.id} className="relative group">
-                          <Badge
-                            variant="outline"
-                            className={`cursor-pointer transition-colors pr-8 ${getTagColorClasses(tag.color)}`}
-                            onClick={() => toast.info(`Filtrar por ${tag.name}`)}
-                            title={tag.description}
-                          >
-                            {tag.icon} {tag.name}
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleEditTag(tag)
-                            }}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="pt-2 border-t">
-                      <p className="text-xs text-gray-500">
-                        Haz clic en una etiqueta para filtrar campañas por categoría
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {classificationTags.map((tag) => (
+                      <div key={tag.id} className="relative group">
+                        <Badge
+                          variant="outline"
+                          className={`cursor-pointer transition-colors pr-8 ${getTagColorClasses(tag.color)}`}
+                          onClick={() => toast.info(`Filtrar por ${tag.name}`)}
+                          title={tag.description}
+                        >
+                          {tag.icon} {tag.name}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleEditTag(tag)
+                          }}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-gray-500">
+                      Haz clic en una etiqueta para filtrar campañas por categoría
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
