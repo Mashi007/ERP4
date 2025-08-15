@@ -8,8 +8,9 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2, FileText, Download, Send } from "lucide-react"
+import { Loader2, FileText, Download, Send, Mail, MessageCircle, ChevronDown } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface Service {
   id: number
@@ -162,6 +163,78 @@ export default function ClientPropuestasPage({ params }: { params: { id: string 
     URL.revokeObjectURL(url)
   }
 
+  const sendProposalByEmail = async () => {
+    if (!generatedProposal) return
+
+    try {
+      const response = await fetch("/api/proposals/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clientId: params.id,
+          clientName,
+          proposal: generatedProposal,
+          method: "email",
+          title: proposalTitle || "Propuesta Comercial",
+        }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Propuesta enviada",
+          description: "La propuesta ha sido enviada por email exitosamente.",
+        })
+      } else {
+        throw new Error("Error sending email")
+      }
+    } catch (error) {
+      console.error("Error sending proposal by email:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo enviar la propuesta por email.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const sendProposalByWhatsApp = async () => {
+    if (!generatedProposal) return
+
+    try {
+      const response = await fetch("/api/proposals/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clientId: params.id,
+          clientName,
+          proposal: generatedProposal,
+          method: "whatsapp",
+          title: proposalTitle || "Propuesta Comercial",
+        }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Propuesta enviada",
+          description: "La propuesta ha sido enviada por WhatsApp exitosamente.",
+        })
+      } else {
+        throw new Error("Error sending WhatsApp")
+      }
+    } catch (error) {
+      console.error("Error sending proposal by WhatsApp:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo enviar la propuesta por WhatsApp.",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <div className="space-y-6">
       <header>
@@ -311,10 +384,25 @@ export default function ClientPropuestasPage({ params }: { params: { id: string 
                   <Download className="mr-2 h-4 w-4" />
                   Descargar
                 </Button>
-                <Button size="sm">
-                  <Send className="mr-2 h-4 w-4" />
-                  Enviar
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm">
+                      <Send className="mr-2 h-4 w-4" />
+                      Enviar
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={sendProposalByEmail}>
+                      <Mail className="mr-2 h-4 w-4" />
+                      Email
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={sendProposalByWhatsApp}>
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      WhatsApp
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </CardTitle>
           </CardHeader>
