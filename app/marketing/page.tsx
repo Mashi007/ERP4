@@ -44,6 +44,10 @@ export default function MarketingPage() {
   const [editingPrompt, setEditingPrompt] = useState<any>(null)
   const [editPromptText, setEditPromptText] = useState("")
   const [editPromptCategory, setEditPromptCategory] = useState("")
+  const [editingTag, setEditingTag] = useState<any>(null)
+  const [editTagName, setEditTagName] = useState("")
+  const [editTagIcon, setEditTagIcon] = useState("")
+  const [editTagDescription, setEditTagDescription] = useState("")
 
   useEffect(() => {
     fetchCampaigns()
@@ -244,6 +248,77 @@ export default function MarketingPage() {
     setEditingPrompt(null)
     setEditPromptText("")
     setEditPromptCategory("")
+  }
+
+  const classificationTags = [
+    {
+      id: 1,
+      name: "Lanzamiento",
+      icon: "🚀",
+      description: "Campañas para lanzamiento de nuevos productos o servicios",
+      color: "blue",
+    },
+    {
+      id: 2,
+      name: "Promoción",
+      icon: "🚚",
+      description: "Ofertas especiales, descuentos y promociones limitadas",
+      color: "green",
+    },
+    {
+      id: 3,
+      name: "Referidos",
+      icon: "👥",
+      description: "Programas de referidos y recompensas por recomendaciones",
+      color: "purple",
+    },
+    {
+      id: 4,
+      name: "Adquisición",
+      icon: "💰",
+      description: "Campañas para atraer nuevos clientes y suscriptores",
+      color: "yellow",
+    },
+    {
+      id: 5,
+      name: "Retención",
+      icon: "🔄",
+      description: "Estrategias para mantener y fidelizar clientes existentes",
+      color: "indigo",
+    },
+  ]
+
+  const handleEditTag = (tag: any) => {
+    setEditingTag(tag)
+    setEditTagName(tag.name)
+    setEditTagIcon(tag.icon)
+    setEditTagDescription(tag.description)
+  }
+
+  const saveEditedTag = () => {
+    // In a real app, you would save this to the database
+    toast.success("Etiqueta actualizada exitosamente")
+    setEditingTag(null)
+    setEditTagName("")
+    setEditTagIcon("")
+    setEditTagDescription("")
+  }
+
+  const getTagColorClasses = (color: string) => {
+    switch (color) {
+      case "blue":
+        return "hover:bg-blue-50 hover:border-blue-300"
+      case "green":
+        return "hover:bg-green-50 hover:border-green-300"
+      case "purple":
+        return "hover:bg-purple-50 hover:border-purple-300"
+      case "yellow":
+        return "hover:bg-yellow-50 hover:border-yellow-300"
+      case "indigo":
+        return "hover:bg-indigo-50 hover:border-indigo-300"
+      default:
+        return "hover:bg-gray-50 hover:border-gray-300"
+    }
   }
 
   return (
@@ -601,45 +676,42 @@ export default function MarketingPage() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-sm">Etiquetas de Clasificación</CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm">Etiquetas de Clasificación</CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toast.info("Agregar nueva etiqueta próximamente")}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex flex-wrap gap-2">
-                      <Badge
-                        variant="outline"
-                        className="cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"
-                        onClick={() => toast.info("Filtrar por Lanzamiento de Producto")}
-                      >
-                        🚀 Lanzamiento
-                      </Badge>
-                      <Badge
-                        variant="outline"
-                        className="cursor-pointer hover:bg-green-50 hover:border-green-300 transition-colors"
-                        onClick={() => toast.info("Filtrar por Promoción")}
-                      >
-                        🚚 Promoción
-                      </Badge>
-                      <Badge
-                        variant="outline"
-                        className="cursor-pointer hover:bg-purple-50 hover:border-purple-300 transition-colors"
-                        onClick={() => toast.info("Filtrar por Referidos")}
-                      >
-                        👥 Referidos
-                      </Badge>
-                      <Badge
-                        variant="outline"
-                        className="cursor-pointer hover:bg-yellow-50 hover:border-yellow-300 transition-colors"
-                        onClick={() => toast.info("Filtrar por Adquisición")}
-                      >
-                        💰 Adquisición
-                      </Badge>
-                      <Badge
-                        variant="outline"
-                        className="cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
-                        onClick={() => toast.info("Filtrar por Retención")}
-                      >
-                        🔄 Retención
-                      </Badge>
+                      {classificationTags.map((tag) => (
+                        <div key={tag.id} className="relative group">
+                          <Badge
+                            variant="outline"
+                            className={`cursor-pointer transition-colors pr-8 ${getTagColorClasses(tag.color)}`}
+                            onClick={() => toast.info(`Filtrar por ${tag.name}`)}
+                            title={tag.description}
+                          >
+                            {tag.icon} {tag.name}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleEditTag(tag)
+                            }}
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
                     </div>
                     <div className="pt-2 border-t">
                       <p className="text-xs text-gray-500">
@@ -948,6 +1020,112 @@ export default function MarketingPage() {
                 className="bg-blue-600 hover:bg-blue-700"
                 onClick={saveEditedPrompt}
                 disabled={!editPromptText.trim() || !editPromptCategory}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Guardar Cambios
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingTag} onOpenChange={() => setEditingTag(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Edit className="h-5 w-5 mr-2" />
+              Editar Etiqueta de Clasificación
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="edit-tag-name">Nombre de la Etiqueta</Label>
+              <Input
+                id="edit-tag-name"
+                value={editTagName}
+                onChange={(e) => setEditTagName(e.target.value)}
+                placeholder="Nombre de la etiqueta..."
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-tag-icon">Icono/Emoji</Label>
+              <div className="flex space-x-2 mt-2">
+                <Input
+                  id="edit-tag-icon"
+                  value={editTagIcon}
+                  onChange={(e) => setEditTagIcon(e.target.value)}
+                  placeholder="🚀"
+                  className="w-20 text-center"
+                />
+                <div className="flex space-x-1">
+                  {["🚀", "🚚", "👥", "💰", "🔄", "📧", "🎯", "📊", "🎉", "📚"].map((emoji) => (
+                    <Button
+                      key={emoji}
+                      variant="outline"
+                      size="sm"
+                      className="w-10 h-10 p-0 bg-transparent"
+                      onClick={() => setEditTagIcon(emoji)}
+                    >
+                      {emoji}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="edit-tag-description">Descripción</Label>
+              <Textarea
+                id="edit-tag-description"
+                value={editTagDescription}
+                onChange={(e) => setEditTagDescription(e.target.value)}
+                placeholder="Describe el propósito y uso de esta etiqueta..."
+                rows={3}
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label>Color de la Etiqueta</Label>
+              <div className="flex space-x-2 mt-2">
+                {[
+                  { name: "Azul", value: "blue", class: "bg-blue-100 border-blue-300" },
+                  { name: "Verde", value: "green", class: "bg-green-100 border-green-300" },
+                  { name: "Púrpura", value: "purple", class: "bg-purple-100 border-purple-300" },
+                  { name: "Amarillo", value: "yellow", class: "bg-yellow-100 border-yellow-300" },
+                  { name: "Índigo", value: "indigo", class: "bg-indigo-100 border-indigo-300" },
+                ].map((color) => (
+                  <Button
+                    key={color.value}
+                    variant="outline"
+                    size="sm"
+                    className={`w-16 h-8 ${color.class} ${editingTag?.color === color.value ? "ring-2 ring-offset-2 ring-blue-500" : ""}`}
+                    onClick={() => setEditingTag({ ...editingTag, color: color.value })}
+                  >
+                    {color.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-2">Vista Previa</h4>
+              <Badge variant="outline" className={`${getTagColorClasses(editingTag?.color || "blue")} cursor-pointer`}>
+                {editTagIcon || "🏷️"} {editTagName || "Nombre de etiqueta"}
+              </Badge>
+              <p className="text-sm text-gray-600 mt-2">{editTagDescription || "Descripción de la etiqueta..."}</p>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <Button variant="outline" onClick={() => setEditingTag(null)}>
+                Cancelar
+              </Button>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={saveEditedTag}
+                disabled={!editTagName.trim() || !editTagIcon.trim()}
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Guardar Cambios
