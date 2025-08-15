@@ -379,6 +379,21 @@ export default function EmailMarketingSection() {
                       Limpiar
                     </Button>
                     <Button
+                      variant="outline"
+                      className="bg-blue-50 hover:bg-blue-100 border-blue-300 text-blue-700"
+                      onClick={() =>
+                        generateEmailWithAI("Crear un email profesional y atractivo para esta campaña de marketing")
+                      }
+                      disabled={isGeneratingEmail}
+                    >
+                      {isGeneratingEmail ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Bot className="h-4 w-4 mr-2" />
+                      )}
+                      Grok AI
+                    </Button>
+                    <Button
                       className="bg-green-600 hover:bg-green-700"
                       onClick={sendEmail}
                       disabled={
