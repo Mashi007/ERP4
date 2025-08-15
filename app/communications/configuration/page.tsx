@@ -1,41 +1,33 @@
 "use client"
 
-import { DialogDescription } from "@/components/ui/dialog"
-
-import { DialogTitle } from "@/components/ui/dialog"
-
-import { DialogHeader } from "@/components/ui/dialog"
-
-import { DialogContent } from "@/components/ui/dialog"
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/hooks/use-toast"
 import {
-  Settings,
   Mail,
-  Users,
   Calendar,
+  Users,
+  Settings,
+  Phone,
   Bell,
   Code,
   MoreHorizontal,
-  Phone,
-  CheckCircle,
-  AlertCircle,
-  Plus,
-  Edit,
+  Check,
+  X,
   Star,
   Zap,
   Globe,
-  DoorOpenIcon as Dialog,
+  Edit,
+  Plus,
 } from "lucide-react"
 
 export default function CommunicationsConfiguration() {
@@ -395,12 +387,12 @@ export default function CommunicationsConfiguration() {
             >
               {provider.status === "connected" ? (
                 <>
-                  <CheckCircle className="h-3 w-3 mr-1" />
+                  <Check className="h-3 w-3 mr-1" />
                   Conectado
                 </>
               ) : (
                 <>
-                  <AlertCircle className="h-3 w-3 mr-1" />
+                  <X className="h-3 w-3 mr-1" />
                   Desconectado
                 </>
               )}
@@ -670,12 +662,12 @@ export default function CommunicationsConfiguration() {
                               >
                                 {provider.status === "connected" ? (
                                   <>
-                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    <Check className="h-3 w-3 mr-1" />
                                     Conectado
                                   </>
                                 ) : (
                                   <>
-                                    <AlertCircle className="h-3 w-3 mr-1" />
+                                    <X className="h-3 w-3 mr-1" />
                                     Desconectado
                                   </>
                                 )}
@@ -894,7 +886,7 @@ export default function CommunicationsConfiguration() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge className="bg-green-100 text-green-800 border-green-300">
-                        <CheckCircle className="h-3 w-3 mr-1" />
+                        <Check className="h-3 w-3 mr-1" />
                         Activo
                       </Badge>
                       <Button
@@ -917,7 +909,7 @@ export default function CommunicationsConfiguration() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge className="bg-blue-100 text-blue-800 border-blue-300">
-                        <CheckCircle className="h-3 w-3 mr-1" />
+                        <Check className="h-3 w-3 mr-1" />
                         Activo
                       </Badge>
                       <Button
@@ -940,7 +932,7 @@ export default function CommunicationsConfiguration() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge variant="secondary" className="bg-gray-100 text-gray-600 border-gray-300">
-                        <AlertCircle className="h-3 w-3 mr-1" />
+                        <X className="h-3 w-3 mr-1" />
                         Inactivo
                       </Badge>
                       <Button
