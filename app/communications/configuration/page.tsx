@@ -39,6 +39,9 @@ import {
   User,
   Server,
   Video,
+  Copy,
+  Trash2,
+  Webhook,
 } from "lucide-react"
 
 export default function CommunicationsConfiguration() {
@@ -224,6 +227,30 @@ export default function CommunicationsConfiguration() {
       chatEnabled: true,
       allowAnonymous: false,
     },
+  })
+
+  const [showWebhookConfig, setShowWebhookConfig] = useState(false)
+  const [showRestApiConfig, setShowRestApiConfig] = useState(false)
+  const [showZapierConfig, setShowZapierConfig] = useState(false)
+  const [webhookConfig, setWebhookConfig] = useState({
+    endpoints: [
+      { url: "https://api.example.com/webhook/contacts", events: ["contact.created", "contact.updated"], active: true },
+      { url: "https://api.example.com/webhook/deals", events: ["deal.created", "deal.won"], active: true },
+    ],
+    retryAttempts: 3,
+    timeout: 30,
+  })
+  const [restApiConfig, setRestApiConfig] = useState({
+    keys: [
+      { name: "Production Key", key: "sk-prod-abc123...", permissions: ["read", "write"], lastUsed: "2025-01-14" },
+    ],
+    rateLimits: { requestsPerMinute: 1000, requestsPerHour: 10000 },
+    allowedIPs: ["192.168.1.1", "10.0.0.1"],
+  })
+  const [zapierConfig, setZapierConfig] = useState({
+    connections: [],
+    availableApps: ["Gmail", "Slack", "Trello", "Google Sheets", "HubSpot"],
+    webhookUrl: "https://hooks.zapier.com/hooks/catch/123456/abcdef/",
   })
 
   const openConfigDialog = (providerId: string) => {
@@ -981,7 +1008,7 @@ export default function CommunicationsConfiguration() {
                       <h4 className="font-semibold text-green-900">Webhooks</h4>
                       <p className="text-sm text-green-700">Recibir notificaciones en tiempo real</p>
                       <div className="flex items-center space-x-4 mt-2 text-xs text-green-600">
-                        <span>Endpoints: 2</span>
+                        <span>Endpoints: {webhookConfig.endpoints.length}</span>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -993,6 +1020,7 @@ export default function CommunicationsConfiguration() {
                         variant="outline"
                         size="sm"
                         className="border-green-300 text-green-700 hover:bg-green-50 bg-transparent"
+                        onClick={() => setShowWebhookConfig(true)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -1004,7 +1032,7 @@ export default function CommunicationsConfiguration() {
                       <h4 className="font-semibold text-blue-900">REST API</h4>
                       <p className="text-sm text-blue-700">Acceso programático a datos del CRM</p>
                       <div className="flex items-center space-x-4 mt-2 text-xs text-blue-600">
-                        <span>API Keys: 1</span>
+                        <span>API Keys: {restApiConfig.keys.length}</span>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -1016,6 +1044,7 @@ export default function CommunicationsConfiguration() {
                         variant="outline"
                         size="sm"
                         className="border-blue-300 text-blue-700 hover:bg-blue-50 bg-transparent"
+                        onClick={() => setShowRestApiConfig(true)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -1027,7 +1056,7 @@ export default function CommunicationsConfiguration() {
                       <h4 className="font-semibold text-gray-900">Zapier</h4>
                       <p className="text-sm text-gray-700">Automatización con miles de apps</p>
                       <div className="flex items-center space-x-4 mt-2 text-xs text-gray-600">
-                        <span>Conexiones: 0</span>
+                        <span>Conexiones: {zapierConfig.connections.length}</span>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -1039,6 +1068,7 @@ export default function CommunicationsConfiguration() {
                         variant="outline"
                         size="sm"
                         className="border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent"
+                        onClick={() => setShowZapierConfig(true)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -1389,6 +1419,363 @@ export default function CommunicationsConfiguration() {
                 {isLoading ? "Guardando..." : "Guardar Credenciales"}
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showWebhookConfig} onOpenChange={setShowWebhookConfig}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <Webhook className="h-5 w-5 mr-2 text-green-600" />
+                Configuración de Webhooks
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-semibold mb-4">Endpoints Configurados</h4>
+                <div className="space-y-3">
+                  {webhookConfig.endpoints.map((endpoint, index) => (
+                    <div key={index} className="p-4 border rounded-lg bg-gray-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <Input
+                          value={endpoint.url}
+                          onChange={(e) => {
+                            const newEndpoints = [...webhookConfig.endpoints]
+                            newEndpoints[index].url = e.target.value
+                            setWebhookConfig((prev) => ({ ...prev, endpoints: newEndpoints }))
+                          }}
+                          placeholder="https://api.example.com/webhook"
+                          className="flex-1 mr-2"
+                        />
+                        <Switch
+                          checked={endpoint.active}
+                          onCheckedChange={(checked) => {
+                            const newEndpoints = [...webhookConfig.endpoints]
+                            newEndpoints[index].active = checked
+                            setWebhookConfig((prev) => ({ ...prev, endpoints: newEndpoints }))
+                          }}
+                        />
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {endpoint.events.map((event, eventIndex) => (
+                          <Badge key={eventIndex} variant="secondary" className="text-xs">
+                            {event}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  className="mt-3 bg-transparent"
+                  onClick={() => {
+                    setWebhookConfig((prev) => ({
+                      ...prev,
+                      endpoints: [...prev.endpoints, { url: "", events: ["contact.created"], active: true }],
+                    }))
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agregar Endpoint
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Intentos de Reintento</Label>
+                  <Input
+                    type="number"
+                    value={webhookConfig.retryAttempts}
+                    onChange={(e) =>
+                      setWebhookConfig((prev) => ({ ...prev, retryAttempts: Number.parseInt(e.target.value) }))
+                    }
+                    min="1"
+                    max="10"
+                  />
+                </div>
+                <div>
+                  <Label>Timeout (segundos)</Label>
+                  <Input
+                    type="number"
+                    value={webhookConfig.timeout}
+                    onChange={(e) =>
+                      setWebhookConfig((prev) => ({ ...prev, timeout: Number.parseInt(e.target.value) }))
+                    }
+                    min="5"
+                    max="300"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => setShowWebhookConfig(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => {
+                  toast.success("Configuración de webhooks guardada")
+                  setShowWebhookConfig(false)
+                }}
+              >
+                Guardar Configuración
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showRestApiConfig} onOpenChange={setShowRestApiConfig}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <Code className="h-5 w-5 mr-2 text-blue-600" />
+                Configuración REST API
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-semibold mb-4">API Keys</h4>
+                <div className="space-y-3">
+                  {restApiConfig.keys.map((apiKey, index) => (
+                    <div key={index} className="p-4 border rounded-lg bg-gray-50">
+                      <div className="grid grid-cols-2 gap-4 mb-3">
+                        <div>
+                          <Label>Nombre</Label>
+                          <Input
+                            value={apiKey.name}
+                            onChange={(e) => {
+                              const newKeys = [...restApiConfig.keys]
+                              newKeys[index].name = e.target.value
+                              setRestApiConfig((prev) => ({ ...prev, keys: newKeys }))
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <Label>Último Uso</Label>
+                          <Input value={apiKey.lastUsed} disabled />
+                        </div>
+                      </div>
+                      <div className="mb-3">
+                        <Label>API Key</Label>
+                        <div className="flex items-center space-x-2">
+                          <Input type="password" value={apiKey.key} disabled className="flex-1" />
+                          <Button variant="outline" size="sm">
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {apiKey.permissions.map((permission, permIndex) => (
+                          <Badge key={permIndex} variant="outline" className="text-xs">
+                            {permission}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  className="mt-3 bg-transparent"
+                  onClick={() => {
+                    const newKey = `sk-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+                    setRestApiConfig((prev) => ({
+                      ...prev,
+                      keys: [
+                        ...prev.keys,
+                        {
+                          name: "Nueva API Key",
+                          key: newKey,
+                          permissions: ["read"],
+                          lastUsed: "Nunca",
+                        },
+                      ],
+                    }))
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Generar Nueva API Key
+                </Button>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-4">Límites de Velocidad</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Requests por Minuto</Label>
+                    <Input
+                      type="number"
+                      value={restApiConfig.rateLimits.requestsPerMinute}
+                      onChange={(e) =>
+                        setRestApiConfig((prev) => ({
+                          ...prev,
+                          rateLimits: { ...prev.rateLimits, requestsPerMinute: Number.parseInt(e.target.value) },
+                        }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Requests por Hora</Label>
+                    <Input
+                      type="number"
+                      value={restApiConfig.rateLimits.requestsPerHour}
+                      onChange={(e) =>
+                        setRestApiConfig((prev) => ({
+                          ...prev,
+                          rateLimits: { ...prev.rateLimits, requestsPerHour: Number.parseInt(e.target.value) },
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-4">IPs Permitidas</h4>
+                <div className="space-y-2">
+                  {restApiConfig.allowedIPs.map((ip, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <Input
+                        value={ip}
+                        onChange={(e) => {
+                          const newIPs = [...restApiConfig.allowedIPs]
+                          newIPs[index] = e.target.value
+                          setRestApiConfig((prev) => ({ ...prev, allowedIPs: newIPs }))
+                        }}
+                        placeholder="192.168.1.1"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const newIPs = restApiConfig.allowedIPs.filter((_, i) => i !== index)
+                          setRestApiConfig((prev) => ({ ...prev, allowedIPs: newIPs }))
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setRestApiConfig((prev) => ({
+                        ...prev,
+                        allowedIPs: [...prev.allowedIPs, ""],
+                      }))
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Agregar IP
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => setShowRestApiConfig(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => {
+                  toast.success("Configuración REST API guardada")
+                  setShowRestApiConfig(false)
+                }}
+              >
+                Guardar Configuración
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showZapierConfig} onOpenChange={setShowZapierConfig}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <Zap className="h-5 w-5 mr-2 text-orange-600" />
+                Configuración de Zapier
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-semibold mb-4">URL del Webhook</h4>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    value={zapierConfig.webhookUrl}
+                    onChange={(e) => setZapierConfig((prev) => ({ ...prev, webhookUrl: e.target.value }))}
+                    placeholder="https://hooks.zapier.com/hooks/catch/..."
+                    className="flex-1"
+                  />
+                  <Button variant="outline" size="sm">
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-600 mt-2">Esta URL se usa para enviar datos desde tu CRM a Zapier</p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-4">Conexiones Activas</h4>
+                {zapierConfig.connections.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Zap className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No hay conexiones activas</p>
+                    <p className="text-sm">Conecta tu CRM con aplicaciones en Zapier</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {zapierConfig.connections.map((connection, index) => (
+                      <div key={index} className="p-4 border rounded-lg bg-gray-50">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h5 className="font-medium">{connection.name}</h5>
+                            <p className="text-sm text-gray-600">{connection.description}</p>
+                          </div>
+                          <Badge variant="outline" className="bg-green-50 text-green-700">
+                            Activo
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-4">Aplicaciones Disponibles</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {zapierConfig.availableApps.map((app, index) => (
+                    <div key={index} className="p-3 border rounded-lg text-center hover:bg-gray-50 cursor-pointer">
+                      <div className="text-2xl mb-2">📱</div>
+                      <p className="text-sm font-medium">{app}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h5 className="font-medium text-blue-900 mb-2">¿Cómo conectar con Zapier?</h5>
+                <ol className="text-sm text-blue-800 space-y-1">
+                  <li>1. Copia la URL del webhook de arriba</li>
+                  <li>2. Ve a Zapier y crea un nuevo Zap</li>
+                  <li>3. Selecciona "Webhooks by Zapier" como trigger</li>
+                  <li>4. Pega la URL del webhook</li>
+                  <li>5. Configura la aplicación de destino</li>
+                </ol>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => setShowZapierConfig(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => {
+                  toast.success("Configuración de Zapier guardada")
+                  setShowZapierConfig(false)
+                }}
+              >
+                Guardar Configuración
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
