@@ -66,8 +66,6 @@ const navigation = [
     subItems: [
       { name: "Campañas", href: "/marketing" },
       { name: "Email Marketing", href: "/marketing/email" },
-      { name: "Leads", href: "/marketing/leads" },
-      { name: "Reportes", href: "/marketing/reportes" },
     ],
   },
   {
