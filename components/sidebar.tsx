@@ -75,6 +75,7 @@ const navigation = [
     subItems: [
       { name: "General", href: "/settings" },
       { name: "Datos de la Empresa", href: "/settings/company" },
+      { name: "Formularios", href: "/settings/forms" },
       { name: "Calendario", href: "/communications/calendar" },
       { name: "Comunicaciones", href: "/communications/configuration" },
       { name: "Vincular WhatsApp", href: "/communications/whatsapp" },
