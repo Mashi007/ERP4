@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ChevronRight,
   Megaphone,
+  FolderKanban,
 } from "lucide-react"
 
 const navigation = [
@@ -43,6 +44,15 @@ const navigation = [
     subItems: [
       { name: "Embudo", href: "/pipeline/embudo" },
       { name: "Oportunidades", href: "/pipeline/oportunidades" },
+    ],
+  },
+  {
+    name: "Gest. Proyectos",
+    href: "/proyectos",
+    icon: FolderKanban,
+    subItems: [
+      { name: "Gest. Normas", href: "/proyectos/normas" },
+      { name: "Proyectos", href: "/proyectos" },
     ],
   },
   {
