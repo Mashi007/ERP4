@@ -98,6 +98,8 @@ function initials(name?: string) {
 export default function OportunidadesPage() {
   const [formFields, setFormFields] = useState<any[]>([])
   const [isLoadingFields, setIsLoadingFields] = useState(true)
+  const [users, setUsers] = useState<any[]>([])
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true)
 
   const [searchTerm, setSearchTerm] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -354,6 +356,7 @@ export default function OportunidadesPage() {
     pain_points: "",
     competitors: "",
     next_steps: "",
+    responsible_user_id: "",
   })
 
   const stages = ["Nuevo", "Calificación", "Propuesta", "Negociación", "Cierre", "Ganado", "Perdido"]
@@ -399,7 +402,24 @@ export default function OportunidadesPage() {
       (deal.contact_name && deal.contact_name.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
-  // Contact search (debounce)
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const response = await fetch("/api/users")
+        const data = await response.json()
+        if (data.success) {
+          setUsers(data.users)
+        }
+      } catch (error) {
+        console.error("Error loading users:", error)
+      } finally {
+        setIsLoadingUsers(false)
+      }
+    }
+
+    loadUsers()
+  }, [])
+
   useEffect(() => {
     const loadFormFields = async () => {
       try {
@@ -540,6 +560,7 @@ export default function OportunidadesPage() {
           pain_points: "",
           competitors: "",
           next_steps: "",
+          responsible_user_id: "",
         })
         setSelectedContact(null)
         setContactQuery("")
@@ -733,6 +754,30 @@ export default function OportunidadesPage() {
                       />
                     </div>
                     <div className="space-y-2">
+                      <Label htmlFor="responsible_user">Usuario Responsable *</Label>
+                      <Select
+                        value={newOpportunity.responsible_user_id || ""}
+                        onValueChange={(value) => setNewOpportunity({ ...newOpportunity, responsible_user_id: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar usuario responsable" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {users.map((user) => (
+                            <SelectItem key={user.id} value={user.id.toString()}>
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                {user.name} - {user.role}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
                       <Label htmlFor="value">{`Valor Estimado (${currencySymbol}) *`}</Label>
                       <Input
                         id="value"
@@ -743,9 +788,6 @@ export default function OportunidadesPage() {
                         required
                       />
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="stage">Etapa</Label>
                       <Select
@@ -764,6 +806,9 @@ export default function OportunidadesPage() {
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="probability">Probabilidad (%)</Label>
                       <Input

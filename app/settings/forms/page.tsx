@@ -287,6 +287,22 @@ const DEFAULT_FORMS: FormConfig[] = [
         field_order: 1,
       },
       {
+        id: "23",
+        field_name: "responsible_user_id",
+        field_label: "Usuario Responsable",
+        field_type: "select",
+        is_required: true,
+        field_group: "assignment",
+        help_text: "Usuario responsable de gestionar esta oportunidad",
+        field_options: [
+          { value: "1", label: "Administrador" },
+          { value: "2", label: "Comercial 1" },
+          { value: "3", label: "Comercial 2" },
+        ],
+        is_active: true,
+        field_order: 2,
+      },
+      {
         id: "16",
         field_name: "opportunity_value",
         field_label: "Valor de la Oportunidad",
@@ -295,7 +311,7 @@ const DEFAULT_FORMS: FormConfig[] = [
         field_group: "financial",
         help_text: "Valor monetario estimado de la oportunidad",
         is_active: true,
-        field_order: 2,
+        field_order: 3,
       },
       {
         id: "17",
@@ -306,7 +322,7 @@ const DEFAULT_FORMS: FormConfig[] = [
         field_group: "timeline",
         help_text: "Fecha estimada para cerrar la oportunidad",
         is_active: true,
-        field_order: 3,
+        field_order: 4,
       },
       {
         id: "18",
@@ -326,7 +342,7 @@ const DEFAULT_FORMS: FormConfig[] = [
           { value: "closed_lost", label: "Cerrada Perdida" },
         ],
         is_active: true,
-        field_order: 4,
+        field_order: 5,
       },
       {
         id: "19",
@@ -338,7 +354,7 @@ const DEFAULT_FORMS: FormConfig[] = [
         help_text: "Probabilidad de cerrar la oportunidad (0-100%)",
         default_value: "50",
         is_active: true,
-        field_order: 5,
+        field_order: 6,
       },
       {
         id: "20",
@@ -349,7 +365,7 @@ const DEFAULT_FORMS: FormConfig[] = [
         field_group: "competitive",
         help_text: "Principal competidor en esta oportunidad",
         is_active: true,
-        field_order: 6,
+        field_order: 7,
       },
       {
         id: "21",
@@ -360,7 +376,7 @@ const DEFAULT_FORMS: FormConfig[] = [
         field_group: "stakeholders",
         help_text: "Persona que toma la decisión final",
         is_active: true,
-        field_order: 7,
+        field_order: 8,
       },
       {
         id: "22",
@@ -371,7 +387,7 @@ const DEFAULT_FORMS: FormConfig[] = [
         field_group: "qualification",
         help_text: "¿El cliente ha confirmado tener presupuesto?",
         is_active: true,
-        field_order: 8,
+        field_order: 9,
       },
     ],
   },
