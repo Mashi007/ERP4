@@ -378,56 +378,56 @@ export default function ProyectosPage() {
                             className="flex items-center gap-3 py-3"
                           >
                             <span className="text-lg">📚</span>
-                            <span className="text-sm text-gray-700">Actualizar Formación</span>
+                            <span className="text-sm text-gray-700">Centro de Facturación Tiene Formación</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleShareDocuments(selectedProject)}
                             className="flex items-center gap-3 py-3"
                           >
                             <span className="text-lg">🔗</span>
-                            <span className="text-sm text-gray-700">Compartir Documentos</span>
+                            <span className="text-sm text-gray-700">Estado Proyecto Documentos</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleUpdateStatus(selectedProject)}
                             className="flex items-center gap-3 py-3"
                           >
                             <span className="text-lg">📊</span>
-                            <span className="text-sm text-gray-700">Actualizar Estado</span>
+                            <span className="text-sm text-gray-700">Estado Proyecto Documentos</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleEditStandards(selectedProject)}
                             className="flex items-center gap-3 py-3"
                           >
                             <span className="text-lg">🔄</span>
-                            <span className="text-sm text-gray-700">Editar/Actualizar Normas</span>
+                            <span className="text-sm text-gray-700">Norma(s) Servicios Vinculados del Contrato</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleValidateProject(selectedProject)}
                             className="flex items-center gap-3 py-3"
                           >
                             <span className="text-lg">✓</span>
-                            <span className="text-sm text-gray-700">Validar Proyecto</span>
+                            <span className="text-sm text-gray-700">Fecha Compartido Fecha Validación</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleAddCertifyingCompany(selectedProject)}
                             className="flex items-center gap-3 py-3"
                           >
                             <span className="text-lg">🏢</span>
-                            <span className="text-sm text-gray-700">Añadir Empresa Certificadora</span>
+                            <span className="text-sm text-gray-700">Empresa Certificadora Auditores</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleAddAuditingCompany(selectedProject)}
                             className="flex items-center gap-3 py-3"
                           >
                             <span className="text-lg">🏛️</span>
-                            <span className="text-sm text-gray-700">Añadir Empresa Auditora</span>
+                            <span className="text-sm text-gray-700">Empresa Certificadora Auditores</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleAddProjectManager(selectedProject)}
                             className="flex items-center gap-3 py-3"
                           >
                             <span className="text-lg">👤</span>
-                            <span className="text-sm text-gray-700">Añadir Jefe de Proyecto</span>
+                            <span className="text-sm text-gray-700">Jefe de Proyecto</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
