@@ -98,6 +98,9 @@ export default function ProyectosPage() {
 
   const [showFullScreenDetails, setShowFullScreenDetails] = useState(false)
   const [selectedProject, setSelectedProject] = useState<any>(null)
+  const [editingField, setEditingField] = useState<string | null>(null)
+  const [editingValue, setEditingValue] = useState<string>("")
+  const [editingProject, setEditingProject] = useState<any>(null)
 
   const handleShowDetails = (project: any) => {
     setSelectedProject(project)
@@ -110,40 +113,133 @@ export default function ProyectosPage() {
   }
 
   const handleUpdateTraining = (project: any) => {
-    console.log("[v0] Actualizar Formación:", project.name)
+    setEditingProject(project)
+    setEditingField("hasTraining")
+    setEditingValue(project.details.hasTraining)
   }
 
   const handleShareDocuments = (project: any) => {
-    console.log("[v0] Compartir Documentos:", project.name)
+    setEditingProject(project)
+    setEditingField("documents")
+    setEditingValue(project.details.documents)
   }
 
   const handleUpdateStatus = (project: any) => {
-    console.log("[v0] Actualizar Estado:", project.name)
+    setEditingProject(project)
+    setEditingField("projectStatus")
+    setEditingValue(project.details.projectStatus)
   }
 
   const handleEditStandards = (project: any) => {
-    console.log("[v0] Editar/Actualizar Normas:", project.name)
+    setEditingProject(project)
+    setEditingField("linkedServices")
+    setEditingValue(project.details.linkedServices)
   }
 
   const handleValidateProject = (project: any) => {
-    console.log("[v0] Validar Proyecto:", project.name)
+    setEditingProject(project)
+    setEditingField("validationDate")
+    setEditingValue(project.details.validationDate)
   }
 
   const handleAddCertifyingCompany = (project: any) => {
-    console.log("[v0] Añadir Empresa Certificadora:", project.name)
+    setEditingProject(project)
+    setEditingField("certifyingCompany")
+    setEditingValue(project.details.certifyingCompany)
   }
 
   const handleAddAuditingCompany = (project: any) => {
-    console.log("[v0] Añadir Empresa Auditora:", project.name)
+    setEditingProject(project)
+    setEditingField("auditors")
+    setEditingValue(project.details.auditors)
   }
 
   const handleAddProjectManager = (project: any) => {
-    console.log("[v0] Añadir Jefe de Proyecto:", project.name)
+    setEditingProject(project)
+    setEditingField("projectManager")
+    setEditingValue(project.details.projectManager)
+  }
+
+  const handleSaveField = () => {
+    if (editingProject && editingField) {
+      // Update the project data
+      editingProject.details[editingField] = editingValue
+      console.log(`[v0] Updated ${editingField}:`, editingValue)
+    }
+    setEditingField(null)
+    setEditingValue("")
+    setEditingProject(null)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingField(null)
+    setEditingValue("")
+    setEditingProject(null)
+  }
+
+  const getFieldDisplayName = (field: string) => {
+    const fieldNames: { [key: string]: string } = {
+      hasTraining: "Formación",
+      documents: "Documentos",
+      projectStatus: "Estado del Proyecto",
+      linkedServices: "Servicios Vinculados",
+      validationDate: "Fecha de Validación",
+      certifyingCompany: "Empresa Certificadora",
+      auditors: "Empresa Auditora",
+      projectManager: "Jefe de Proyecto",
+    }
+    return fieldNames[field] || field
   }
 
   if (showFullScreenDetails && selectedProject) {
     return (
       <div className="min-h-screen bg-gray-50">
+        {editingField && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-96 max-w-md">
+              <h3 className="text-lg font-semibold mb-4 text-[#1A4F7A]">Editar {getFieldDisplayName(editingField)}</h3>
+              <div className="space-y-4">
+                {editingField === "hasTraining" ? (
+                  <select
+                    value={editingValue}
+                    onChange={(e) => setEditingValue(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2"
+                  >
+                    <option value="SI">SI</option>
+                    <option value="NO">NO</option>
+                  </select>
+                ) : editingField === "projectStatus" ? (
+                  <select
+                    value={editingValue}
+                    onChange={(e) => setEditingValue(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2"
+                  >
+                    <option value="Pend. Iniciar">Pend. Iniciar</option>
+                    <option value="En Progreso">En Progreso</option>
+                    <option value="Completado">Completado</option>
+                    <option value="Pausado">Pausado</option>
+                  </select>
+                ) : (
+                  <textarea
+                    value={editingValue}
+                    onChange={(e) => setEditingValue(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 h-24 resize-none"
+                    placeholder={`Ingrese ${getFieldDisplayName(editingField).toLowerCase()}...`}
+                  />
+                )}
+              </div>
+              <div className="flex gap-3 mt-6">
+                <Button onClick={handleSaveField} className="flex-1 bg-[#1A4F7A] hover:bg-[#1A4F7A]/90">
+                  Guardar
+                </Button>
+                <Button onClick={handleCancelEdit} variant="outline" className="flex-1 bg-transparent">
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white border-b shadow-sm">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
