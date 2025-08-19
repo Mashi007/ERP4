@@ -71,6 +71,9 @@ export default function UsersManagementPage() {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null)
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false)
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false)
+  const [isViewUserDialogOpen, setIsViewUserDialogOpen] = useState(false)
+  const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false)
+  const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
@@ -213,6 +216,95 @@ export default function UsersManagementPage() {
     }
   }
 
+  const handleViewUser = (user: User) => {
+    setSelectedUser(user)
+    setIsViewUserDialogOpen(true)
+  }
+
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user)
+    setIsEditUserDialogOpen(true)
+  }
+
+  const handleManagePermissions = (user: User) => {
+    setSelectedUser(user)
+    setIsPermissionsDialogOpen(true)
+  }
+
+  const handleUpdateUser = async (userData: Partial<User>) => {
+    try {
+      if (!selectedUser) return
+
+      const updatedUsers = users.map((user) => (user.id === selectedUser.id ? { ...user, ...userData } : user))
+
+      setUsers(updatedUsers)
+      setIsEditUserDialogOpen(false)
+      setSelectedUser(null)
+
+      toast({
+        title: "Usuario actualizado",
+        description: `Usuario ${userData.name || selectedUser.name} actualizado exitosamente`,
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el usuario",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleUpdatePermissions = async (permissions: string[]) => {
+    try {
+      if (!selectedUser) return
+
+      const updatedUsers = users.map((user) => (user.id === selectedUser.id ? { ...user, permissions } : user))
+
+      setUsers(updatedUsers)
+      setIsPermissionsDialogOpen(false)
+      setSelectedUser(null)
+
+      toast({
+        title: "Permisos actualizados",
+        description: `Permisos de ${selectedUser.name} actualizados exitosamente`,
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudieron actualizar los permisos",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDeleteRole = async (roleId: string) => {
+    try {
+      const roleToDelete = roles.find((r) => r.id === roleId)
+      if (!roleToDelete) return
+
+      if (roleToDelete.userCount > 0) {
+        toast({
+          title: "No se puede eliminar",
+          description: "No se puede eliminar un rol que tiene usuarios asignados",
+          variant: "destructive",
+        })
+        return
+      }
+
+      setRoles((prev) => prev.filter((r) => r.id !== roleId))
+      toast({
+        title: "Rol eliminado",
+        description: `Rol ${roleToDelete.name} eliminado exitosamente`,
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el rol",
+        variant: "destructive",
+      })
+    }
+  }
+
   const filteredUsers = users.filter(
     (user) =>
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -319,13 +411,23 @@ export default function UsersManagementPage() {
                       <p className="text-sm text-gray-600">Último acceso:</p>
                       <p className="font-medium">{user.lastLogin}</p>
                       <div className="flex items-center gap-2 mt-2">
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewUser(user)}
+                          title="Ver detalles del usuario"
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => handleEditUser(user)} title="Editar usuario">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleManagePermissions(user)}
+                          title="Gestionar permisos"
+                        >
                           <Key className="h-4 w-4" />
                         </Button>
                       </div>
@@ -378,10 +480,24 @@ export default function UsersManagementPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedRole(role)
+                          setIsRoleDialogOpen(true)
+                        }}
+                        title="Editar rol"
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteRole(role.id)}
+                        title="Eliminar rol"
+                        disabled={role.userCount > 0}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -405,6 +521,99 @@ export default function UsersManagementPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* View User Dialog */}
+      <Dialog open={isViewUserDialogOpen} onOpenChange={setIsViewUserDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalles del Usuario</DialogTitle>
+            <DialogDescription>Información completa del usuario seleccionado</DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Nombre</Label>
+                  <p className="text-lg">{selectedUser.name}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Email</Label>
+                  <p className="text-lg">{selectedUser.email}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Rol</Label>
+                  <Badge variant="outline" className="mt-1">
+                    {selectedUser.role}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Estado</Label>
+                  <Badge variant={selectedUser.status === "active" ? "default" : "secondary"} className="mt-1">
+                    {selectedUser.status === "active" ? "Activo" : "Inactivo"}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Último acceso</Label>
+                  <p className="text-lg">{selectedUser.lastLogin}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Fecha de creación</Label>
+                  <p className="text-lg">{selectedUser.createdAt}</p>
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Permisos asignados</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedUser.permissions.map((permissionId) => {
+                    const permission = AVAILABLE_PERMISSIONS.find((p) => p.id === permissionId)
+                    return permission ? (
+                      <Badge key={permissionId} variant="secondary" className="text-xs">
+                        {permission.name}
+                      </Badge>
+                    ) : null
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={isEditUserDialogOpen} onOpenChange={setIsEditUserDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Usuario</DialogTitle>
+            <DialogDescription>Modifica la información del usuario</DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <EditUserForm
+              user={selectedUser}
+              onSubmit={handleUpdateUser}
+              roles={roles}
+              onCancel={() => setIsEditUserDialogOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage Permissions Dialog */}
+      <Dialog open={isPermissionsDialogOpen} onOpenChange={setIsPermissionsDialogOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Gestionar Permisos</DialogTitle>
+            <DialogDescription>Configura los permisos específicos para {selectedUser?.name}</DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <PermissionsForm
+              user={selectedUser}
+              onSubmit={handleUpdatePermissions}
+              permissions={groupedPermissions}
+              onCancel={() => setIsPermissionsDialogOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -552,6 +761,162 @@ function RoleForm({
           Cancelar
         </Button>
         <Button type="submit">Crear Rol</Button>
+      </div>
+    </form>
+  )
+}
+
+// Edit User Form Component
+function EditUserForm({
+  user,
+  onSubmit,
+  roles,
+  onCancel,
+}: {
+  user: User
+  onSubmit: (data: Partial<User>) => void
+  roles: Role[]
+  onCancel: () => void
+}) {
+  const [formData, setFormData] = useState({
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    status: user.status,
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSubmit(formData)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="editName">Nombre completo</Label>
+          <Input
+            id="editName"
+            value={formData.name}
+            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="editEmail">Correo electrónico</Label>
+          <Input
+            id="editEmail"
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+            required
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="editRole">Rol</Label>
+          <Select value={formData.role} onValueChange={(value) => setFormData((prev) => ({ ...prev, role: value }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar rol" />
+            </SelectTrigger>
+            <SelectContent>
+              {roles.map((role) => (
+                <SelectItem key={role.id} value={role.name}>
+                  {role.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="editStatus">Estado</Label>
+          <Select
+            value={formData.status}
+            onValueChange={(value: "active" | "inactive") => setFormData((prev) => ({ ...prev, status: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Activo</SelectItem>
+              <SelectItem value="inactive">Inactivo</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit">Actualizar Usuario</Button>
+      </div>
+    </form>
+  )
+}
+
+// Permissions Form Component
+function PermissionsForm({
+  user,
+  onSubmit,
+  permissions,
+  onCancel,
+}: {
+  user: User
+  onSubmit: (permissions: string[]) => void
+  permissions: Record<string, typeof AVAILABLE_PERMISSIONS>
+  onCancel: () => void
+}) {
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>(user.permissions)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSubmit(selectedPermissions)
+  }
+
+  const togglePermission = (permissionId: string) => {
+    setSelectedPermissions((prev) =>
+      prev.includes(permissionId) ? prev.filter((p) => p !== permissionId) : [...prev, permissionId],
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <h4 className="font-medium mb-2">Usuario: {user.name}</h4>
+        <p className="text-sm text-gray-600">Rol actual: {user.role}</p>
+      </div>
+
+      <div>
+        <Label>Permisos específicos</Label>
+        <div className="mt-2 space-y-4 max-h-96 overflow-y-auto border rounded-lg p-4">
+          {Object.entries(permissions).map(([category, categoryPermissions]) => (
+            <div key={category}>
+              <h4 className="font-medium text-sm text-gray-700 mb-2">{category}</h4>
+              <div className="space-y-2 ml-4">
+                {categoryPermissions.map((permission) => (
+                  <div key={permission.id} className="flex items-center space-x-2">
+                    <Switch
+                      id={`perm-${permission.id}`}
+                      checked={selectedPermissions.includes(permission.id)}
+                      onCheckedChange={() => togglePermission(permission.id)}
+                    />
+                    <Label htmlFor={`perm-${permission.id}`} className="text-sm">
+                      {permission.name}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit">Actualizar Permisos</Button>
       </div>
     </form>
   )
