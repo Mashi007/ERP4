@@ -4,6 +4,27 @@ import { RevenueKPIs } from "@/components/dashboard/revenue-kpis"
 import { WonLostPercent, ListCurrency, ListCount, TareasPorPropietario } from "@/components/dashboard/charts"
 import { DbStatusBanner } from "@/components/dashboard/db-status"
 import { getOrgCurrency } from "@/lib/org-settings"
+import { industryOptions, sourceOptions } from "@/lib/options"
+
+async function getResponsibleUsers() {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/users`, {
+      cache: "no-store",
+    })
+    if (response.ok) {
+      const users = await response.json()
+      return Array.isArray(users) ? users : []
+    }
+  } catch (error) {
+    console.error("Error fetching users:", error)
+  }
+
+  // Return default users if API fails
+  return [
+    { id: "admin-1", name: "Administrador" },
+    { id: "comercial-1", name: "Comercial Principal" },
+  ]
+}
 
 export default async function DashboardPage({
   searchParams,
@@ -18,33 +39,17 @@ export default async function DashboardPage({
   // Nota: industry/source hoy no filtran en el servidor, pero se mantienen en la URL para sincronizar la UI.
   const industry = typeof searchParams.industry === "string" ? searchParams.industry : undefined
   const source = typeof searchParams.source === "string" ? searchParams.source : undefined
+  const responsibleUser = typeof searchParams.responsibleUser === "string" ? searchParams.responsibleUser : undefined
   void industry
   void source
+  void responsibleUser
 
   const data = await getDashboardData({ from, to })
+  const responsibleUsers = await getResponsibleUsers()
 
-  // Opciones para selects; usar valores del servidor si existen, de lo contrario valores estáticos
-  const fallbackIndustries = [
-    "Tecnología",
-    "Software",
-    "Startup",
-    "Manufactura",
-    "Consultoría",
-    "Marketing",
-    "Educación",
-  ]
-  const fallbackSources = [
-    "Referido",
-    "Website",
-    "Redes Sociales",
-    "Evento",
-    "Cliente Existente",
-    "Email Marketing",
-    "Llamada Fría",
-    "N/A",
-  ]
-  const industryOptions = (data.filters?.industries ?? []).length ? data.filters.industries : fallbackIndustries
-  const sourceOptions = (data.filters?.sources ?? []).length ? data.filters.sources : fallbackSources
+  // Use imported options instead of fallback arrays
+  const industryOptionsToUse = (data.filters?.industries ?? []).length ? data.filters.industries : industryOptions
+  const sourceOptionsToUse = (data.filters?.sources ?? []).length ? data.filters.sources : sourceOptions
 
   // Agregar pronóstico por etapa (sumando por etapa los valores de cada trimestre)
   const forecastTotalsMap = new Map<string, number>()
@@ -61,7 +66,11 @@ export default async function DashboardPage({
       </div>
 
       <div className="mb-6">
-        <DateFilters industries={industryOptions} sources={sourceOptions} />
+        <DateFilters
+          industries={industryOptionsToUse}
+          sources={sourceOptionsToUse}
+          responsibleUsers={responsibleUsers}
+        />
       </div>
 
       <div className="mb-6">
