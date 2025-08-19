@@ -82,6 +82,8 @@ export default function ProyectosPage() {
   const [selectedProject, setSelectedProject] = useState<any>(null)
   const [showDetails, setShowDetails] = useState(false)
   const [itemsPerPage, setItemsPerPage] = useState("10")
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editedProject, setEditedProject] = useState<any>(null)
 
   const sharedDocuments = [
     // Empty for now to match the "No se ha encontrado ningún registro" state
@@ -118,11 +120,42 @@ export default function ProyectosPage() {
   const handleViewDetails = (project: any) => {
     setSelectedProject(project)
     setShowDetails(true)
+    setIsEditMode(false)
+    setEditedProject(null)
+  }
+
+  const handleEditProject = () => {
+    setIsEditMode(true)
+    setEditedProject({ ...selectedProject })
+    console.log("[v0] Edit mode activated for project:", selectedProject.name)
+  }
+
+  const handleSaveProject = () => {
+    if (editedProject) {
+      console.log("[v0] Saving project changes:", editedProject)
+      setSelectedProject(editedProject)
+      setIsEditMode(false)
+      setEditedProject(null)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false)
+    setEditedProject(null)
+    console.log("[v0] Edit mode cancelled")
+  }
+
+  const handleFieldUpdate = (field: string, value: string) => {
+    if (editedProject) {
+      setEditedProject({
+        ...editedProject,
+        [field]: value,
+      })
+    }
   }
 
   const handleMenuAction = (action: string, project: any) => {
     console.log(`[v0] Menu action: ${action} for project:`, project.name)
-    // Here you would implement the actual functionality for each action
   }
 
   return (
@@ -196,7 +229,9 @@ export default function ProyectosPage() {
               <Button variant="ghost" size="sm" onClick={() => setShowDetails(false)} className="hover:bg-gray-100">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <DialogTitle className="text-2xl font-bold text-[#1A4F7A]">Detalles del Proyecto</DialogTitle>
+              <DialogTitle className="text-2xl font-bold text-[#1A4F7A]">
+                {isEditMode ? "Editando Proyecto" : "Detalles del Proyecto"}
+              </DialogTitle>
             </div>
           </DialogHeader>
 
@@ -251,9 +286,18 @@ export default function ProyectosPage() {
                           </div>
                         </TableCell>
                         <TableCell className="py-6 px-8">
-                          <div className="text-blue-600 cursor-pointer font-medium hover:text-blue-800">
-                            {selectedProject.client}
-                          </div>
+                          {isEditMode ? (
+                            <input
+                              type="text"
+                              value={editedProject?.client || selectedProject.client}
+                              onChange={(e) => handleFieldUpdate("client", e.target.value)}
+                              className="w-full p-2 border rounded text-blue-600 font-medium"
+                            />
+                          ) : (
+                            <div className="text-blue-600 cursor-pointer font-medium hover:text-blue-800">
+                              {selectedProject.client}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell className="py-6 px-8">
                           <div className="font-semibold text-gray-900">{selectedProject.projectCode}</div>
@@ -262,9 +306,18 @@ export default function ProyectosPage() {
                           </div>
                         </TableCell>
                         <TableCell className="py-6 px-8">
-                          <div className="text-blue-600 cursor-pointer hover:text-blue-800 whitespace-pre-line">
-                            {selectedProject.linkedServices}
-                          </div>
+                          {isEditMode ? (
+                            <textarea
+                              value={editedProject?.linkedServices || selectedProject.linkedServices}
+                              onChange={(e) => handleFieldUpdate("linkedServices", e.target.value)}
+                              className="w-full p-2 border rounded text-blue-600 resize-none"
+                              rows={3}
+                            />
+                          ) : (
+                            <div className="text-blue-600 cursor-pointer hover:text-blue-800 whitespace-pre-line">
+                              {selectedProject.linkedServices}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell className="py-6 px-8">
                           <Badge className="bg-purple-100 text-purple-800 text-sm px-3 py-1 mb-2">Pend. Iniciar</Badge>
@@ -279,9 +332,18 @@ export default function ProyectosPage() {
                           <Badge className="bg-red-500 text-white text-sm px-3 py-1">NO</Badge>
                         </TableCell>
                         <TableCell className="py-6 px-8">
-                          <div className="text-blue-600 font-medium hover:text-blue-800 cursor-pointer">
-                            {selectedProject.certifyingCompany}
-                          </div>
+                          {isEditMode ? (
+                            <input
+                              type="text"
+                              value={editedProject?.certifyingCompany || selectedProject.certifyingCompany}
+                              onChange={(e) => handleFieldUpdate("certifyingCompany", e.target.value)}
+                              className="w-full p-2 border rounded text-blue-600 font-medium"
+                            />
+                          ) : (
+                            <div className="text-blue-600 font-medium hover:text-blue-800 cursor-pointer">
+                              {selectedProject.certifyingCompany}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell className="py-6 px-8">
                           <div className="space-y-1 text-sm">
@@ -303,53 +365,55 @@ export default function ProyectosPage() {
                           <div className="text-sm font-medium">{selectedProject.projectManager}</div>
                         </TableCell>
                         <TableCell className="py-6 px-8">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="hover:bg-gray-100">
-                                <MoreHorizontal className="h-5 w-5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-64">
-                              <DropdownMenuItem onClick={() => handleMenuAction("update-training", selectedProject)}>
-                                <FileText className="mr-2 h-4 w-4" />
-                                Actualizar Formación
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleMenuAction("share-documents", selectedProject)}>
-                                <Share className="mr-2 h-4 w-4" />
-                                Compartir Documentos
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleMenuAction("update-status", selectedProject)}>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Actualizar Estado
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleMenuAction("edit-standards", selectedProject)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Editar/Actualizar Normas
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleMenuAction("validate-project", selectedProject)}>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Validar Proyecto
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleMenuAction("add-certifying-company", selectedProject)}
-                              >
-                                <Building className="mr-2 h-4 w-4" />
-                                Añadir Empresa Certificadora
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleMenuAction("add-auditing-company", selectedProject)}
-                              >
-                                <Building className="mr-2 h-4 w-4" />
-                                Añadir Empresa Auditora
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleMenuAction("add-project-manager", selectedProject)}
-                              >
-                                <UserPlus className="mr-2 h-4 w-4" />
-                                Añadir Jefe de Proyecto
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          {!isEditMode && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="hover:bg-gray-100">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-64">
+                                <DropdownMenuItem onClick={() => handleMenuAction("update-training", selectedProject)}>
+                                  <FileText className="mr-2 h-4 w-4" />
+                                  Actualizar Formación
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleMenuAction("share-documents", selectedProject)}>
+                                  <Share className="mr-2 h-4 w-4" />
+                                  Compartir Documentos
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleMenuAction("update-status", selectedProject)}>
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Actualizar Estado
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleMenuAction("edit-standards", selectedProject)}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Editar/Actualizar Normas
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleMenuAction("validate-project", selectedProject)}>
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Validar Proyecto
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleMenuAction("add-certifying-company", selectedProject)}
+                                >
+                                  <Building className="mr-2 h-4 w-4" />
+                                  Añadir Empresa Certificadora
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleMenuAction("add-auditing-company", selectedProject)}
+                                >
+                                  <Building className="mr-2 h-4 w-4" />
+                                  Añadir Empresa Auditora
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleMenuAction("add-project-manager", selectedProject)}
+                                >
+                                  <UserPlus className="mr-2 h-4 w-4" />
+                                  Añadir Jefe de Proyecto
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </TableCell>
                       </TableRow>
                     </TableBody>
@@ -460,21 +524,36 @@ export default function ProyectosPage() {
 
           <div className="flex-shrink-0 border-t pt-4 pb-2">
             <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                className="bg-transparent border-[#1A4F7A] text-[#1A4F7A] hover:bg-[#1A4F7A] hover:text-white"
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Editar
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowDetails(false)}
-                className="bg-transparent border-gray-400 text-gray-600 hover:bg-gray-100"
-              >
-                Cerrar
-              </Button>
-              <Button className="bg-[#1A4F7A] hover:bg-[#1A4F7A]/90 text-white">Guardar</Button>
+              {isEditMode ? (
+                <>
+                  <Button onClick={handleSaveProject} className="bg-[#1A4F7A] hover:bg-[#1A4F7A]/90 text-white">
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Guardar Cambios
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleCancelEdit}
+                    className="bg-transparent border-gray-400 text-gray-600 hover:bg-gray-100"
+                  >
+                    Cancelar
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button onClick={handleEditProject} className="bg-[#1A4F7A] hover:bg-[#1A4F7A]/90 text-white">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDetails(false)}
+                    className="bg-transparent border-gray-400 text-gray-600 hover:bg-gray-100"
+                  >
+                    Cerrar
+                  </Button>
+                  <Button className="bg-[#1A4F7A] hover:bg-[#1A4F7A]/90 text-white">Guardar</Button>
+                </>
+              )}
             </div>
           </div>
         </DialogContent>
