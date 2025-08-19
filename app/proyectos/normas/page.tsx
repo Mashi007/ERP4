@@ -8,7 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, ChevronUp, ChevronDown, MoreHorizontal } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Plus, ChevronUp, ChevronDown, MoreHorizontal, X } from "lucide-react"
 
 export default function GestNormasPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -17,6 +20,13 @@ export default function GestNormasPage() {
   const [selectedItems, setSelectedItems] = useState<number[]>([])
   const [sortField, setSortField] = useState<string>("")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [formData, setFormData] = useState({
+    nombre: "",
+    consultores: "",
+    presupuestos: "",
+  })
 
   const [normas] = useState([
     // Empty array to show "No hay isos registradas" state as shown in image
@@ -45,6 +55,25 @@ export default function GestNormasPage() {
     } else {
       setSelectedItems(selectedItems.filter((item) => item !== id))
     }
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
+  }
+
+  const handleSave = () => {
+    // TODO: Implement save functionality
+    console.log("Saving norma:", formData)
+    setIsDialogOpen(false)
+    setFormData({ nombre: "", consultores: "", presupuestos: "" })
+  }
+
+  const handleCancel = () => {
+    setIsDialogOpen(false)
+    setFormData({ nombre: "", consultores: "", presupuestos: "" })
   }
 
   const SortButton = ({ field, children }: { field: string; children: React.ReactNode }) => (
@@ -91,10 +120,88 @@ export default function GestNormasPage() {
               />
             </div>
           </div>
-          <Button className="bg-[#6366f1] hover:bg-[#5b5bd6] text-white">
-            <Plus className="mr-2 h-4 w-4" />
-            Crear Norma
-          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-[#6366f1] hover:bg-[#5b5bd6] text-white">
+                <Plus className="mr-2 h-4 w-4" />
+                Crear Norma
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader className="flex flex-row items-center justify-between">
+                <DialogTitle className="text-[#6366f1] text-lg font-medium">Crear Norma</DialogTitle>
+                <Button variant="ghost" size="sm" onClick={handleCancel} className="h-6 w-6 p-0">
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogHeader>
+
+              <div className="space-y-6 py-4">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="nombre" className="text-sm font-medium text-gray-700">
+                      Nombre <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="nombre"
+                      placeholder="Nombre de la ISO"
+                      value={formData.nombre}
+                      onChange={(e) => handleInputChange("nombre", e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="consultores" className="text-sm font-medium text-gray-700">
+                      Consultores
+                    </Label>
+                    <Select
+                      value={formData.consultores}
+                      onValueChange={(value) => handleInputChange("consultores", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar consultores" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="consultor1">Consultor 1</SelectItem>
+                        <SelectItem value="consultor2">Consultor 2</SelectItem>
+                        <SelectItem value="consultor3">Consultor 3</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="presupuestos" className="text-sm font-medium text-gray-700">
+                    Presupuestos
+                  </Label>
+                  <Textarea
+                    id="presupuestos"
+                    placeholder="Detalles del presupuesto..."
+                    value={formData.presupuestos}
+                    onChange={(e) => handleInputChange("presupuestos", e.target.value)}
+                    className="min-h-[100px] resize-none"
+                  />
+                </div>
+
+                <div className="text-sm text-red-500 bg-red-50 p-3 rounded-md">
+                  Los campos marcados con <span className="font-medium">*</span> son obligatorios
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button variant="outline" onClick={handleCancel} className="px-6 bg-transparent">
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={!formData.nombre.trim()}
+                  className="bg-[#6366f1] hover:bg-[#5b5bd6] text-white px-6"
+                >
+                  Guardar
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
