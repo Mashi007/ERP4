@@ -1505,6 +1505,71 @@ export default function OportunidadesPage() {
           {editingDeal && (
             <form onSubmit={handleUpdateDeal}>
               <div className="grid gap-6 py-4">
+                <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Briefcase className="h-5 w-5 text-orange-600" />
+                    <h3 className="text-lg font-semibold text-orange-800">Responsable Comercial</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit_responsible_user" className="text-orange-700 font-medium">
+                        Asignar Responsable *
+                      </Label>
+                      {isLoadingUsers ? (
+                        <div className="flex items-center gap-2 p-3 bg-white rounded-md border border-orange-300">
+                          <span className="text-sm text-orange-600">Cargando usuarios...</span>
+                        </div>
+                      ) : (
+                        <Select
+                          value={editingDeal?.responsible_user_id?.toString() || ""}
+                          onValueChange={(value) => {
+                            console.log("[v0] Updated commercial responsible:", value)
+                            if (editingDeal) {
+                              setEditingDeal({ ...editingDeal, responsible_user_id: value })
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-full bg-white border-orange-300 focus:border-orange-500">
+                            <SelectValue placeholder="Seleccionar responsable comercial" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {users.length === 0 ? (
+                              <SelectItem value="no-users" disabled>
+                                No hay usuarios disponibles
+                              </SelectItem>
+                            ) : (
+                              users.map((user) => (
+                                <SelectItem key={user.id} value={user.id.toString()}>
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={`w-3 h-3 rounded-full ${
+                                        user.role === "Comercial"
+                                          ? "bg-blue-500"
+                                          : user.role === "Administrador"
+                                            ? "bg-green-500"
+                                            : "bg-gray-500"
+                                      }`}
+                                    ></div>
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{user.name}</span>
+                                      <span className="text-xs text-gray-500">
+                                        {user.role || "Usuario"} • {user.email}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <p className="text-xs text-orange-700">
+                        Esta persona será responsable de gestionar y dar seguimiento a la oportunidad comercial.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-3">
                     <DollarSign className="h-5 w-5 text-blue-600" />
