@@ -19,7 +19,20 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
-import { Search, Plus, DollarSign, TrendingUp, User, Building, Mail, Phone, Edit, Save, X } from "lucide-react"
+import {
+  Search,
+  Plus,
+  DollarSign,
+  TrendingUp,
+  User,
+  Building,
+  Mail,
+  Phone,
+  Edit,
+  Save,
+  X,
+  UserCheck,
+} from "lucide-react"
 import { createOpportunityWithContact, updateOpportunity, deleteOpportunity, updateDealStage } from "../actions"
 import { toast } from "@/hooks/use-toast"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet"
@@ -752,28 +765,30 @@ export default function OportunidadesPage() {
               <div className="grid gap-6 py-4">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <DollarSign className="h-5 w-5 text-blue-600" />
-                    <h3 className="text-lg font-semibold">Información de la Oportunidad</h3>
+                    <UserCheck className="h-5 w-5 text-orange-600" />
+                    <h3 className="text-lg font-semibold">Responsable Comercial</h3>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2">
-                      <Label htmlFor="responsible_user">Usuario Responsable *</Label>
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <div className="space-y-3">
+                      <Label htmlFor="commercial_responsible" className="text-sm font-medium text-orange-800">
+                        Asignar Responsable Comercial *
+                      </Label>
                       {isLoadingUsers ? (
-                        <div className="flex items-center gap-2 p-2 border rounded">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                          <span className="text-sm text-gray-500">Cargando usuarios...</span>
+                        <div className="flex items-center gap-2 p-3 border border-orange-300 rounded-md bg-white">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600"></div>
+                          <span className="text-sm text-orange-600">Cargando usuarios...</span>
                         </div>
                       ) : (
                         <Select
                           value={newOpportunity.responsible_user_id || ""}
                           onValueChange={(value) => {
-                            console.log("[v0] Selected user:", value)
+                            console.log("[v0] Selected commercial responsible:", value)
                             setNewOpportunity({ ...newOpportunity, responsible_user_id: value })
                           }}
                         >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Seleccionar usuario responsable" />
+                          <SelectTrigger className="w-full bg-white border-orange-300 focus:border-orange-500">
+                            <SelectValue placeholder="Seleccionar responsable comercial" />
                           </SelectTrigger>
                           <SelectContent>
                             {users.length === 0 ? (
@@ -783,9 +798,22 @@ export default function OportunidadesPage() {
                             ) : (
                               users.map((user) => (
                                 <SelectItem key={user.id} value={user.id.toString()}>
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                    {user.name} - {user.role || "Usuario"}
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={`w-3 h-3 rounded-full ${
+                                        user.role === "Comercial"
+                                          ? "bg-blue-500"
+                                          : user.role === "Administrador"
+                                            ? "bg-green-500"
+                                            : "bg-gray-500"
+                                      }`}
+                                    ></div>
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{user.name}</span>
+                                      <span className="text-xs text-gray-500">
+                                        {user.role || "Usuario"} • {user.email}
+                                      </span>
+                                    </div>
                                   </div>
                                 </SelectItem>
                               ))
@@ -793,8 +821,20 @@ export default function OportunidadesPage() {
                           </SelectContent>
                         </Select>
                       )}
+                      <p className="text-xs text-orange-700">
+                        Esta persona será responsable de gestionar y dar seguimiento a la oportunidad comercial.
+                      </p>
                     </div>
+                  </div>
+                </div>
 
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <DollarSign className="h-5 w-5 text-blue-600" />
+                    <h3 className="text-lg font-semibold">Información de la Oportunidad</h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="title">Nombre de la Oportunidad *</Label>
                       <Input
