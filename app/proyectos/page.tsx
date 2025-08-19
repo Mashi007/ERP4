@@ -190,142 +190,174 @@ export default function ProyectosPage() {
       </div>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setShowDetails(false)}>
-                <ArrowLeft className="h-4 w-4" />
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[95vh] h-[95vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0 pb-4 border-b">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setShowDetails(false)} className="hover:bg-gray-100">
+                <ArrowLeft className="h-5 w-5" />
               </Button>
-              <DialogTitle className="text-xl text-[#1A4F7A]">Detalles del Proyecto</DialogTitle>
+              <DialogTitle className="text-2xl font-bold text-[#1A4F7A]">Detalles del Proyecto</DialogTitle>
             </div>
           </DialogHeader>
 
           {selectedProject && (
-            <div className="space-y-6">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead className="text-xs font-medium text-gray-600">#</TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">CLIENTE</TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">PROYECTO</TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">
-                        NORMA(S) SERVICIOS VINCULADOS DEL CONTRATO
-                      </TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">ESTADO PROYECTO DOCUMENTOS</TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">
-                        CENTRO DE FACTURACIÓN TIENE FORMACIÓN
-                      </TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">
-                        EMPRESA CERTIFICADORA AUDITORES
-                      </TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">
-                        FECHA COMPARTIDO FECHA VALIDACIÓN
-                      </TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">CONSULTORES</TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">JEFE DE PROYECTO</TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">ACCIONES</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="text-sm">
-                        <div className="text-blue-600 cursor-pointer">0027-25</div>
-                        <div className="text-blue-600 cursor-pointer text-xs">ID CONSULTING 2060 SL</div>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        <div className="text-blue-600 cursor-pointer">{selectedProject.client}</div>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        <div className="font-medium">{selectedProject.projectCode}</div>
-                        <div className="text-blue-600 text-xs mt-1">{selectedProject.associatedStandards}</div>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        <div className="text-blue-600 cursor-pointer">{selectedProject.linkedServices}</div>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        <Badge className="bg-purple-100 text-purple-800 text-xs">Pend. Iniciar</Badge>
-                        <div className="mt-1">
-                          <Badge className="bg-red-100 text-red-800 text-xs">Documentos Sin Compartir</Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        <div>{selectedProject.billingCenter}</div>
-                        <Badge className="bg-red-500 text-white text-xs mt-1">NO</Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        <div className="text-blue-600">{selectedProject.certifyingCompany}</div>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        <div className="text-xs">
-                          <div>Creado: {selectedProject.sharedDate.created}</div>
-                          <div>Aceptado: {selectedProject.sharedDate.accepted}</div>
-                          <div>Validado: {selectedProject.sharedDate.validated}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm">{selectedProject.consultants.join(", ")}</TableCell>
-                      <TableCell className="text-sm">{selectedProject.projectManager}</TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem onClick={() => handleMenuAction("update-training", selectedProject)}>
-                              <FileText className="mr-2 h-4 w-4" />
-                              Actualizar Formación
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleMenuAction("share-documents", selectedProject)}>
-                              <Share className="mr-2 h-4 w-4" />
-                              Compartir Documentos
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleMenuAction("update-status", selectedProject)}>
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Actualizar Estado
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleMenuAction("edit-standards", selectedProject)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar/Actualizar Normas
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleMenuAction("validate-project", selectedProject)}>
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Validar Proyecto
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleMenuAction("add-certifying-company", selectedProject)}
-                            >
-                              <Building className="mr-2 h-4 w-4" />
-                              Añadir Empresa Certificadora
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleMenuAction("add-auditing-company", selectedProject)}>
-                              <Building className="mr-2 h-4 w-4" />
-                              Añadir Empresa Auditora
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleMenuAction("add-project-manager", selectedProject)}>
-                              <UserPlus className="mr-2 h-4 w-4" />
-                              Añadir Jefe de Proyecto
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+            <div className="flex-1 overflow-y-auto space-y-8 py-6">
+              <div className="bg-white rounded-lg border shadow-sm">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gradient-to-r from-[#1A4F7A]/5 to-[#1A4F7A]/10 border-b-2 border-[#1A4F7A]/20">
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6">#</TableHead>
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6">CLIENTE</TableHead>
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6">PROYECTO</TableHead>
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6 min-w-[200px]">
+                          NORMA(S) SERVICIOS VINCULADOS DEL CONTRATO
+                        </TableHead>
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6 min-w-[180px]">
+                          ESTADO PROYECTO DOCUMENTOS
+                        </TableHead>
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6 min-w-[180px]">
+                          CENTRO DE FACTURACIÓN TIENE FORMACIÓN
+                        </TableHead>
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6 min-w-[180px]">
+                          EMPRESA CERTIFICADORA AUDITORES
+                        </TableHead>
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6 min-w-[160px]">
+                          FECHA COMPARTIDO FECHA VALIDACIÓN
+                        </TableHead>
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6">CONSULTORES</TableHead>
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6">
+                          JEFE DE PROYECTO
+                        </TableHead>
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6">ACCIONES</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow className="hover:bg-gray-50/50 transition-colors">
+                        <TableCell className="py-6 px-6">
+                          <div className="text-blue-600 cursor-pointer font-medium hover:text-blue-800">0027-25</div>
+                          <div className="text-blue-600 cursor-pointer text-sm hover:text-blue-800">
+                            ID CONSULTING 2060 SL
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-6 px-6">
+                          <div className="text-blue-600 cursor-pointer font-medium hover:text-blue-800">
+                            {selectedProject.client}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-6 px-6">
+                          <div className="font-semibold text-gray-900">{selectedProject.projectCode}</div>
+                          <div className="text-blue-600 text-sm mt-2 hover:text-blue-800 cursor-pointer">
+                            {selectedProject.associatedStandards}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-6 px-6">
+                          <div className="text-blue-600 cursor-pointer hover:text-blue-800 whitespace-pre-line">
+                            {selectedProject.linkedServices}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-6 px-6">
+                          <Badge className="bg-purple-100 text-purple-800 text-sm px-3 py-1 mb-2">Pend. Iniciar</Badge>
+                          <div>
+                            <Badge className="bg-red-100 text-red-800 text-sm px-3 py-1">
+                              Documentos Sin Compartir
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-6 px-6">
+                          <div className="font-medium text-gray-900 mb-2">{selectedProject.billingCenter}</div>
+                          <Badge className="bg-red-500 text-white text-sm px-3 py-1">NO</Badge>
+                        </TableCell>
+                        <TableCell className="py-6 px-6">
+                          <div className="text-blue-600 font-medium hover:text-blue-800 cursor-pointer">
+                            {selectedProject.certifyingCompany}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-6 px-6">
+                          <div className="space-y-1 text-sm">
+                            <div>
+                              <span className="font-medium">Creado:</span> {selectedProject.sharedDate.created}
+                            </div>
+                            <div>
+                              <span className="font-medium">Aceptado:</span> {selectedProject.sharedDate.accepted}
+                            </div>
+                            <div>
+                              <span className="font-medium">Validado:</span> {selectedProject.sharedDate.validated}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-6 px-6">
+                          <div className="text-sm">{selectedProject.consultants.join(", ")}</div>
+                        </TableCell>
+                        <TableCell className="py-6 px-6">
+                          <div className="text-sm font-medium">{selectedProject.projectManager}</div>
+                        </TableCell>
+                        <TableCell className="py-6 px-6">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="hover:bg-gray-100">
+                                <MoreHorizontal className="h-5 w-5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-64">
+                              <DropdownMenuItem onClick={() => handleMenuAction("update-training", selectedProject)}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                Actualizar Formación
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleMenuAction("share-documents", selectedProject)}>
+                                <Share className="mr-2 h-4 w-4" />
+                                Compartir Documentos
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleMenuAction("update-status", selectedProject)}>
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Actualizar Estado
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleMenuAction("edit-standards", selectedProject)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Editar/Actualizar Normas
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleMenuAction("validate-project", selectedProject)}>
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Validar Proyecto
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleMenuAction("add-certifying-company", selectedProject)}
+                              >
+                                <Building className="mr-2 h-4 w-4" />
+                                Añadir Empresa Certificadora
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleMenuAction("add-auditing-company", selectedProject)}
+                              >
+                                <Building className="mr-2 h-4 w-4" />
+                                Añadir Empresa Auditora
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleMenuAction("add-project-manager", selectedProject)}
+                              >
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Añadir Jefe de Proyecto
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-red-500" />
-                  <h3 className="text-lg font-semibold text-blue-600">Documentos Compartidos</h3>
+              <div className="bg-white rounded-lg border shadow-sm p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <FileText className="h-6 w-6 text-red-500" />
+                  <h3 className="text-xl font-bold text-blue-600">Documentos Compartidos</h3>
                 </div>
 
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">Mostrar</span>
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium">Mostrar</span>
                     <Select value={itemsPerPage} onValueChange={setItemsPerPage}>
-                      <SelectTrigger className="w-20">
+                      <SelectTrigger className="w-24">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -334,27 +366,30 @@ export default function ProyectosPage() {
                         <SelectItem value="50">50</SelectItem>
                       </SelectContent>
                     </Select>
-                    <span className="text-sm">registros por página</span>
+                    <span className="text-sm font-medium">registros por página</span>
                   </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto border rounded-lg">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        <TableHead className="text-xs font-medium text-gray-600">URL DOCUMENTO</TableHead>
-                        <TableHead className="text-xs font-medium text-gray-600">URL AYUDA</TableHead>
-                        <TableHead className="text-xs font-medium text-gray-600">PERMISO</TableHead>
-                        <TableHead className="text-xs font-medium text-gray-600">FECHA ENVIADO</TableHead>
-                        <TableHead className="text-xs font-medium text-gray-600">ESTADO</TableHead>
-                        <TableHead className="text-xs font-medium text-gray-600">ACCIONES</TableHead>
+                      <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-6">URL DOCUMENTO</TableHead>
+                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-6">URL AYUDA</TableHead>
+                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-6">PERMISO</TableHead>
+                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-6">FECHA ENVIADO</TableHead>
+                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-6">ESTADO</TableHead>
+                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-6">ACCIONES</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {sharedDocuments.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                            No se ha encontrado ningún registro
+                          <TableCell colSpan={6} className="text-center py-12 text-gray-500">
+                            <div className="flex flex-col items-center gap-2">
+                              <FileText className="h-12 w-12 text-gray-300" />
+                              <span className="text-lg">No se ha encontrado ningún registro</span>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -368,7 +403,7 @@ export default function ProyectosPage() {
                             <TableCell>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm">
+                                  <Button variant="ghost" size="sm" className="hover:bg-gray-100">
                                     <MoreHorizontal className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
@@ -386,13 +421,13 @@ export default function ProyectosPage() {
                   </Table>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500">No hay registros disponibles</div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" disabled>
+                <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                  <div className="text-sm text-gray-500 font-medium">No hay registros disponibles</div>
+                  <div className="flex items-center gap-3">
+                    <Button variant="outline" size="sm" disabled className="px-4 bg-transparent">
                       Anterior
                     </Button>
-                    <Button variant="outline" size="sm" disabled>
+                    <Button variant="outline" size="sm" disabled className="px-4 bg-transparent">
                       Siguiente
                     </Button>
                   </div>
