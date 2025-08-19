@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Plus, Calendar, Users, ArrowLeft, X } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
 export default function ProyectosPage() {
   const [projects] = useState([
@@ -96,12 +95,227 @@ export default function ProyectosPage() {
     }
   }
 
-  const [showDetails, setShowDetails] = useState(false)
+  const [showFullScreenDetails, setShowFullScreenDetails] = useState(false)
   const [selectedProject, setSelectedProject] = useState<any>(null)
 
   const handleShowDetails = (project: any) => {
     setSelectedProject(project)
-    setShowDetails(true)
+    setShowFullScreenDetails(true)
+  }
+
+  const handleBackToProjects = () => {
+    setShowFullScreenDetails(false)
+    setSelectedProject(null)
+  }
+
+  if (showFullScreenDetails && selectedProject) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b shadow-sm">
+          <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBackToProjects}
+                className="flex items-center gap-2 text-[#1A4F7A] hover:bg-[#1A4F7A]/10"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Volver a Proyectos
+              </Button>
+              <h1 className="text-2xl font-bold text-[#1A4F7A]">Detalles del Proyecto</h1>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="bg-white rounded-lg border shadow-sm p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Mostrar</span>
+                  <select className="border rounded-lg px-3 py-2 text-sm bg-white min-w-[80px]">
+                    <option>25</option>
+                    <option>50</option>
+                    <option>100</option>
+                  </select>
+                  <span className="text-sm text-gray-600">registros por página</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Buscar:</span>
+                  <input
+                    type="text"
+                    className="border rounded-lg px-3 py-2 text-sm min-w-[200px]"
+                    placeholder="Buscar proyectos..."
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" className="bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white">
+                    📊
+                  </Button>
+                  <Button size="sm" className="bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white">
+                    📄
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      #
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Cliente
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Proyecto
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Norma(s) Servicios Vinculados del Contrato
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Estado Proyecto Documentos
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Centro de Facturación Tiene Formación
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Empresa Certificadora Auditores
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Fecha Compartido Fecha Validación
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Consultores
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Jefe de Proyecto
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-4 py-4 text-sm">
+                      <div className="text-blue-600 font-medium">{selectedProject.details.number}</div>
+                      <div className="text-blue-500 text-xs">{selectedProject.details.project}</div>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-blue-600 font-medium">{selectedProject.details.client}</td>
+                    <td className="px-4 py-4 text-sm">
+                      <div className="font-medium text-gray-900">{selectedProject.details.project}</div>
+                    </td>
+                    <td className="px-4 py-4 text-sm">
+                      <div className="text-blue-600 font-medium">{selectedProject.details.linkedServices}</div>
+                      <div className="text-gray-600 text-xs">Certificación ISO</div>
+                      <div className="text-blue-600 text-xs mt-1">🔗 {selectedProject.details.associatedStandards}</div>
+                    </td>
+                    <td className="px-4 py-4 text-sm">
+                      <Badge className="bg-blue-100 text-blue-800 mb-1">{selectedProject.details.projectStatus}</Badge>
+                      <div className="text-red-600 text-xs font-medium">{selectedProject.details.documents}</div>
+                    </td>
+                    <td className="px-4 py-4 text-sm">
+                      <div className="text-gray-900 mb-1 font-medium">{selectedProject.details.billingCenter}</div>
+                      <Badge className="bg-red-500 text-white">{selectedProject.details.hasTraining}</Badge>
+                    </td>
+                    <td className="px-4 py-4 text-sm">
+                      <div className="text-blue-600 mb-1 font-medium">{selectedProject.details.certifyingCompany}</div>
+                      <div className="text-blue-600 font-medium">{selectedProject.details.auditors}</div>
+                    </td>
+                    <td className="px-4 py-4 text-sm">
+                      <div className="text-gray-600 text-xs mb-1">{selectedProject.details.sharedDate}</div>
+                      <div className="text-gray-600 text-xs">{selectedProject.details.validationDate}</div>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-600">{selectedProject.details.consultants}</td>
+                    <td className="px-4 py-4 text-sm text-gray-600">{selectedProject.details.projectManager}</td>
+                    <td className="px-4 py-4 text-sm">
+                      <Button variant="ghost" size="sm" className="p-1">
+                        <span className="text-gray-400 text-lg">⋮</span>
+                      </Button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border shadow-sm">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-red-500 text-xl">📎</span>
+                <h2 className="text-xl font-bold text-blue-600">Documentos Compartidos</h2>
+              </div>
+
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Mostrar</span>
+                  <select className="border rounded-lg px-3 py-2 text-sm bg-white">
+                    <option>10</option>
+                    <option>25</option>
+                    <option>50</option>
+                  </select>
+                  <span className="text-sm text-gray-600">registros por página</span>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        URL Documento
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        URL Ayuda
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Permiso
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Fecha Enviado
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Estado
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white">
+                    <tr>
+                      <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
+                        No se ha encontrado ningún registro
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex items-center justify-between mt-6 text-sm text-gray-600">
+                <span>No hay registros disponibles</span>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" disabled>
+                    ← Anterior
+                  </Button>
+                  <Button variant="outline" size="sm" disabled>
+                    Siguiente →
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -112,7 +326,8 @@ export default function ProyectosPage() {
           <p className="text-muted-foreground">Gestiona y supervisa todos los proyectos de la organización</p>
         </div>
         <Button className="bg-[#1A4F7A] hover:bg-[#1A4F7A]/90">
-          <Plus className="mr-2 h-4 w-4" />
+          {/* Placeholder for Plus icon */}
+          <span className="mr-2 h-4 w-4">+</span>
           Nuevo Proyecto
         </Button>
       </div>
@@ -138,14 +353,15 @@ export default function ProyectosPage() {
               </div>
 
               <div className="space-y-2 text-sm text-muted-foreground">
+                {/* Placeholder for Calendar and Users icons */}
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
+                  <span className="mr-2 h-4 w-4">📅</span>
                   <span>
                     {project.startDate} - {project.endDate}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
+                  <span className="mr-2 h-4 w-4">👥</span>
                   <span>{project.team.length} miembros</span>
                 </div>
               </div>
@@ -167,206 +383,6 @@ export default function ProyectosPage() {
           </Card>
         ))}
       </div>
-
-      <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="fixed inset-2 w-[calc(100vw-1rem)] h-[calc(100vh-1rem)] max-w-none max-h-none overflow-hidden flex flex-col m-0 p-0 rounded-lg border shadow-2xl bg-white">
-          <DialogHeader className="flex-row items-center justify-between space-y-0 pb-4 border-b px-8 pt-6 bg-gradient-to-r from-[#1A4F7A] to-[#2563eb] text-white">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowDetails(false)}
-                className="p-2 hover:bg-white/20 text-white"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <DialogTitle className="text-2xl font-bold">Detalles del Proyecto</DialogTitle>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowDetails(false)}
-              className="p-2 hover:bg-white/20 text-white"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-auto px-8 py-6 space-y-8 bg-gray-50">
-            {selectedProject && (
-              <>
-                <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[1600px]">
-                      <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
-                        <tr>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[8%]">
-                            #
-                          </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[12%]">
-                            Cliente
-                          </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[10%]">
-                            Proyecto
-                          </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[15%]">
-                            Norma(s) Servicios Vinculados
-                          </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[12%]">
-                            Estado Proyecto Documentos
-                          </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[12%]">
-                            Centro Facturación
-                          </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[12%]">
-                            Empresa Certificadora
-                          </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[12%]">
-                            Fecha Compartido
-                          </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[8%]">
-                            Consultores
-                          </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[8%]">
-                            Jefe Proyecto
-                          </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[6%]">
-                            Acciones
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        <tr className="hover:bg-gray-50">
-                          <td className="px-4 py-5 text-sm text-blue-600 font-medium">
-                            {selectedProject.details.number}
-                            <br />
-                            <span className="text-blue-500 text-xs">{selectedProject.details.project}</span>
-                          </td>
-                          <td className="px-4 py-5 text-sm text-blue-600 font-medium">
-                            {selectedProject.details.client}
-                          </td>
-                          <td className="px-4 py-5 text-sm">
-                            <div className="text-gray-900 font-semibold">{selectedProject.details.project}</div>
-                            <div className="text-blue-600 text-xs mt-1">
-                              🔗 {selectedProject.details.associatedStandards}
-                            </div>
-                          </td>
-                          <td className="px-4 py-5 text-sm">
-                            <div className="text-blue-600 font-medium">{selectedProject.details.linkedServices}</div>
-                            <div className="text-gray-600 text-xs mt-1">Certificación ISO</div>
-                          </td>
-                          <td className="px-4 py-5 text-sm">
-                            <Badge className="bg-blue-100 text-blue-800 mb-2 font-medium">
-                              {selectedProject.details.projectStatus}
-                            </Badge>
-                            <div className="text-red-600 text-xs font-medium">{selectedProject.details.documents}</div>
-                          </td>
-                          <td className="px-4 py-5 text-sm">
-                            <div className="text-gray-900 mb-2 font-medium">
-                              {selectedProject.details.billingCenter}
-                            </div>
-                            <Badge className="bg-red-500 text-white font-medium">
-                              {selectedProject.details.hasTraining}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-5 text-sm">
-                            <div className="text-blue-600 mb-1 font-medium">
-                              {selectedProject.details.certifyingCompany}
-                            </div>
-                            <div className="text-blue-600 font-medium">{selectedProject.details.auditors}</div>
-                          </td>
-                          <td className="px-4 py-5 text-sm">
-                            <div className="text-gray-600 text-xs mb-1">{selectedProject.details.sharedDate}</div>
-                            <div className="text-gray-600 text-xs">{selectedProject.details.validationDate}</div>
-                          </td>
-                          <td className="px-4 py-5 text-sm text-gray-600 font-medium">
-                            {selectedProject.details.consultants}
-                          </td>
-                          <td className="px-4 py-5 text-sm text-gray-600 font-medium">
-                            {selectedProject.details.projectManager}
-                          </td>
-                          <td className="px-4 py-5 text-sm">
-                            <Button variant="ghost" size="sm" className="p-2 hover:bg-gray-100">
-                              <span className="text-gray-400 text-lg">⋮</span>
-                            </Button>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-xl border shadow-sm">
-                  <div className="p-8">
-                    <div className="flex items-center gap-3 mb-6">
-                      <span className="text-red-500 text-xl">📎</span>
-                      <h3 className="text-xl font-bold text-blue-600">Documentos Compartidos</h3>
-                    </div>
-
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600 font-medium">Mostrar</span>
-                        <select className="border rounded-lg px-3 py-2 text-sm font-medium bg-white">
-                          <option>10</option>
-                          <option>25</option>
-                          <option>50</option>
-                        </select>
-                        <span className="text-sm text-gray-600 font-medium">registros por página</span>
-                      </div>
-                    </div>
-
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[1200px]">
-                        <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
-                          <tr>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                              URL Documento
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                              URL Ayuda
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                              Permiso
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                              Fecha Enviado
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                              Estado
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                              Acciones
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white">
-                          <tr>
-                            <td colSpan={6} className="px-6 py-16 text-center text-gray-500 text-xl">
-                              No se ha encontrado ningún registro
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-6 text-sm text-gray-600">
-                      <span className="font-medium">No hay registros disponibles</span>
-                      <div className="flex items-center gap-3">
-                        <Button variant="outline" size="sm" disabled className="px-4 py-2 bg-transparent">
-                          ← Anterior
-                        </Button>
-                        <Button variant="outline" size="sm" disabled className="px-4 py-2 bg-transparent">
-                          Siguiente →
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
