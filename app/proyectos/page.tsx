@@ -101,6 +101,7 @@ export default function ProyectosPage() {
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editingValue, setEditingValue] = useState<string>("")
   const [editingProject, setEditingProject] = useState<any>(null)
+  const [observations, setObservations] = useState<string>("")
 
   const handleShowDetails = (project: any) => {
     setSelectedProject(project)
@@ -116,6 +117,7 @@ export default function ProyectosPage() {
     setEditingProject(project)
     setEditingField("hasTraining")
     setEditingValue(project.details.hasTraining)
+    setObservations("")
   }
 
   const handleShareDocuments = (project: any) => {
@@ -165,16 +167,21 @@ export default function ProyectosPage() {
       // Update the project data
       editingProject.details[editingField] = editingValue
       console.log(`[v0] Updated ${editingField}:`, editingValue)
+      if (editingField === "hasTraining" && observations) {
+        console.log(`[v0] Training observations:`, observations)
+      }
     }
     setEditingField(null)
     setEditingValue("")
     setEditingProject(null)
+    setObservations("")
   }
 
   const handleCancelEdit = () => {
     setEditingField(null)
     setEditingValue("")
     setEditingProject(null)
+    setObservations("")
   }
 
   const getFieldDisplayName = (field: string) => {
@@ -197,17 +204,35 @@ export default function ProyectosPage() {
         {editingField && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-96 max-w-md">
-              <h3 className="text-lg font-semibold mb-4 text-[#1A4F7A]">Editar {getFieldDisplayName(editingField)}</h3>
+              <h3 className="text-lg font-semibold mb-4 text-[#1A4F7A]">
+                {editingField === "hasTraining"
+                  ? "Actualizar Formación del Proyecto"
+                  : `Editar ${getFieldDisplayName(editingField)}`}
+              </h3>
               <div className="space-y-4">
                 {editingField === "hasTraining" ? (
-                  <select
-                    value={editingValue}
-                    onChange={(e) => setEditingValue(e.target.value)}
-                    className="w-full border rounded-lg px-3 py-2"
-                  >
-                    <option value="SI">SI</option>
-                    <option value="NO">NO</option>
-                  </select>
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Tiene Formación</label>
+                      <select
+                        value={editingValue}
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        className="w-full border rounded-lg px-3 py-2"
+                      >
+                        <option value="SI">SI</option>
+                        <option value="NO">NO</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Observaciones</label>
+                      <textarea
+                        value={observations}
+                        onChange={(e) => setObservations(e.target.value)}
+                        className="w-full border rounded-lg px-3 py-2 h-24 resize-none"
+                        placeholder="Ingrese observaciones sobre la formación..."
+                      />
+                    </div>
+                  </>
                 ) : editingField === "projectStatus" ? (
                   <select
                     value={editingValue}
@@ -229,7 +254,7 @@ export default function ProyectosPage() {
                 )}
               </div>
               <div className="flex gap-3 mt-6">
-                <Button onClick={handleSaveField} className="flex-1 bg-[#1A4F7A] hover:bg-[#1A4F7A]/90">
+                <Button onClick={handleSaveField} className="flex-1 bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white">
                   Guardar
                 </Button>
                 <Button onClick={handleCancelEdit} variant="outline" className="flex-1 bg-transparent">
