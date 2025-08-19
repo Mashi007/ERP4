@@ -16,7 +16,6 @@ type Props = {
   initialTo?: string
   initialIndustry?: string
   initialSource?: string
-  initialSegmentBy?: string
 }
 
 export function DateFilters({
@@ -26,7 +25,6 @@ export function DateFilters({
   initialTo = "",
   initialIndustry = "",
   initialSource = "",
-  initialSegmentBy = "",
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -38,13 +36,11 @@ export function DateFilters({
   const urlTo = sp.get("to") || initialTo
   const urlIndustry = sp.get("industry") || initialIndustry
   const urlSource = sp.get("source") || initialSource
-  const urlSegmentBy = sp.get("segmentBy") || initialSegmentBy
 
   const [from, setFrom] = useState(urlFrom)
   const [to, setTo] = useState(urlTo)
   const [industry, setIndustry] = useState(urlIndustry)
   const [source, setSource] = useState(urlSource)
-  const [segmentBy, setSegmentBy] = useState(urlSegmentBy)
 
   // keep state in sync if URL changes elsewhere
   useEffect(() => {
@@ -52,9 +48,8 @@ export function DateFilters({
     if (urlTo !== to) setTo(urlTo)
     if (urlIndustry !== industry) setIndustry(urlIndustry)
     if (urlSource !== source) setSource(urlSource)
-    if (urlSegmentBy !== segmentBy) setSegmentBy(urlSegmentBy)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlFrom, urlTo, urlIndustry, urlSource, urlSegmentBy])
+  }, [urlFrom, urlTo, urlIndustry, urlSource])
 
   const canApply = useMemo(() => true, [])
 
@@ -70,9 +65,6 @@ export function DateFilters({
     else params.delete("industry")
     if (source) params.set("source", source)
     else params.delete("source")
-    // segmentBy (optional)
-    if (segmentBy) params.set("segmentBy", segmentBy)
-    else params.delete("segmentBy")
 
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`)
@@ -81,7 +73,7 @@ export function DateFilters({
 
   function reset() {
     const params = new URLSearchParams(sp.toString())
-    ;["from", "to", "industry", "source", "segmentBy"].forEach((k) => params.delete(k))
+    ;["from", "to", "industry", "source"].forEach((k) => params.delete(k))
     startTransition(() => {
       router.push(`${pathname}${params.toString() ? `?${params.toString()}` : ""}`)
     })
@@ -126,19 +118,6 @@ export function DateFilters({
                 {opt}
               </SelectItem>
             ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="grid gap-1 min-w-44">
-        <Label>Comparar por</Label>
-        <Select value={segmentBy} onValueChange={setSegmentBy}>
-          <SelectTrigger>
-            <SelectValue placeholder="—" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">—</SelectItem>
-            <SelectItem value="industry">Industria</SelectItem>
-            <SelectItem value="source">Fuente</SelectItem>
           </SelectContent>
         </Select>
       </div>
