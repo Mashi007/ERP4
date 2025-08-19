@@ -31,7 +31,7 @@ import {
   Edit,
   Save,
   X,
-  UserCheck,
+  Briefcase,
 } from "lucide-react"
 import { createOpportunityWithContact, updateOpportunity, deleteOpportunity, updateDealStage } from "../actions"
 import { toast } from "@/hooks/use-toast"
@@ -763,20 +763,18 @@ export default function OportunidadesPage() {
             {/* formulario de creación */}
             <form onSubmit={handleSubmit}>
               <div className="grid gap-6 py-4">
-                <div className="space-y-4">
+                <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
                   <div className="flex items-center gap-2 mb-3">
-                    <UserCheck className="h-5 w-5 text-orange-600" />
-                    <h3 className="text-lg font-semibold">Responsable Comercial</h3>
+                    <Briefcase className="h-5 w-5 text-orange-600" />
+                    <h3 className="text-lg font-semibold text-orange-800">Responsable Comercial</h3>
                   </div>
-
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                    <div className="space-y-3">
-                      <Label htmlFor="commercial_responsible" className="text-sm font-medium text-orange-800">
-                        Asignar Responsable Comercial *
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="responsible_user" className="text-orange-700 font-medium">
+                        Asignar Responsable *
                       </Label>
                       {isLoadingUsers ? (
-                        <div className="flex items-center gap-2 p-3 border border-orange-300 rounded-md bg-white">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600"></div>
+                        <div className="flex items-center gap-2 p-3 bg-white rounded-md border border-orange-300">
                           <span className="text-sm text-orange-600">Cargando usuarios...</span>
                         </div>
                       ) : (
@@ -1056,7 +1054,9 @@ export default function OportunidadesPage() {
                       <Label htmlFor="lead_source">Fuente del Lead</Label>
                       <Select
                         value={newOpportunity.lead_source}
-                        onValueChange={(value) => setNewOpportunity({ ...newOpportunity, lead_source: value })}
+                        onChange={(e) =>
+                          setNewOpportunity({ ...newOpportunity, lead_source: (e.target as HTMLSelectElement).value })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar fuente" />
@@ -1086,7 +1086,9 @@ export default function OportunidadesPage() {
                       <Label htmlFor="company_size">Tamaño de Empresa</Label>
                       <Select
                         value={newOpportunity.company_size}
-                        onValueChange={(value) => setNewOpportunity({ ...newOpportunity, company_size: value })}
+                        onChange={(e) =>
+                          setNewOpportunity({ ...newOpportunity, company_size: (e.target as HTMLSelectElement).value })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar tamaño" />
@@ -1104,7 +1106,9 @@ export default function OportunidadesPage() {
                       <Label htmlFor="budget_range">Rango de Presupuesto</Label>
                       <Select
                         value={newOpportunity.budget_range}
-                        onValueChange={(value) => setNewOpportunity({ ...newOpportunity, budget_range: value })}
+                        onChange={(e) =>
+                          setNewOpportunity({ ...newOpportunity, budget_range: (e.target as HTMLSelectElement).value })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar rango" />
@@ -1124,7 +1128,12 @@ export default function OportunidadesPage() {
                     <Label htmlFor="decision_timeline">Timeline de Decisión</Label>
                     <Select
                       value={newOpportunity.decision_timeline}
-                      onValueChange={(value) => setNewOpportunity({ ...newOpportunity, decision_timeline: value })}
+                      onChange={(e) =>
+                        setNewOpportunity({
+                          ...newOpportunity,
+                          decision_timeline: (e.target as HTMLSelectElement).value,
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="¿Cuándo planean decidir?" />
@@ -1581,7 +1590,9 @@ export default function OportunidadesPage() {
                       <Label htmlFor="edit_lead_source">Fuente del Lead</Label>
                       <Select
                         value={editingDeal.lead_source || ""}
-                        onValueChange={(value) => setEditingDeal({ ...editingDeal, lead_source: value })}
+                        onChange={(e) =>
+                          setEditingDeal({ ...editingDeal, lead_source: (e.target as HTMLSelectElement).value })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar fuente" />
