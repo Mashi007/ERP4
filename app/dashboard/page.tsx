@@ -5,26 +5,7 @@ import { WonLostPercent, ListCurrency, ListCount, TareasPorPropietario } from "@
 import { DbStatusBanner } from "@/components/dashboard/db-status"
 import { getOrgCurrency } from "@/lib/org-settings"
 import { industryOptions, sourceOptions } from "@/lib/options"
-
-async function getResponsibleUsers() {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/users`, {
-      cache: "no-store",
-    })
-    if (response.ok) {
-      const users = await response.json()
-      return Array.isArray(users) ? users : []
-    }
-  } catch (error) {
-    console.error("Error fetching users:", error)
-  }
-
-  // Return default users if API fails
-  return [
-    { id: "admin-1", name: "Administrador" },
-    { id: "comercial-1", name: "Comercial Principal" },
-  ]
-}
+import { getUsers } from "@/lib/users"
 
 export default async function DashboardPage({
   searchParams,
@@ -45,7 +26,7 @@ export default async function DashboardPage({
   void responsibleUser
 
   const data = await getDashboardData({ from, to })
-  const responsibleUsers = await getResponsibleUsers()
+  const responsibleUsers = await getUsers()
 
   // Use imported options instead of fallback arrays
   const industryOptionsToUse = (data.filters?.industries ?? []).length ? data.filters.industries : industryOptions
