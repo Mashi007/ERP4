@@ -19,7 +19,20 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
-import { Search, Plus, DollarSign, TrendingUp, User, Building, Mail, Phone, Edit, Save, X } from "lucide-react"
+import {
+  Search,
+  Plus,
+  DollarSign,
+  TrendingUp,
+  User,
+  Building,
+  Mail,
+  Phone,
+  Edit,
+  Save,
+  X,
+  Briefcase,
+} from "lucide-react"
 import { createOpportunityWithContact, updateOpportunity, deleteOpportunity, updateDealStage } from "../actions"
 import { toast } from "@/hooks/use-toast"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet"
@@ -43,6 +56,7 @@ interface Deal {
   id: number
   title: string
   company: string
+  comercial?: string
   contact_name?: string
   contact_email?: string
   contact_phone?: string
@@ -335,25 +349,26 @@ export default function OportunidadesPage() {
 
   const [newOpportunity, setNewOpportunity] = useState({
     title: "",
-    value: "",
-    stage: "Nuevo",
-    probability: "25",
-    expected_close_date: "",
-    notes: "",
+    company: "",
+    comercial: "",
     contact_name: "",
     contact_email: "",
     contact_phone: "",
-    company: "",
+    value: 0,
+    stage: "prospecto",
+    probability: 10,
+    expected_close_date: "",
+    notes: "",
     job_title: "",
-    contact_notes: "",
     lead_source: "",
     industry: "",
     company_size: "",
     budget_range: "",
     decision_timeline: "",
     pain_points: "",
-    competitors: "",
+    competitive_situation: "",
     next_steps: "",
+    last_contact_date: "",
   })
 
   const stages = ["Nuevo", "Calificación", "Propuesta", "Negociación", "Cierre", "Ganado", "Perdido"]
@@ -510,6 +525,7 @@ export default function OportunidadesPage() {
           pain_points: result.deal.pain_points,
           competitors: result.deal.competitors,
           next_steps: result.deal.next_steps,
+          comercial: result.deal.comercial,
         }
 
         setDeals([newDeal, ...deals])
@@ -521,25 +537,26 @@ export default function OportunidadesPage() {
         // Reset form and contact search UI
         setNewOpportunity({
           title: "",
-          value: "",
-          stage: "Nuevo",
-          probability: "25",
-          expected_close_date: "",
-          notes: "",
+          company: "",
+          comercial: "",
           contact_name: "",
           contact_email: "",
           contact_phone: "",
-          company: "",
+          value: 0,
+          stage: "prospecto",
+          probability: 10,
+          expected_close_date: "",
+          notes: "",
           job_title: "",
-          contact_notes: "",
           lead_source: "",
           industry: "",
           company_size: "",
           budget_range: "",
           decision_timeline: "",
           pain_points: "",
-          competitors: "",
+          competitive_situation: "",
           next_steps: "",
+          last_contact_date: "",
         })
         setSelectedContact(null)
         setContactQuery("")
@@ -798,6 +815,25 @@ export default function OportunidadesPage() {
                   </div>
                 </div>
 
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Briefcase className="h-5 w-5 text-blue-600" />
+                    <h3 className="text-lg font-semibold">Responsable Comercial</h3>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="comercial">Comercial *</Label>
+                    <Input
+                      id="comercial"
+                      value={newOpportunity.comercial}
+                      onChange={(e) => setNewOpportunity({ ...newOpportunity, comercial: e.target.value })}
+                      placeholder="Nombre del responsable comercial"
+                      required={isFieldRequired("comercial")}
+                      style={{ display: isFieldVisible("comercial") ? "block" : "none" }}
+                    />
+                  </div>
+                </div>
+
                 {/* Información del Contacto con búsqueda vinculada a Contactos */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-3">
@@ -942,7 +978,7 @@ export default function OportunidadesPage() {
                       <Label htmlFor="lead_source">Fuente del Lead</Label>
                       <Select
                         value={newOpportunity.lead_source}
-                        onValueChange={(value) => setNewOpportunity({ ...newOpportunity, lead_source: value })}
+                        onChange={(e) => setNewOpportunity({ ...newOpportunity, lead_source: e.target.value })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar fuente" />
@@ -972,7 +1008,7 @@ export default function OportunidadesPage() {
                       <Label htmlFor="company_size">Tamaño de Empresa</Label>
                       <Select
                         value={newOpportunity.company_size}
-                        onValueChange={(value) => setNewOpportunity({ ...newOpportunity, company_size: value })}
+                        onChange={(e) => setNewOpportunity({ ...newOpportunity, company_size: e.target.value })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar tamaño" />
@@ -990,7 +1026,7 @@ export default function OportunidadesPage() {
                       <Label htmlFor="budget_range">Rango de Presupuesto</Label>
                       <Select
                         value={newOpportunity.budget_range}
-                        onValueChange={(value) => setNewOpportunity({ ...newOpportunity, budget_range: value })}
+                        onChange={(e) => setNewOpportunity({ ...newOpportunity, budget_range: e.target.value })}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar rango" />
@@ -1010,7 +1046,7 @@ export default function OportunidadesPage() {
                     <Label htmlFor="decision_timeline">Timeline de Decisión</Label>
                     <Select
                       value={newOpportunity.decision_timeline}
-                      onValueChange={(value) => setNewOpportunity({ ...newOpportunity, decision_timeline: value })}
+                      onChange={(e) => setNewOpportunity({ ...newOpportunity, decision_timeline: e.target.value })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="¿Cuándo planean decidir?" />
