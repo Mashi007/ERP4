@@ -8,7 +8,7 @@ export async function GET() {
     if (sql) {
       const result = await sql`
         SELECT * FROM form_configurations 
-        WHERE form_type = 'opportunities' AND is_active = true
+        WHERE form_type = 'opportunities' AND is_visible = true
         ORDER BY created_at DESC
         LIMIT 1
       `
@@ -17,6 +17,7 @@ export async function GET() {
 
     // Default opportunities form fields if no configuration exists
     const defaultFields = [
+      { name: "comercial", type: "text", label: "Comercial", required: true, visible: true },
       { name: "title", type: "text", label: "Título de la Oportunidad", required: true, visible: true },
       { name: "value", type: "number", label: "Valor Estimado", required: true, visible: true },
       {
