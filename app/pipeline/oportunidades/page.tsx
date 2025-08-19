@@ -96,6 +96,9 @@ function initials(name?: string) {
 }
 
 export default function OportunidadesPage() {
+  const [formFields, setFormFields] = useState<any[]>([])
+  const [isLoadingFields, setIsLoadingFields] = useState(true)
+
   const [searchTerm, setSearchTerm] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -398,6 +401,24 @@ export default function OportunidadesPage() {
 
   // Contact search (debounce)
   useEffect(() => {
+    const loadFormFields = async () => {
+      try {
+        const response = await fetch("/api/settings/opportunities/active-fields")
+        const data = await response.json()
+        if (data.success) {
+          setFormFields(data.fields)
+        }
+      } catch (error) {
+        console.error("Error loading form fields:", error)
+      } finally {
+        setIsLoadingFields(false)
+      }
+    }
+
+    loadFormFields()
+  }, [])
+
+  useEffect(() => {
     const handler = setTimeout(async () => {
       const q = contactQuery.trim()
       if (q.length < 2) {
@@ -449,6 +470,16 @@ export default function OportunidadesPage() {
     }))
     setContactQuery(c.name || "")
     setContactOpen(false)
+  }
+
+  const isFieldVisible = (fieldName: string) => {
+    const field = formFields.find((f) => f.name === fieldName)
+    return field ? field.visible : true
+  }
+
+  const isFieldRequired = (fieldName: string) => {
+    const field = formFields.find((f) => f.name === fieldName)
+    return field ? field.required : false
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
