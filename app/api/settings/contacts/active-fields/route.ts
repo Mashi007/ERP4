@@ -90,23 +90,6 @@ const DEFAULT_GROUPS = [
 
 export async function GET() {
   try {
-    const formsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/forms/config`)
-
-    if (formsResponse.ok) {
-      const formsData = await formsResponse.json()
-      const contactForm = formsData.forms?.find((form: any) => form.form_name === "contacts")
-
-      if (contactForm && contactForm.fields?.length > 0) {
-        const activeFields = contactForm.fields.filter((field: any) => field.is_active)
-
-        return NextResponse.json({
-          fields: activeFields,
-          groups: DEFAULT_GROUPS,
-          source: "forms_configuration",
-        })
-      }
-    }
-
     if (!sql) {
       return NextResponse.json({
         fields: DEFAULT_FIELDS,
@@ -116,7 +99,33 @@ export async function GET() {
       })
     }
 
-    // Try to fetch from database
+    // Try to fetch from form_configurations table first
+    const formConfigResult = await sql`
+      SELECT *
+      FROM form_configurations
+      WHERE form_type = 'contacts' AND is_visible = true
+      ORDER BY field_order
+    `
+
+    if (formConfigResult.length > 0) {
+      const fields = formConfigResult.map((field) => ({
+        field_name: field.field_name,
+        field_label: field.field_label,
+        field_type: field.field_type,
+        is_required: field.is_required,
+        field_group: field.field_group || "general",
+        help_text: field.placeholder_text || "",
+        field_options: field.field_options || [],
+      }))
+
+      return NextResponse.json({
+        fields,
+        groups: DEFAULT_GROUPS,
+        source: "form_configurations",
+      })
+    }
+
+    // Try to fetch from legacy contact_field_configs table
     const [fieldsResult, groupsResult] = await Promise.all([
       sql`
         SELECT 
@@ -151,22 +160,6 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching active contact fields:", error)
 
-    // Check if it's a "relation does not exist" error
-    if (
-      error instanceof Error &&
-      (error.message.includes("does not exist") ||
-        error.message.includes("relation") ||
-        error.message.includes("table"))
-    ) {
-      return NextResponse.json({
-        fields: DEFAULT_FIELDS,
-        groups: DEFAULT_GROUPS,
-        source: "default_fallback",
-        error: "Contact configuration tables not found. Using default configuration.",
-      })
-    }
-
-    // For other errors, still return defaults but with error info
     return NextResponse.json({
       fields: DEFAULT_FIELDS,
       groups: DEFAULT_GROUPS,
