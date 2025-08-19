@@ -409,14 +409,23 @@ export default function OportunidadesPage() {
         const response = await fetch("/api/users")
         const data = await response.json()
         console.log("[v0] Users API response:", data)
-        if (data.success) {
+
+        // Handle direct array response from users API
+        if (Array.isArray(data)) {
+          setUsers(data)
+          console.log("[v0] Users loaded successfully:", data.length)
+        } else if (data.success && data.users) {
+          // Fallback for success/users format
           setUsers(data.users)
           console.log("[v0] Users loaded successfully:", data.users.length)
         } else {
-          console.error("[v0] Failed to load users:", data.error)
+          console.error("[v0] Failed to load users:", data.error || "Invalid response format")
+          // Set empty array as fallback
+          setUsers([])
         }
       } catch (error) {
         console.error("Error loading users:", error)
+        setUsers([]) // Set empty array on error
       } finally {
         setIsLoadingUsers(false)
       }
