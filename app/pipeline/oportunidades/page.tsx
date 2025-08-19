@@ -1285,16 +1285,16 @@ export default function OportunidadesPage() {
                   </div>
                 )}
                 {deal.notes && <p className="text-xs text-muted-foreground bg-gray-50 p-2 rounded">{deal.notes}</p>}
-                {deal.responsible_user_id && (
-                  <div className="pt-2 border-t border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Responsable comercial:</span>
-                      <span className="text-sm font-medium text-gray-700">
-                        {users.find((u) => u.id === deal.responsible_user_id)?.name || "No asignado"}
-                      </span>
-                    </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Responsable comercial:</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {deal.responsible_user_id
+                        ? users.find((u) => u.id === deal.responsible_user_id)?.name || "Usuario no encontrado"
+                        : "No asignado"}
+                    </span>
                   </div>
-                )}
+                </div>
               </div>
             </CardContent>
           </Card>
