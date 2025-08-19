@@ -74,6 +74,7 @@ const navigation = [
     icon: Settings,
     subItems: [
       { name: "General", href: "/settings" },
+      { name: "Usuarios", href: "/settings/users" },
       { name: "Datos de la Empresa", href: "/settings/company" },
       { name: "Formularios", href: "/settings/forms" },
       { name: "Calendario", href: "/communications/calendar" },
