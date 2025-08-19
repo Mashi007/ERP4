@@ -8,7 +8,7 @@ export async function GET() {
     if (sql) {
       const result = await sql`
         SELECT * FROM form_configurations 
-        WHERE form_type = 'funnel' AND is_active = true
+        WHERE form_type = 'funnel' AND is_visible = true
         ORDER BY created_at DESC
         LIMIT 1
       `
