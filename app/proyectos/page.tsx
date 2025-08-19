@@ -169,7 +169,7 @@ export default function ProyectosPage() {
       </div>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="fixed inset-4 w-[calc(100vw-2rem)] h-[calc(100vh-2rem)] max-w-none max-h-none overflow-hidden flex flex-col m-0 p-0 rounded-lg border shadow-2xl bg-white">
+        <DialogContent className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[95vw] h-[90vh] max-w-none max-h-none overflow-hidden flex flex-col m-0 p-0 rounded-lg border shadow-2xl bg-white">
           <DialogHeader className="flex-row items-center justify-between space-y-0 pb-4 border-b px-8 pt-6 bg-gradient-to-r from-[#1A4F7A] to-[#2563eb] text-white">
             <div className="flex items-center gap-3">
               <Button
@@ -197,71 +197,71 @@ export default function ProyectosPage() {
               <>
                 <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[1400px]">
+                    <table className="w-full min-w-[1200px]">
                       <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                         <tr>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[120px]">
+                          <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[10%]">
                             #
                           </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[180px]">
+                          <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[15%]">
                             Cliente
                           </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[150px]">
+                          <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[12%]">
                             Proyecto
                           </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[220px]">
-                            Norma(s) Servicios Vinculados del Contrato
+                          <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[18%]">
+                            Norma(s) Servicios Vinculados
                           </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[180px]">
+                          <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[15%]">
                             Estado Proyecto Documentos
                           </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[180px]">
-                            Centro de Facturación Tiene Formación
+                          <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[15%]">
+                            Centro Facturación
                           </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[180px]">
-                            Empresa Certificadora Auditores
+                          <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[15%]">
+                            Empresa Certificadora
                           </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[180px]">
-                            Fecha Compartido Fecha Validación
+                          <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[15%]">
+                            Fecha Compartido
                           </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[140px]">
+                          <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[10%]">
                             Consultores
                           </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[140px]">
-                            Jefe de Proyecto
+                          <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[10%]">
+                            Jefe Proyecto
                           </th>
-                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[100px]">
+                          <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-[8%]">
                             Acciones
                           </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         <tr className="hover:bg-gray-50">
-                          <td className="px-4 py-6 text-sm text-blue-600 font-medium">
+                          <td className="px-3 py-4 text-sm text-blue-600 font-medium">
                             {selectedProject.details.number}
                             <br />
                             <span className="text-blue-500 text-xs">{selectedProject.details.project}</span>
                           </td>
-                          <td className="px-4 py-6 text-sm text-blue-600 font-medium">
+                          <td className="px-3 py-4 text-sm text-blue-600 font-medium">
                             {selectedProject.details.client}
                           </td>
-                          <td className="px-4 py-6 text-sm">
+                          <td className="px-3 py-4 text-sm">
                             <div className="text-gray-900 font-semibold">{selectedProject.details.project}</div>
                             <div className="text-blue-600 text-xs mt-1">
                               🔗 {selectedProject.details.associatedStandards}
                             </div>
                           </td>
-                          <td className="px-4 py-6 text-sm">
+                          <td className="px-3 py-4 text-sm">
                             <div className="text-blue-600 font-medium">{selectedProject.details.linkedServices}</div>
                             <div className="text-gray-600 text-xs mt-1">Certificación ISO</div>
                           </td>
-                          <td className="px-4 py-6 text-sm">
+                          <td className="px-3 py-4 text-sm">
                             <Badge className="bg-blue-100 text-blue-800 mb-2 font-medium">
                               {selectedProject.details.projectStatus}
                             </Badge>
                             <div className="text-red-600 text-xs font-medium">{selectedProject.details.documents}</div>
                           </td>
-                          <td className="px-4 py-6 text-sm">
+                          <td className="px-3 py-4 text-sm">
                             <div className="text-gray-900 mb-2 font-medium">
                               {selectedProject.details.billingCenter}
                             </div>
@@ -269,23 +269,23 @@ export default function ProyectosPage() {
                               {selectedProject.details.hasTraining}
                             </Badge>
                           </td>
-                          <td className="px-4 py-6 text-sm">
+                          <td className="px-3 py-4 text-sm">
                             <div className="text-blue-600 mb-1 font-medium">
                               {selectedProject.details.certifyingCompany}
                             </div>
                             <div className="text-blue-600 font-medium">{selectedProject.details.auditors}</div>
                           </td>
-                          <td className="px-4 py-6 text-sm">
+                          <td className="px-3 py-4 text-sm">
                             <div className="text-gray-600 text-xs mb-1">{selectedProject.details.sharedDate}</div>
                             <div className="text-gray-600 text-xs">{selectedProject.details.validationDate}</div>
                           </td>
-                          <td className="px-4 py-6 text-sm text-gray-600 font-medium">
+                          <td className="px-3 py-4 text-sm text-gray-600 font-medium">
                             {selectedProject.details.consultants}
                           </td>
-                          <td className="px-4 py-6 text-sm text-gray-600 font-medium">
+                          <td className="px-3 py-4 text-sm text-gray-600 font-medium">
                             {selectedProject.details.projectManager}
                           </td>
-                          <td className="px-4 py-6 text-sm">
+                          <td className="px-3 py-4 text-sm">
                             <Button variant="ghost" size="sm" className="p-2 hover:bg-gray-100">
                               <span className="text-gray-400 text-lg">⋮</span>
                             </Button>
@@ -297,7 +297,7 @@ export default function ProyectosPage() {
                 </div>
 
                 <div className="bg-white rounded-xl border shadow-sm">
-                  <div className="p-8">
+                  <div className="p-6">
                     <div className="flex items-center gap-3 mb-6">
                       <span className="text-red-500 text-xl">📎</span>
                       <h3 className="text-xl font-bold text-blue-600">Documentos Compartidos</h3>
@@ -316,32 +316,32 @@ export default function ProyectosPage() {
                     </div>
 
                     <div className="overflow-x-auto">
-                      <table className="w-full min-w-[1000px]">
+                      <table className="w-full min-w-[800px]">
                         <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                           <tr>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[200px]">
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                               URL Documento
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[160px]">
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                               URL Ayuda
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[120px]">
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                               Permiso
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[160px]">
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                               Fecha Enviado
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[100px]">
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                               Estado
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[100px]">
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                               Acciones
                             </th>
                           </tr>
                         </thead>
                         <tbody className="bg-white">
                           <tr>
-                            <td colSpan={6} className="px-6 py-12 text-center text-gray-500 text-lg">
+                            <td colSpan={6} className="px-4 py-12 text-center text-gray-500 text-lg">
                               No se ha encontrado ningún registro
                             </td>
                           </tr>
