@@ -1374,6 +1374,30 @@ export default function OportunidadesPage() {
 
               {/* Info grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-md border bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200 p-4">
+                  <div className="mb-3 text-sm font-medium text-orange-700 flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" />
+                    Responsable Comercial
+                  </div>
+                  {detailDeal.responsible_user_id ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                      <div className="min-w-0">
+                        <div className="font-medium text-orange-800">
+                          {users.find((u) => u.id.toString() === detailDeal.responsible_user_id?.toString())?.name ||
+                            "Usuario no encontrado"}
+                        </div>
+                        <div className="text-sm text-orange-600">
+                          {users.find((u) => u.id.toString() === detailDeal.responsible_user_id?.toString())?.role ||
+                            "Comercial"}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-orange-600">No asignado</div>
+                  )}
+                </div>
+
                 <div className="rounded-md border bg-white p-4">
                   <div className="mb-3 text-sm font-medium text-muted-foreground">Probabilidad</div>
                   <div className="flex items-center justify-between text-sm">
