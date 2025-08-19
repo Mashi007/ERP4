@@ -90,6 +90,23 @@ const DEFAULT_GROUPS = [
 
 export async function GET() {
   try {
+    const formsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/forms/config`)
+
+    if (formsResponse.ok) {
+      const formsData = await formsResponse.json()
+      const contactForm = formsData.forms?.find((form: any) => form.form_name === "contacts")
+
+      if (contactForm && contactForm.fields?.length > 0) {
+        const activeFields = contactForm.fields.filter((field: any) => field.is_active)
+
+        return NextResponse.json({
+          fields: activeFields,
+          groups: DEFAULT_GROUPS,
+          source: "forms_configuration",
+        })
+      }
+    }
+
     if (!sql) {
       return NextResponse.json({
         fields: DEFAULT_FIELDS,
