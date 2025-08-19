@@ -193,11 +193,17 @@ export default function GestNormasPage() {
                     <Select
                       value={formData.consultores}
                       onValueChange={(value) => handleInputChange("consultores", value)}
-                      disabled={loadingConsultants}
+                      disabled={loadingConsultants || consultantUsers.length === 0}
                     >
                       <SelectTrigger>
                         <SelectValue
-                          placeholder={loadingConsultants ? "Cargando consultores..." : "Seleccionar consultores"}
+                          placeholder={
+                            loadingConsultants
+                              ? "Cargando consultores..."
+                              : consultantUsers.length === 0
+                                ? "No hay consultores disponibles"
+                                : "Seleccionar consultores"
+                          }
                         />
                       </SelectTrigger>
                       <SelectContent>
@@ -209,11 +215,6 @@ export default function GestNormasPage() {
                             </div>
                           </SelectItem>
                         ))}
-                        {consultantUsers.length === 0 && !loadingConsultants && (
-                          <SelectItem value="" disabled>
-                            No hay consultores disponibles
-                          </SelectItem>
-                        )}
                       </SelectContent>
                     </Select>
                   </div>
