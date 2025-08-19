@@ -190,7 +190,7 @@ export default function ProyectosPage() {
       </div>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-[calc(100vw-100px)] w-[calc(100vw-100px)] max-h-[95vh] h-[95vh] overflow-hidden flex flex-col mx-auto">
+        <DialogContent className="max-w-[calc(100vw-20px)] w-[calc(100vw-20px)] max-h-[95vh] h-[95vh] overflow-hidden flex flex-col mx-auto">
           <DialogHeader className="flex-shrink-0 pb-4 border-b">
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="sm" onClick={() => setShowDetails(false)} className="hover:bg-gray-100">
