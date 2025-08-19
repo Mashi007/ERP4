@@ -190,7 +190,7 @@ export default function ProyectosPage() {
       </div>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[95vh] h-[95vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-[98vw] w-[98vw] max-h-[95vh] h-[95vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex-shrink-0 pb-4 border-b">
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="sm" onClick={() => setShowDetails(false)} className="hover:bg-gray-100">
@@ -435,6 +435,26 @@ export default function ProyectosPage() {
               </div>
             </div>
           )}
+
+          <div className="flex-shrink-0 border-t pt-4 pb-2">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                className="bg-transparent border-[#1A4F7A] text-[#1A4F7A] hover:bg-[#1A4F7A] hover:text-white"
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Editar
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowDetails(false)}
+                className="bg-transparent border-gray-400 text-gray-600 hover:bg-gray-100"
+              >
+                Cerrar
+              </Button>
+              <Button className="bg-[#1A4F7A] hover:bg-[#1A4F7A]/90 text-white">Guardar</Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
