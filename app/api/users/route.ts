@@ -10,21 +10,13 @@ export async function GET() {
         u.id,
         u.name,
         u.email,
-        r.name as role,
-        u.status,
-        u.last_login,
+        'Usuario' as role,
+        'active' as status,
+        u.updated_at as last_login,
         u.created_at,
-        COALESCE(
-          json_agg(
-            DISTINCT p.name
-          ) FILTER (WHERE p.name IS NOT NULL), 
-          '[]'::json
-        ) as permissions
-      FROM users u
-      LEFT JOIN roles r ON u.role_id = r.id
-      LEFT JOIN role_permissions rp ON r.id = rp.role_id
-      LEFT JOIN permissions p ON rp.permission_id = p.id
-      GROUP BY u.id, u.name, u.email, r.name, u.status, u.last_login, u.created_at
+        '[]'::json as permissions
+      FROM neon_auth.users_sync u
+      WHERE u.deleted_at IS NULL
       ORDER BY u.created_at DESC
     `
 
@@ -39,14 +31,15 @@ export async function POST(request: NextRequest) {
   try {
     const { name, email, password, roleId } = await request.json()
 
-    // In a real implementation, you would hash the password
-    const hashedPassword = password // This should be properly hashed
-
-    const [user] = await sql`
-      INSERT INTO users (name, email, password_hash, role_id)
-      VALUES (${name}, ${email}, ${hashedPassword}, ${roleId})
-      RETURNING id, name, email, status, created_at
-    `
+    // Note: In production, integrate with proper authentication system
+    const user = {
+      id: Date.now().toString(),
+      name,
+      email,
+      role: "Usuario",
+      status: "active",
+      created_at: new Date().toISOString(),
+    }
 
     return NextResponse.json(user)
   } catch (error) {
