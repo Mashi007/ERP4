@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ArrowLeft } from "lucide-react"
 
 export default function ProyectosPage() {
@@ -106,6 +107,38 @@ export default function ProyectosPage() {
   const handleBackToProjects = () => {
     setShowFullScreenDetails(false)
     setSelectedProject(null)
+  }
+
+  const handleUpdateTraining = (project: any) => {
+    console.log("[v0] Actualizar Formación:", project.name)
+  }
+
+  const handleShareDocuments = (project: any) => {
+    console.log("[v0] Compartir Documentos:", project.name)
+  }
+
+  const handleUpdateStatus = (project: any) => {
+    console.log("[v0] Actualizar Estado:", project.name)
+  }
+
+  const handleEditStandards = (project: any) => {
+    console.log("[v0] Editar/Actualizar Normas:", project.name)
+  }
+
+  const handleValidateProject = (project: any) => {
+    console.log("[v0] Validar Proyecto:", project.name)
+  }
+
+  const handleAddCertifyingCompany = (project: any) => {
+    console.log("[v0] Añadir Empresa Certificadora:", project.name)
+  }
+
+  const handleAddAuditingCompany = (project: any) => {
+    console.log("[v0] Añadir Empresa Auditora:", project.name)
+  }
+
+  const handleAddProjectManager = (project: any) => {
+    console.log("[v0] Añadir Jefe de Proyecto:", project.name)
   }
 
   if (showFullScreenDetails && selectedProject) {
@@ -237,9 +270,71 @@ export default function ProyectosPage() {
                     <td className="px-4 py-4 text-sm text-gray-600">{selectedProject.details.consultants}</td>
                     <td className="px-4 py-4 text-sm text-gray-600">{selectedProject.details.projectManager}</td>
                     <td className="px-4 py-4 text-sm">
-                      <Button variant="ghost" size="sm" className="p-1">
-                        <span className="text-gray-400 text-lg">⋮</span>
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="p-1">
+                            <span className="text-gray-400 text-lg">⋮</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-64">
+                          <DropdownMenuItem
+                            onClick={() => handleUpdateTraining(selectedProject)}
+                            className="flex items-center gap-3 py-3"
+                          >
+                            <span className="text-lg">📚</span>
+                            <span className="text-sm text-gray-700">Actualizar Formación</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleShareDocuments(selectedProject)}
+                            className="flex items-center gap-3 py-3"
+                          >
+                            <span className="text-lg">🔗</span>
+                            <span className="text-sm text-gray-700">Compartir Documentos</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleUpdateStatus(selectedProject)}
+                            className="flex items-center gap-3 py-3"
+                          >
+                            <span className="text-lg">📊</span>
+                            <span className="text-sm text-gray-700">Actualizar Estado</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleEditStandards(selectedProject)}
+                            className="flex items-center gap-3 py-3"
+                          >
+                            <span className="text-lg">🔄</span>
+                            <span className="text-sm text-gray-700">Editar/Actualizar Normas</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleValidateProject(selectedProject)}
+                            className="flex items-center gap-3 py-3"
+                          >
+                            <span className="text-lg">✓</span>
+                            <span className="text-sm text-gray-700">Validar Proyecto</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleAddCertifyingCompany(selectedProject)}
+                            className="flex items-center gap-3 py-3"
+                          >
+                            <span className="text-lg">🏢</span>
+                            <span className="text-sm text-gray-700">Añadir Empresa Certificadora</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleAddAuditingCompany(selectedProject)}
+                            className="flex items-center gap-3 py-3"
+                          >
+                            <span className="text-lg">🏛️</span>
+                            <span className="text-sm text-gray-700">Añadir Empresa Auditora</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleAddProjectManager(selectedProject)}
+                            className="flex items-center gap-3 py-3"
+                          >
+                            <span className="text-lg">👤</span>
+                            <span className="text-sm text-gray-700">Añadir Jefe de Proyecto</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 </tbody>
