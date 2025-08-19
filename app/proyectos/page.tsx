@@ -169,103 +169,125 @@ export default function ProyectosPage() {
       </div>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="fixed inset-0 w-screen h-screen max-w-none max-h-none overflow-hidden flex flex-col m-0 p-0 rounded-none border-0">
-          <DialogHeader className="flex-row items-center justify-between space-y-0 pb-4 border-b px-6 pt-4 bg-white">
+        <DialogContent className="fixed inset-4 w-[calc(100vw-2rem)] h-[calc(100vh-2rem)] max-w-none max-h-none overflow-hidden flex flex-col m-0 p-0 rounded-lg border shadow-2xl bg-white">
+          <DialogHeader className="flex-row items-center justify-between space-y-0 pb-4 border-b px-8 pt-6 bg-gradient-to-r from-[#1A4F7A] to-[#2563eb] text-white">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => setShowDetails(false)} className="p-1">
-                <ArrowLeft className="h-4 w-4" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDetails(false)}
+                className="p-2 hover:bg-white/20 text-white"
+              >
+                <ArrowLeft className="h-5 w-5" />
               </Button>
-              <DialogTitle className="text-xl font-semibold text-[#1A4F7A]">Detalles del Proyecto</DialogTitle>
+              <DialogTitle className="text-2xl font-bold">Detalles del Proyecto</DialogTitle>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setShowDetails(false)} className="p-1">
-              <X className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDetails(false)}
+              className="p-2 hover:bg-white/20 text-white"
+            >
+              <X className="h-5 w-5" />
             </Button>
           </DialogHeader>
 
-          <div className="flex-1 overflow-auto px-6 py-6 space-y-6 bg-gray-50">
+          <div className="flex-1 overflow-auto px-8 py-6 space-y-8 bg-gray-50">
             {selectedProject && (
               <>
-                <div className="bg-white rounded-lg border overflow-hidden">
+                <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50">
+                    <table className="w-full min-w-[1400px]">
+                      <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                         <tr>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
+                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[120px]">
                             #
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[12%]">
+                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[180px]">
                             Cliente
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
+                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[150px]">
                             Proyecto
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[15%]">
+                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[220px]">
                             Norma(s) Servicios Vinculados del Contrato
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[12%]">
+                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[180px]">
                             Estado Proyecto Documentos
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[12%]">
+                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[180px]">
                             Centro de Facturación Tiene Formación
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[12%]">
+                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[180px]">
                             Empresa Certificadora Auditores
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[12%]">
+                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[180px]">
                             Fecha Compartido Fecha Validación
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[9%]">
+                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[140px]">
                             Consultores
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[9%]">
+                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[140px]">
                             Jefe de Proyecto
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
+                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[100px]">
                             Acciones
                           </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        <tr>
-                          <td className="px-6 py-4 text-sm text-blue-600">
+                        <tr className="hover:bg-gray-50">
+                          <td className="px-4 py-6 text-sm text-blue-600 font-medium">
                             {selectedProject.details.number}
                             <br />
-                            <span className="text-blue-500">{selectedProject.details.project}</span>
+                            <span className="text-blue-500 text-xs">{selectedProject.details.project}</span>
                           </td>
-                          <td className="px-6 py-4 text-sm text-blue-600">{selectedProject.details.client}</td>
-                          <td className="px-6 py-4 text-sm">
-                            <div className="text-gray-900 font-medium">{selectedProject.details.project}</div>
+                          <td className="px-4 py-6 text-sm text-blue-600 font-medium">
+                            {selectedProject.details.client}
+                          </td>
+                          <td className="px-4 py-6 text-sm">
+                            <div className="text-gray-900 font-semibold">{selectedProject.details.project}</div>
                             <div className="text-blue-600 text-xs mt-1">
                               🔗 {selectedProject.details.associatedStandards}
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-sm">
-                            <div className="text-blue-600">{selectedProject.details.linkedServices}</div>
+                          <td className="px-4 py-6 text-sm">
+                            <div className="text-blue-600 font-medium">{selectedProject.details.linkedServices}</div>
                             <div className="text-gray-600 text-xs mt-1">Certificación ISO</div>
                           </td>
-                          <td className="px-6 py-4 text-sm">
-                            <Badge className="bg-blue-100 text-blue-800 mb-2">
+                          <td className="px-4 py-6 text-sm">
+                            <Badge className="bg-blue-100 text-blue-800 mb-2 font-medium">
                               {selectedProject.details.projectStatus}
                             </Badge>
-                            <div className="text-red-600 text-xs">{selectedProject.details.documents}</div>
+                            <div className="text-red-600 text-xs font-medium">{selectedProject.details.documents}</div>
                           </td>
-                          <td className="px-6 py-4 text-sm">
-                            <div className="text-gray-900 mb-1">{selectedProject.details.billingCenter}</div>
-                            <Badge className="bg-red-500 text-white">{selectedProject.details.hasTraining}</Badge>
+                          <td className="px-4 py-6 text-sm">
+                            <div className="text-gray-900 mb-2 font-medium">
+                              {selectedProject.details.billingCenter}
+                            </div>
+                            <Badge className="bg-red-500 text-white font-medium">
+                              {selectedProject.details.hasTraining}
+                            </Badge>
                           </td>
-                          <td className="px-6 py-4 text-sm">
-                            <div className="text-blue-600 mb-1">{selectedProject.details.certifyingCompany}</div>
-                            <div className="text-blue-600">{selectedProject.details.auditors}</div>
+                          <td className="px-4 py-6 text-sm">
+                            <div className="text-blue-600 mb-1 font-medium">
+                              {selectedProject.details.certifyingCompany}
+                            </div>
+                            <div className="text-blue-600 font-medium">{selectedProject.details.auditors}</div>
                           </td>
-                          <td className="px-6 py-4 text-sm">
+                          <td className="px-4 py-6 text-sm">
                             <div className="text-gray-600 text-xs mb-1">{selectedProject.details.sharedDate}</div>
                             <div className="text-gray-600 text-xs">{selectedProject.details.validationDate}</div>
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{selectedProject.details.consultants}</td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{selectedProject.details.projectManager}</td>
-                          <td className="px-6 py-4 text-sm">
-                            <Button variant="ghost" size="sm" className="p-1">
-                              <span className="text-gray-400">⋮</span>
+                          <td className="px-4 py-6 text-sm text-gray-600 font-medium">
+                            {selectedProject.details.consultants}
+                          </td>
+                          <td className="px-4 py-6 text-sm text-gray-600 font-medium">
+                            {selectedProject.details.projectManager}
+                          </td>
+                          <td className="px-4 py-6 text-sm">
+                            <Button variant="ghost" size="sm" className="p-2 hover:bg-gray-100">
+                              <span className="text-gray-400 text-lg">⋮</span>
                             </Button>
                           </td>
                         </tr>
@@ -274,52 +296,52 @@ export default function ProyectosPage() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg border">
-                  <div className="p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-red-500">📎</span>
-                      <h3 className="text-lg font-semibold text-blue-600">Documentos Compartidos</h3>
+                <div className="bg-white rounded-xl border shadow-sm">
+                  <div className="p-8">
+                    <div className="flex items-center gap-3 mb-6">
+                      <span className="text-red-500 text-xl">📎</span>
+                      <h3 className="text-xl font-bold text-blue-600">Documentos Compartidos</h3>
                     </div>
 
-                    <div className="flex items-center gap-4 mb-4">
+                    <div className="flex items-center gap-4 mb-6">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">Mostrar</span>
-                        <select className="border rounded px-2 py-1 text-sm">
+                        <span className="text-sm text-gray-600 font-medium">Mostrar</span>
+                        <select className="border rounded-lg px-3 py-2 text-sm font-medium bg-white">
                           <option>10</option>
                           <option>25</option>
                           <option>50</option>
                         </select>
-                        <span className="text-sm text-gray-600">registros por página</span>
+                        <span className="text-sm text-gray-600 font-medium">registros por página</span>
                       </div>
                     </div>
 
                     <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gray-50">
+                      <table className="w-full min-w-[1000px]">
+                        <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                           <tr>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[25%]">
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[200px]">
                               URL Documento
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[20%]">
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[160px]">
                               URL Ayuda
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[15%]">
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[120px]">
                               Permiso
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[20%]">
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[160px]">
                               Fecha Enviado
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[100px]">
                               Estado
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[100px]">
                               Acciones
                             </th>
                           </tr>
                         </thead>
                         <tbody className="bg-white">
                           <tr>
-                            <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                            <td colSpan={6} className="px-6 py-12 text-center text-gray-500 text-lg">
                               No se ha encontrado ningún registro
                             </td>
                           </tr>
@@ -327,13 +349,13 @@ export default function ProyectosPage() {
                       </table>
                     </div>
 
-                    <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
-                      <span>No hay registros disponibles</span>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" disabled>
+                    <div className="flex items-center justify-between mt-6 text-sm text-gray-600">
+                      <span className="font-medium">No hay registros disponibles</span>
+                      <div className="flex items-center gap-3">
+                        <Button variant="outline" size="sm" disabled className="px-4 py-2 bg-transparent">
                           ← Anterior
                         </Button>
-                        <Button variant="outline" size="sm" disabled>
+                        <Button variant="outline" size="sm" disabled className="px-4 py-2 bg-transparent">
                           Siguiente →
                         </Button>
                       </div>
