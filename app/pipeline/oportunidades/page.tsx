@@ -1243,14 +1243,6 @@ export default function OportunidadesPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {deal.responsible_user_id && (
-                  <div className="flex items-center gap-2 text-sm bg-orange-50 p-2 rounded-md border border-orange-200">
-                    <Briefcase className="h-3 w-3 text-orange-600" />
-                    <span className="font-medium text-orange-800">
-                      Responsable: {users.find((u) => u.id === deal.responsible_user_id)?.name || "No asignado"}
-                    </span>
-                  </div>
-                )}
                 {deal.contact_name && (
                   <div className="flex items-center gap-2 text-sm">
                     <User className="h-3 w-3 text-muted-foreground" />
@@ -1293,6 +1285,16 @@ export default function OportunidadesPage() {
                   </div>
                 )}
                 {deal.notes && <p className="text-xs text-muted-foreground bg-gray-50 p-2 rounded">{deal.notes}</p>}
+                {deal.responsible_user_id && (
+                  <div className="pt-2 border-t border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">Responsable comercial:</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        {users.find((u) => u.id === deal.responsible_user_id)?.name || "No asignado"}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
