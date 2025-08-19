@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -31,6 +30,44 @@ export default function GestNormasPage() {
   const [normas] = useState([
     // Empty array to show "No hay isos registradas" state as shown in image
   ])
+
+  const [consultantUsers, setConsultantUsers] = useState<Array<{ id: string; name: string; role: string }>>([])
+  const [loadingConsultants, setLoadingConsultants] = useState(false)
+
+  useEffect(() => {
+    const loadConsultantUsers = async () => {
+      setLoadingConsultants(true)
+      try {
+        const response = await fetch("/api/users")
+        if (response.ok) {
+          const users = await response.json()
+          const consultants = users.filter(
+            (user: any) =>
+              user.role &&
+              (user.role.toLowerCase().includes("consultor") || user.role.toLowerCase().includes("consultores")),
+          )
+          setConsultantUsers(consultants)
+        } else {
+          setConsultantUsers([
+            { id: "consultor-1", name: "Consultor Principal", role: "Consultor" },
+            { id: "consultor-2", name: "Consultor Senior", role: "Consultor Senior" },
+            { id: "consultor-3", name: "Consultor Especialista", role: "Consultor Especialista" },
+          ])
+        }
+      } catch (error) {
+        console.error("Error loading consultant users:", error)
+        setConsultantUsers([
+          { id: "consultor-1", name: "Consultor Principal", role: "Consultor" },
+          { id: "consultor-2", name: "Consultor Senior", role: "Consultor Senior" },
+          { id: "consultor-3", name: "Consultor Especialista", role: "Consultor Especialista" },
+        ])
+      } finally {
+        setLoadingConsultants(false)
+      }
+    }
+
+    loadConsultantUsers()
+  }, [])
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -65,7 +102,6 @@ export default function GestNormasPage() {
   }
 
   const handleSave = () => {
-    // TODO: Implement save functionality
     console.log("Saving norma:", formData)
     setIsDialogOpen(false)
     setFormData({ nombre: "", consultores: "", presupuestos: "" })
@@ -157,14 +193,27 @@ export default function GestNormasPage() {
                     <Select
                       value={formData.consultores}
                       onValueChange={(value) => handleInputChange("consultores", value)}
+                      disabled={loadingConsultants}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar consultores" />
+                        <SelectValue
+                          placeholder={loadingConsultants ? "Cargando consultores..." : "Seleccionar consultores"}
+                        />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="consultor1">Consultor 1</SelectItem>
-                        <SelectItem value="consultor2">Consultor 2</SelectItem>
-                        <SelectItem value="consultor3">Consultor 3</SelectItem>
+                        {consultantUsers.map((consultant) => (
+                          <SelectItem key={consultant.id} value={consultant.id}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{consultant.name}</span>
+                              <span className="text-xs text-muted-foreground">{consultant.role}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                        {consultantUsers.length === 0 && !loadingConsultants && (
+                          <SelectItem value="" disabled>
+                            No hay consultores disponibles
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
