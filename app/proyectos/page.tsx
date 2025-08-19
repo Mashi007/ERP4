@@ -190,7 +190,7 @@ export default function ProyectosPage() {
       </div>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-[96vw] w-[96vw] max-h-[95vh] h-[95vh] overflow-hidden flex flex-col mx-auto">
+        <DialogContent className="max-w-[calc(100vw-100px)] w-[calc(100vw-100px)] max-h-[95vh] h-[95vh] overflow-hidden flex flex-col mx-auto">
           <DialogHeader className="flex-shrink-0 pb-4 border-b">
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="sm" onClick={() => setShowDetails(false)} className="hover:bg-gray-100">
@@ -207,56 +207,66 @@ export default function ProyectosPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-gradient-to-r from-[#1A4F7A]/5 to-[#1A4F7A]/10 border-b-2 border-[#1A4F7A]/20">
-                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6">#</TableHead>
-                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6">CLIENTE</TableHead>
-                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6">PROYECTO</TableHead>
-                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6 min-w-[200px]">
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-8 min-w-[120px]">
+                          #
+                        </TableHead>
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-8 min-w-[250px]">
+                          CLIENTE
+                        </TableHead>
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-8 min-w-[200px]">
+                          PROYECTO
+                        </TableHead>
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-8 min-w-[280px]">
                           NORMA(S) SERVICIOS VINCULADOS DEL CONTRATO
                         </TableHead>
-                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6 min-w-[180px]">
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-8 min-w-[220px]">
                           ESTADO PROYECTO DOCUMENTOS
                         </TableHead>
-                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6 min-w-[180px]">
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-8 min-w-[220px]">
                           CENTRO DE FACTURACIÓN TIENE FORMACIÓN
                         </TableHead>
-                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6 min-w-[180px]">
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-8 min-w-[220px]">
                           EMPRESA CERTIFICADORA AUDITORES
                         </TableHead>
-                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6 min-w-[160px]">
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-8 min-w-[200px]">
                           FECHA COMPARTIDO FECHA VALIDACIÓN
                         </TableHead>
-                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6">CONSULTORES</TableHead>
-                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6">
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-8 min-w-[150px]">
+                          CONSULTORES
+                        </TableHead>
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-8 min-w-[150px]">
                           JEFE DE PROYECTO
                         </TableHead>
-                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-6">ACCIONES</TableHead>
+                        <TableHead className="text-sm font-semibold text-[#1A4F7A] py-4 px-8 min-w-[120px]">
+                          ACCIONES
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       <TableRow className="hover:bg-gray-50/50 transition-colors">
-                        <TableCell className="py-6 px-6">
+                        <TableCell className="py-6 px-8">
                           <div className="text-blue-600 cursor-pointer font-medium hover:text-blue-800">0027-25</div>
                           <div className="text-blue-600 cursor-pointer text-sm hover:text-blue-800">
                             ID CONSULTING 2060 SL
                           </div>
                         </TableCell>
-                        <TableCell className="py-6 px-6">
+                        <TableCell className="py-6 px-8">
                           <div className="text-blue-600 cursor-pointer font-medium hover:text-blue-800">
                             {selectedProject.client}
                           </div>
                         </TableCell>
-                        <TableCell className="py-6 px-6">
+                        <TableCell className="py-6 px-8">
                           <div className="font-semibold text-gray-900">{selectedProject.projectCode}</div>
                           <div className="text-blue-600 text-sm mt-2 hover:text-blue-800 cursor-pointer">
                             {selectedProject.associatedStandards}
                           </div>
                         </TableCell>
-                        <TableCell className="py-6 px-6">
+                        <TableCell className="py-6 px-8">
                           <div className="text-blue-600 cursor-pointer hover:text-blue-800 whitespace-pre-line">
                             {selectedProject.linkedServices}
                           </div>
                         </TableCell>
-                        <TableCell className="py-6 px-6">
+                        <TableCell className="py-6 px-8">
                           <Badge className="bg-purple-100 text-purple-800 text-sm px-3 py-1 mb-2">Pend. Iniciar</Badge>
                           <div>
                             <Badge className="bg-red-100 text-red-800 text-sm px-3 py-1">
@@ -264,16 +274,16 @@ export default function ProyectosPage() {
                             </Badge>
                           </div>
                         </TableCell>
-                        <TableCell className="py-6 px-6">
+                        <TableCell className="py-6 px-8">
                           <div className="font-medium text-gray-900 mb-2">{selectedProject.billingCenter}</div>
                           <Badge className="bg-red-500 text-white text-sm px-3 py-1">NO</Badge>
                         </TableCell>
-                        <TableCell className="py-6 px-6">
+                        <TableCell className="py-6 px-8">
                           <div className="text-blue-600 font-medium hover:text-blue-800 cursor-pointer">
                             {selectedProject.certifyingCompany}
                           </div>
                         </TableCell>
-                        <TableCell className="py-6 px-6">
+                        <TableCell className="py-6 px-8">
                           <div className="space-y-1 text-sm">
                             <div>
                               <span className="font-medium">Creado:</span> {selectedProject.sharedDate.created}
@@ -286,13 +296,13 @@ export default function ProyectosPage() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="py-6 px-6">
+                        <TableCell className="py-6 px-8">
                           <div className="text-sm">{selectedProject.consultants.join(", ")}</div>
                         </TableCell>
-                        <TableCell className="py-6 px-6">
+                        <TableCell className="py-6 px-8">
                           <div className="text-sm font-medium">{selectedProject.projectManager}</div>
                         </TableCell>
-                        <TableCell className="py-6 px-6">
+                        <TableCell className="py-6 px-8">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="sm" className="hover:bg-gray-100">
@@ -374,12 +384,24 @@ export default function ProyectosPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-6">URL DOCUMENTO</TableHead>
-                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-6">URL AYUDA</TableHead>
-                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-6">PERMISO</TableHead>
-                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-6">FECHA ENVIADO</TableHead>
-                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-6">ESTADO</TableHead>
-                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-6">ACCIONES</TableHead>
+                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-8 min-w-[200px]">
+                          URL DOCUMENTO
+                        </TableHead>
+                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-8 min-w-[180px]">
+                          URL AYUDA
+                        </TableHead>
+                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-8 min-w-[150px]">
+                          PERMISO
+                        </TableHead>
+                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-8 min-w-[180px]">
+                          FECHA ENVIADO
+                        </TableHead>
+                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-8 min-w-[120px]">
+                          ESTADO
+                        </TableHead>
+                        <TableHead className="text-sm font-semibold text-gray-700 py-4 px-8 min-w-[120px]">
+                          ACCIONES
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
