@@ -405,10 +405,15 @@ export default function OportunidadesPage() {
   useEffect(() => {
     const loadUsers = async () => {
       try {
+        console.log("[v0] Loading users for opportunities...")
         const response = await fetch("/api/users")
         const data = await response.json()
+        console.log("[v0] Users API response:", data)
         if (data.success) {
           setUsers(data.users)
+          console.log("[v0] Users loaded successfully:", data.users.length)
+        } else {
+          console.error("[v0] Failed to load users:", data.error)
         }
       } catch (error) {
         console.error("Error loading users:", error)
@@ -742,41 +747,56 @@ export default function OportunidadesPage() {
                     <h3 className="text-lg font-semibold">Información de la Oportunidad</h3>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Título de la Oportunidad *</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <Label htmlFor="responsible_user">Usuario Responsable *</Label>
+                      {isLoadingUsers ? (
+                        <div className="flex items-center gap-2 p-2 border rounded">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                          <span className="text-sm text-gray-500">Cargando usuarios...</span>
+                        </div>
+                      ) : (
+                        <Select
+                          value={newOpportunity.responsible_user_id || ""}
+                          onValueChange={(value) => {
+                            console.log("[v0] Selected user:", value)
+                            setNewOpportunity({ ...newOpportunity, responsible_user_id: value })
+                          }}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Seleccionar usuario responsable" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {users.length === 0 ? (
+                              <SelectItem value="no-users" disabled>
+                                No hay usuarios disponibles
+                              </SelectItem>
+                            ) : (
+                              users.map((user) => (
+                                <SelectItem key={user.id} value={user.id.toString()}>
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                    {user.name} - {user.role || "Usuario"}
+                                  </div>
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="title">Nombre de la Oportunidad *</Label>
                       <Input
                         id="title"
                         value={newOpportunity.title}
                         onChange={(e) => setNewOpportunity({ ...newOpportunity, title: e.target.value })}
-                        placeholder="ej. Implementación CRM Enterprise"
+                        placeholder="Ej: Renovación de contrato"
                         required
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="responsible_user">Usuario Responsable *</Label>
-                      <Select
-                        value={newOpportunity.responsible_user_id || ""}
-                        onValueChange={(value) => setNewOpportunity({ ...newOpportunity, responsible_user_id: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar usuario responsable" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {users.map((user) => (
-                            <SelectItem key={user.id} value={user.id.toString()}>
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                {user.name} - {user.role}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="value">{`Valor Estimado (${currencySymbol}) *`}</Label>
                       <Input
