@@ -73,6 +73,7 @@ interface Deal {
   pain_points?: string
   competitors?: string
   next_steps?: string
+  responsible_user_id?: string
 }
 
 function toPipelineDeal(d: Deal): PipelineDeal {
@@ -557,6 +558,7 @@ export default function OportunidadesPage() {
           pain_points: result.deal.pain_points,
           competitors: result.deal.competitors,
           next_steps: result.deal.next_steps,
+          responsible_user_id: result.deal.responsible_user_id,
         }
 
         setDeals([newDeal, ...deals])
@@ -1241,6 +1243,14 @@ export default function OportunidadesPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
+                {deal.responsible_user_id && (
+                  <div className="flex items-center gap-2 text-sm bg-orange-50 p-2 rounded-md border border-orange-200">
+                    <Briefcase className="h-3 w-3 text-orange-600" />
+                    <span className="font-medium text-orange-800">
+                      Responsable: {users.find((u) => u.id === deal.responsible_user_id)?.name || "No asignado"}
+                    </span>
+                  </div>
+                )}
                 {deal.contact_name && (
                   <div className="flex items-center gap-2 text-sm">
                     <User className="h-3 w-3 text-muted-foreground" />
