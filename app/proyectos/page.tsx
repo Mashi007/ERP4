@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Plus, Calendar, Users } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Plus, Calendar, Users, ArrowLeft, X } from "lucide-react"
 
 export default function ProyectosPage() {
   const [projects] = useState([
@@ -19,6 +20,23 @@ export default function ProyectosPage() {
       endDate: "2025-03-31",
       team: ["Juan Pérez", "María García", "Carlos López"],
       priority: "Alta",
+      details: {
+        number: "0027-25",
+        client: "OCA INSTITUTO DE CERTIFICACION SL",
+        project: "ID CONSULTING 2060 SL",
+        linkedServices: "PROYECTOS 2023/2024 - Certificación ISO",
+        associatedStandards: "NORMAS ASOCIADAS:",
+        projectStatus: "Pend. Iniciar",
+        documents: "Documentos Sin Compartir",
+        billingCenter: "ID CONSULTING 2060 SL",
+        hasTraining: "NO",
+        certifyingCompany: "CERTIFICADORA",
+        auditors: "AUDITORES",
+        sharedDate: "Creado: 15/07/2025 05:22",
+        validationDate: "Aceptado: 15/07/2025 12:22 Validado: -",
+        consultants: "Consultores asignados",
+        projectManager: "Jefe de proyecto asignado",
+      },
     },
     {
       id: 2,
@@ -30,6 +48,23 @@ export default function ProyectosPage() {
       endDate: "2025-04-15",
       team: ["Ana Martín", "Pedro Ruiz"],
       priority: "Media",
+      details: {
+        number: "0028-25",
+        client: "ABC COMPANY",
+        project: "ID MIGRATION 2061 SL",
+        linkedServices: "SERVICIOS DE MIGRACIÓN",
+        associatedStandards: "NORMAS DE BASE DE DATOS",
+        projectStatus: "Planificado",
+        documents: "Documentos Pendientes",
+        billingCenter: "ID MIGRATION 2061 SL",
+        hasTraining: "SI",
+        certifyingCompany: "CERTIFICADORA XYZ",
+        auditors: "AUDITORES XYZ",
+        sharedDate: "Creado: 16/07/2025 08:30",
+        validationDate: "Aceptado: - Validado: -",
+        consultants: "Consultores XYZ",
+        projectManager: "Jefe de Proyecto XYZ",
+      },
     },
   ])
 
@@ -59,6 +94,14 @@ export default function ProyectosPage() {
       default:
         return "bg-gray-100 text-gray-800"
     }
+  }
+
+  const [showDetails, setShowDetails] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<any>(null)
+
+  const handleShowDetails = (project: any) => {
+    setSelectedProject(project)
+    setShowDetails(true)
   }
 
   return (
@@ -108,6 +151,14 @@ export default function ProyectosPage() {
               </div>
 
               <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 bg-transparent"
+                  onClick={() => handleShowDetails(project)}
+                >
+                  Detalles
+                </Button>
                 <Button size="sm" className="flex-1 bg-[#1A4F7A] hover:bg-[#1A4F7A]/90">
                   Editar
                 </Button>
@@ -116,6 +167,186 @@ export default function ProyectosPage() {
           </Card>
         ))}
       </div>
+
+      <Dialog open={showDetails} onOpenChange={setShowDetails}>
+        <DialogContent className="max-w-[98vw] w-[98vw] max-h-[95vh] h-[95vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-row items-center justify-between space-y-0 pb-4 border-b">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setShowDetails(false)} className="p-1">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <DialogTitle className="text-xl font-semibold text-[#1A4F7A]">Detalles del Proyecto</DialogTitle>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setShowDetails(false)} className="p-1">
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-auto p-6 space-y-6">
+            {selectedProject && (
+              <>
+                <div className="bg-white rounded-lg border overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            #
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Cliente
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Proyecto
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Norma(s) Servicios Vinculados del Contrato
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Estado Proyecto Documentos
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Centro de Facturación Tiene Formación
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Empresa Certificadora Auditores
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Fecha Compartido Fecha Validación
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Consultores
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Jefe de Proyecto
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Acciones
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        <tr>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
+                            {selectedProject.details.number}
+                            <br />
+                            <span className="text-blue-500">{selectedProject.details.project}</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
+                            {selectedProject.details.client}
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <div className="text-gray-900 font-medium">{selectedProject.details.project}</div>
+                            <div className="text-blue-600 text-xs mt-1">
+                              🔗 {selectedProject.details.associatedStandards}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <div className="text-blue-600">{selectedProject.details.linkedServices}</div>
+                            <div className="text-gray-600 text-xs mt-1">Certificación ISO</div>
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <Badge className="bg-blue-100 text-blue-800 mb-2">
+                              {selectedProject.details.projectStatus}
+                            </Badge>
+                            <div className="text-red-600 text-xs">{selectedProject.details.documents}</div>
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <div className="text-gray-900 mb-1">{selectedProject.details.billingCenter}</div>
+                            <Badge className="bg-red-500 text-white">{selectedProject.details.hasTraining}</Badge>
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <div className="text-blue-600 mb-1">{selectedProject.details.certifyingCompany}</div>
+                            <div className="text-blue-600">{selectedProject.details.auditors}</div>
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <div className="text-gray-600 text-xs mb-1">{selectedProject.details.sharedDate}</div>
+                            <div className="text-gray-600 text-xs">{selectedProject.details.validationDate}</div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{selectedProject.details.consultants}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{selectedProject.details.projectManager}</td>
+                          <td className="px-6 py-4 text-sm">
+                            <Button variant="ghost" size="sm" className="p-1">
+                              <span className="text-gray-400">⋮</span>
+                            </Button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg border">
+                  <div className="p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-red-500">📎</span>
+                      <h3 className="text-lg font-semibold text-blue-600">Documentos Compartidos</h3>
+                    </div>
+
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">Mostrar</span>
+                        <select className="border rounded px-2 py-1 text-sm">
+                          <option>10</option>
+                          <option>25</option>
+                          <option>50</option>
+                        </select>
+                        <span className="text-sm text-gray-600">registros por página</span>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              URL Documento
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              URL Ayuda
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Permiso
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Fecha Enviado
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Estado
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Acciones
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white">
+                          <tr>
+                            <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                              No se ha encontrado ningún registro
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
+                      <span>No hay registros disponibles</span>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" disabled>
+                          ← Anterior
+                        </Button>
+                        <Button variant="outline" size="sm" disabled>
+                          Siguiente →
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
