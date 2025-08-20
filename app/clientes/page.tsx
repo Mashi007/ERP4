@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, Plus, Building2, Mail, Phone, MapPin, Calendar } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Search, Plus, Building2, Mail, Phone, MapPin, Calendar, User, Edit, Trash2 } from "lucide-react"
 import DynamicContactForm from "@/components/contacts/dynamic-contact-form"
 import { useToast } from "@/hooks/use-toast"
 
@@ -22,6 +23,8 @@ export default function ClientesPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [isNewClientDialogOpen, setIsNewClientDialogOpen] = useState(false)
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
+  const [isClientDetailsOpen, setIsClientDetailsOpen] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -31,10 +34,8 @@ export default function ClientesPage() {
   const loadClients = async () => {
     try {
       setLoading(true)
-      // Simulate API call - in real implementation, fetch from database
       await new Promise((resolve) => setTimeout(resolve, 500))
 
-      // Mock data for demonstration
       const mockClients: Client[] = [
         {
           id: "1",
@@ -73,7 +74,6 @@ export default function ClientesPage() {
     try {
       console.log("[v0] Saving new client:", clientData)
 
-      // Create new client object
       const newClient: Client = {
         id: Date.now().toString(),
         name: clientData.name || clientData.company || "Cliente Sin Nombre",
@@ -84,7 +84,6 @@ export default function ClientesPage() {
         created_at: new Date().toISOString(),
       }
 
-      // Add to clients list
       setClients((prev) => [newClient, ...prev])
 
       toast({
@@ -102,6 +101,17 @@ export default function ClientesPage() {
   const handleNewClientClick = () => {
     console.log("[v0] Opening new client dialog")
     setIsNewClientDialogOpen(true)
+  }
+
+  const handleViewDetails = (client: Client) => {
+    console.log("[v0] Opening client details for:", client.name)
+    setSelectedClient(client)
+    setIsClientDetailsOpen(true)
+  }
+
+  const handleCloseDetails = () => {
+    setIsClientDetailsOpen(false)
+    setSelectedClient(null)
   }
 
   if (loading) {
@@ -129,7 +139,6 @@ export default function ClientesPage() {
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200">
-        {/* Header with search and add button */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <div>
@@ -152,7 +161,6 @@ export default function ClientesPage() {
           </div>
         </div>
 
-        {/* Client cards grid */}
         <div className="p-6">
           {clients && clients.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -209,6 +217,7 @@ export default function ClientesPage() {
                         variant="outline"
                         size="sm"
                         className="text-purple-600 border-purple-200 hover:bg-purple-50 bg-transparent"
+                        onClick={() => handleViewDetails(client)}
                       >
                         Ver Detalles
                       </Button>
@@ -236,6 +245,129 @@ export default function ClientesPage() {
         onClose={() => setIsNewClientDialogOpen(false)}
         onSave={handleSaveNewClient}
       />
+
+      <Dialog open={isClientDetailsOpen} onOpenChange={setIsClientDetailsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Building2 className="h-6 w-6 text-purple-600" />
+              Detalles del Cliente
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedClient && (
+            <div className="space-y-6">
+              <div className="flex items-start justify-between p-4 bg-purple-50 rounded-lg">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-purple-100 rounded-full">
+                    <Building2 className="h-8 w-8 text-purple-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">{selectedClient.name}</h2>
+                    <Badge variant="outline" className="mt-1">
+                      {selectedClient.type || "Empresa"}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="text-purple-600 border-purple-200 bg-transparent">
+                    <Edit className="h-4 w-4 mr-1" />
+                    Editar
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-red-600 border-red-200 bg-transparent">
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Eliminar
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-gray-900 border-b pb-2">Información de Contacto</h3>
+
+                  {selectedClient.email && (
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <Mail className="h-5 w-5 text-gray-500" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Email</p>
+                        <p className="text-sm text-gray-600">{selectedClient.email}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedClient.phone && (
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <Phone className="h-5 w-5 text-gray-500" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Teléfono</p>
+                        <p className="text-sm text-gray-600">{selectedClient.phone}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedClient.address && (
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <MapPin className="h-5 w-5 text-gray-500" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Dirección</p>
+                        <p className="text-sm text-gray-600">{selectedClient.address}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-gray-900 border-b pb-2">Información del Sistema</h3>
+
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <User className="h-5 w-5 text-gray-500" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">ID del Cliente</p>
+                      <p className="text-sm text-gray-600">{selectedClient.id}</p>
+                    </div>
+                  </div>
+
+                  {selectedClient.created_at && (
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <Calendar className="h-5 w-5 text-gray-500" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Fecha de Creación</p>
+                        <p className="text-sm text-gray-600">
+                          {new Date(selectedClient.created_at).toLocaleDateString("es-ES", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                    <div className="h-3 w-3 bg-green-500 rounded-full"></div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Estado</p>
+                      <p className="text-sm text-green-600">Activo</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button variant="outline" onClick={handleCloseDetails}>
+                  Cerrar
+                </Button>
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar Cliente
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
