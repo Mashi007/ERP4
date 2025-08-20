@@ -620,13 +620,22 @@ export default function ProyectosPage() {
   }
 
   const filteredClients = Array.isArray(availableClients)
-    ? availableClients.filter(
-        (client) =>
-          client.name?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-          client.email?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-          client.address?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-          client.phone?.toLowerCase().includes(clientSearchTerm.toLowerCase()),
-      )
+    ? availableClients.filter((client) => {
+        const searchTerm = clientSearchTerm.toLowerCase()
+        const fullName = client.name?.toLowerCase() || ""
+        const nameParts = fullName.split(" ")
+        const firstName = nameParts[0] || ""
+        const lastName = nameParts.slice(1).join(" ") || "" // Apellido (surname)
+
+        return (
+          fullName.includes(searchTerm) ||
+          firstName.includes(searchTerm) ||
+          lastName.includes(searchTerm) || // Search by apellido
+          client.email?.toLowerCase().includes(searchTerm) ||
+          client.address?.toLowerCase().includes(searchTerm) || // Company/address
+          client.phone?.toLowerCase().includes(searchTerm)
+        )
+      })
     : []
 
   if (showFullScreenDetails && selectedProject) {
@@ -1556,7 +1565,7 @@ export default function ProyectosPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    placeholder="Buscar por nombre, email o empresa..."
+                    placeholder="Buscar por nombre, apellido, email o empresa..."
                     value={clientSearchTerm}
                     onChange={(e) => setClientSearchTerm(e.target.value)}
                     className="pl-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500"
