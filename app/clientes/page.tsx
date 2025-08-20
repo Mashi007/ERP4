@@ -15,30 +15,66 @@ export default async function ClientesPage() {
       </div>
 
       <Tabs defaultValue="directorio" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="directorio">Directorio de Clientes</TabsTrigger>
-          <TabsTrigger value="contactos">Contactos</TabsTrigger>
-          <TabsTrigger value="todos">Vista Unificada</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1 rounded-lg">
+          <TabsTrigger
+            value="directorio"
+            className="data-[state=active]:bg-white data-[state=active]:text-purple-600 data-[state=active]:shadow-sm font-medium"
+          >
+            Directorio de Clientes
+          </TabsTrigger>
+          <TabsTrigger
+            value="contactos"
+            className="data-[state=active]:bg-white data-[state=active]:text-purple-600 data-[state=active]:shadow-sm font-medium"
+          >
+            Contactos
+          </TabsTrigger>
+          <TabsTrigger
+            value="todos"
+            className="data-[state=active]:bg-white data-[state=active]:text-purple-600 data-[state=active]:shadow-sm font-medium"
+          >
+            Vista Unificada
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="directorio" className="mt-6">
-          <ClientList clients={clients} />
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Directorio Exclusivo de Clientes</h2>
+              <p className="text-sm text-gray-600">Gestión completa del directorio de clientes empresariales</p>
+            </div>
+            <ClientList clients={clients} />
+          </div>
         </TabsContent>
 
         <TabsContent value="contactos" className="mt-6">
-          <Suspense fallback={<ContactsPageSkeleton />}>
-            <ContactsClient />
-          </Suspense>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Contactos de Clientes</h2>
+              <p className="text-sm text-gray-600">Base de contactos vinculada exclusivamente a clientes</p>
+            </div>
+            <Suspense fallback={<ContactsPageSkeleton />}>
+              <ContactsClient />
+            </Suspense>
+          </div>
         </TabsContent>
 
         <TabsContent value="todos" className="mt-6">
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Directorio de Clientes</h2>
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Vista Unificada - Clientes</h2>
+                <p className="text-sm text-gray-600">
+                  Directorio completo y contactos integrados en el módulo de clientes
+                </p>
+              </div>
               <ClientList clients={clients} />
             </div>
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Base de Contactos</h2>
+
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Contactos Asociados</h2>
+                <p className="text-sm text-gray-600">Todos los contactos vinculados a los clientes del sistema</p>
+              </div>
               <Suspense fallback={<ContactsPageSkeleton />}>
                 <ContactsClient />
               </Suspense>
