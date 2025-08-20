@@ -157,41 +157,124 @@ export default function ClientesPage() {
     }
   }
 
-  const handleSaveNewClient = async (clientData: any) => {
+  const fetchClients = async () => {
     try {
-      console.log("[v0] Saving new client to database:", clientData)
+      setLoading(true)
+      console.log("[v0] Loading clients from database...")
 
-      const response = await fetch("/api/clients", {
+      const response = await fetch("/api/clients")
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch clients")
+      }
+
+      const data = await response.json()
+      console.log("[v0] Database clients query result:", data.clients.length, "clients found")
+
+      setClients(data.clients)
+      console.log("[v0] Clients loaded successfully:", data.clients)
+    } catch (error) {
+      console.error("[v0] Error loading clients from database:", error)
+      // Fallback to mock data if database fails
+      console.log("[v0] Falling back to mock data")
+      const mockClients: Client[] = [
+        {
+          id: "1",
+          name: "Empresa ABC S.L.",
+          email: "contacto@empresaabc.com",
+          phone: "+34 912 345 678",
+          address: "Calle Mayor 123, Madrid",
+          type: "Empresa",
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: "2",
+          name: "Consultoría XYZ",
+          email: "info@consultoriaxyz.com",
+          phone: "+34 987 654 321",
+          address: "Avenida Principal 456, Barcelona",
+          type: "Consultoría",
+          created_at: new Date().toISOString(),
+        },
+      ]
+      setClients(mockClients)
+
+      toast({
+        title: "Advertencia",
+        description: "Se cargaron datos de ejemplo. Verifica la conexión a la base de datos.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSaveNewClient = async (contactData: any) => {
+    try {
+      // Create client record
+      const clientResponse = await fetch("/api/clients", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(clientData),
+        body: JSON.stringify({
+          ...contactData,
+          status: "client", // Mark as client instead of contact
+        }),
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to save client")
+      if (!clientResponse.ok) {
+        throw new Error("Failed to create client")
       }
 
-      const data = await response.json()
-      console.log("[v0] Database insert result:", data.client)
+      const newClient = await clientResponse.json()
 
-      setClients((prev) => [data.client, ...prev])
+      // Create opportunity record if stage is provided
+      if (contactData.stage) {
+        const opportunityResponse = await fetch("/api/deals", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: `Oportunidad - ${contactData.name}`,
+            client_id: newClient.id,
+            stage: contactData.stage,
+            value: 0,
+            probability:
+              contactData.stage === "Nuevo"
+                ? 10
+                : contactData.stage === "Calificación"
+                  ? 25
+                  : contactData.stage === "Propuesta"
+                    ? 50
+                    : contactData.stage === "Negociación"
+                      ? 75
+                      : contactData.stage === "Cierre"
+                        ? 90
+                        : contactData.stage === "Ganado"
+                          ? 100
+                          : 0,
+            expected_close_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 30 days from now
+            description: `Oportunidad creada automáticamente para ${contactData.name}`,
+            sales_owner: contactData.sales_owner || "Daniel Casañas",
+          }),
+        })
+
+        if (!opportunityResponse.ok) {
+          console.warn("Failed to create opportunity, but client was created successfully")
+        }
+      }
 
       toast({
         title: "Cliente creado",
-        description: `El cliente "${data.client.name}" se guardó en la base de datos`,
+        description: `${contactData.name} ha sido agregado como cliente${contactData.stage ? " y se creó una oportunidad" : ""}`,
       })
 
-      console.log("[v0] Client saved to database successfully:", data.client)
-      setIsNewClientDialogOpen(false)
+      // Refresh clients list
+      fetchClients()
     } catch (error) {
-      console.error("[v0] Error saving client to database:", error)
-      toast({
-        title: "Error",
-        description: "No se pudo guardar el cliente en la base de datos",
-        variant: "destructive",
-      })
+      console.error("Error creating client:", error)
       throw error
     }
   }
