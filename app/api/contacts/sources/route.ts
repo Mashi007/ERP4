@@ -1,17 +1,16 @@
 export async function GET() {
   try {
-    const defaultSources = [
-      "Website",
-      "Referencia",
-      "Redes Sociales",
+    const dashboardSources = [
+      "Cliente Existente",
       "Email Marketing",
-      "Publicidad Online",
       "Evento",
-      "Llamada en Frío",
-      "Partner",
+      "Llamada Fría",
+      "Redes Sociales",
+      "Referido",
+      "Website",
     ]
 
-    return Response.json(defaultSources)
+    return Response.json(dashboardSources)
 
     // TODO: Uncomment this after running the migration script
     // const result = await sql`
