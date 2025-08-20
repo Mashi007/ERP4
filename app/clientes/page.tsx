@@ -36,8 +36,24 @@ interface Communication {
   type: "email" | "phone" | "meeting" | "note" | "whatsapp" | "ticket"
   subject?: string
   content: string
-  date: string
-  status: "sent" | "received" | "scheduled" | "completed" | "open" | "closed"
+  date?: string
+  duration?: string
+  participants?: string
+  priority?: "low" | "medium" | "high"
+  ticketCategory?: string
+  ticketType?: string
+  assignedTo?: string
+  delegatedTo?: string
+  escalatedTo?: string
+  delegationReason?: string
+  escalationReason?: string
+  delegationHistory?: Array<{
+    action: "delegated" | "escalated"
+    from: string
+    to: string
+    reason: string
+    date: string
+  }>
 }
 
 interface CommunicationForm {
@@ -50,6 +66,10 @@ interface CommunicationForm {
   priority?: "low" | "medium" | "high"
   ticketCategory?: string
   ticketType?: string
+  delegatedTo?: string
+  delegationReason?: string
+  escalatedTo?: string
+  escalationReason?: string
 }
 
 export default function ClientesPage() {
@@ -72,6 +92,14 @@ export default function ClientesPage() {
     priority: "medium",
   })
   const { toast } = useToast()
+
+  const mockUsers = [
+    { id: "1", name: "Ana García", role: "Soporte Técnico", department: "IT" },
+    { id: "2", name: "Carlos López", role: "Supervisor", department: "Soporte" },
+    { id: "3", name: "María Rodríguez", role: "Manager", department: "Ventas" },
+    { id: "4", name: "Juan Pérez", role: "Director", department: "Operaciones" },
+    { id: "5", name: "Laura Martín", role: "Especialista", department: "Facturación" },
+  ]
 
   useEffect(() => {
     loadClients()
@@ -317,7 +345,7 @@ export default function ClientesPage() {
     setCommunications(mockComms)
   }
 
-  const handleNewCommunication = (type: "email" | "phone" | "meeting" | "note" | "whatsapp" | "ticket") => {
+  const handleOpenCommForm = (type: Communication["type"]) => {
     console.log("[v0] Creating new communication of type:", type, "for client:", selectedCommClient?.name)
 
     const initialForm: CommunicationForm = {
@@ -339,12 +367,54 @@ export default function ClientesPage() {
         subject: `Ticket de soporte - ${selectedCommClient?.name}`,
         ticketCategory: "general",
         ticketType: "consulta",
+        assignedTo: "current-user",
+        delegationHistory: [],
       }),
     }
 
     setCommForm(initialForm)
     setCommFormType(type)
     setIsCommFormOpen(true)
+  }
+
+  const handleDelegateTicket = () => {
+    if (!commForm.delegatedTo || !commForm.delegationReason) return
+
+    const delegationEntry = {
+      action: "delegated" as const,
+      from: "Usuario Actual",
+      to: mockUsers.find((u) => u.id === commForm.delegatedTo)?.name || "Usuario Desconocido",
+      reason: commForm.delegationReason,
+      date: new Date().toISOString(),
+    }
+
+    setCommForm((prev) => ({
+      ...prev,
+      assignedTo: prev.delegatedTo,
+      delegationHistory: [...(prev.delegationHistory || []), delegationEntry],
+      delegatedTo: "",
+      delegationReason: "",
+    }))
+  }
+
+  const handleEscalateTicket = () => {
+    if (!commForm.escalatedTo || !commForm.escalationReason) return
+
+    const escalationEntry = {
+      action: "escalated" as const,
+      from: "Usuario Actual",
+      to: mockUsers.find((u) => u.id === commForm.escalatedTo)?.name || "Usuario Desconocido",
+      reason: commForm.escalationReason,
+      date: new Date().toISOString(),
+    }
+
+    setCommForm((prev) => ({
+      ...prev,
+      assignedTo: prev.escalatedTo,
+      delegationHistory: [...(prev.delegationHistory || []), escalationEntry],
+      escalatedTo: "",
+      escalationReason: "",
+    }))
   }
 
   const handleSaveCommunication = async () => {
@@ -369,6 +439,12 @@ export default function ClientesPage() {
                   : commForm.type === "ticket"
                     ? "open"
                     : "completed",
+        assignedTo: commForm.assignedTo,
+        delegatedTo: commForm.delegatedTo,
+        escalatedTo: commForm.escalatedTo,
+        delegationReason: commForm.delegationReason,
+        escalationReason: commForm.escalationReason,
+        delegationHistory: commForm.delegationHistory,
       }
 
       setCommunications((prev) => [newComm, ...prev])
@@ -436,42 +512,42 @@ export default function ClientesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
               <Button
                 className="bg-blue-600 hover:bg-blue-700 text-white h-20 flex-col gap-2"
-                onClick={() => handleNewCommunication("email")}
+                onClick={() => handleOpenCommForm("email")}
               >
                 <Mail className="h-6 w-6" />
                 Enviar Email
               </Button>
               <Button
                 className="bg-green-600 hover:bg-green-700 text-white h-20 flex-col gap-2"
-                onClick={() => handleNewCommunication("phone")}
+                onClick={() => handleOpenCommForm("phone")}
               >
                 <Phone className="h-6 w-6" />
                 Realizar Llamada
               </Button>
               <Button
                 className="bg-purple-600 hover:bg-purple-700 text-white h-20 flex-col gap-2"
-                onClick={() => handleNewCommunication("meeting")}
+                onClick={() => handleOpenCommForm("meeting")}
               >
                 <Calendar className="h-6 w-6" />
                 Programar Reunión
               </Button>
               <Button
                 className="bg-orange-600 hover:bg-orange-700 text-white h-20 flex-col gap-2"
-                onClick={() => handleNewCommunication("note")}
+                onClick={() => handleOpenCommForm("note")}
               >
                 <User className="h-6 w-6" />
                 Agregar Nota
               </Button>
               <Button
                 className="bg-emerald-600 hover:bg-emerald-700 text-white h-20 flex-col gap-2"
-                onClick={() => handleNewCommunication("whatsapp")}
+                onClick={() => handleOpenCommForm("whatsapp")}
               >
                 <MessageCircle className="h-6 w-6" />
                 WhatsApp
               </Button>
               <Button
                 className="bg-red-600 hover:bg-red-700 text-white h-20 flex-col gap-2"
-                onClick={() => handleNewCommunication("ticket")}
+                onClick={() => handleOpenCommForm("ticket")}
               >
                 <Ticket className="h-6 w-6" />
                 Ticket
@@ -532,36 +608,153 @@ export default function ClientesPage() {
               )}
 
               {commFormType === "ticket" && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
-                    <select
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
-                      value={commForm.ticketCategory || "general"}
-                      onChange={(e) => setCommForm((prev) => ({ ...prev, ticketCategory: e.target.value }))}
-                    >
-                      <option value="general">General</option>
-                      <option value="tecnico">Técnico</option>
-                      <option value="comercial">Comercial</option>
-                      <option value="facturacion">Facturación</option>
-                      <option value="soporte">Soporte</option>
-                    </select>
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+                      <select
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                        value={commForm.ticketCategory || "general"}
+                        onChange={(e) => setCommForm((prev) => ({ ...prev, ticketCategory: e.target.value }))}
+                      >
+                        <option value="general">General</option>
+                        <option value="tecnico">Técnico</option>
+                        <option value="comercial">Comercial</option>
+                        <option value="facturacion">Facturación</option>
+                        <option value="soporte">Soporte</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+                      <select
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                        value={commForm.ticketType || "consulta"}
+                        onChange={(e) => setCommForm((prev) => ({ ...prev, ticketType: e.target.value }))}
+                      >
+                        <option value="consulta">Consulta</option>
+                        <option value="incidencia">Incidencia</option>
+                        <option value="solicitud">Solicitud</option>
+                        <option value="reclamo">Reclamo</option>
+                        <option value="sugerencia">Sugerencia</option>
+                      </select>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
-                    <select
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
-                      value={commForm.ticketType || "consulta"}
-                      onChange={(e) => setCommForm((prev) => ({ ...prev, ticketType: e.target.value }))}
-                    >
-                      <option value="consulta">Consulta</option>
-                      <option value="incidencia">Incidencia</option>
-                      <option value="solicitud">Solicitud</option>
-                      <option value="reclamo">Reclamo</option>
-                      <option value="sugerencia">Sugerencia</option>
-                    </select>
+
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium text-gray-900 mb-3">Delegación y Escalamiento</h4>
+
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Delegar a</label>
+                        <select
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                          value={commForm.delegatedTo || ""}
+                          onChange={(e) => setCommForm((prev) => ({ ...prev, delegatedTo: e.target.value }))}
+                        >
+                          <option value="">Seleccionar usuario</option>
+                          {mockUsers.map((user) => (
+                            <option key={user.id} value={user.id}>
+                              {user.name} - {user.role}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Escalar a</label>
+                        <select
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                          value={commForm.escalatedTo || ""}
+                          onChange={(e) => setCommForm((prev) => ({ ...prev, escalatedTo: e.target.value }))}
+                        >
+                          <option value="">Seleccionar supervisor</option>
+                          {mockUsers
+                            .filter(
+                              (user) =>
+                                user.role.includes("Supervisor") ||
+                                user.role.includes("Manager") ||
+                                user.role.includes("Director"),
+                            )
+                            .map((user) => (
+                              <option key={user.id} value={user.id}>
+                                {user.name} - {user.role}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {commForm.delegatedTo && (
+                      <div className="mb-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Motivo de delegación</label>
+                        <Input
+                          placeholder="Explique por qué delega este ticket..."
+                          value={commForm.delegationReason || ""}
+                          onChange={(e) => setCommForm((prev) => ({ ...prev, delegationReason: e.target.value }))}
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="mt-2 bg-blue-600 hover:bg-blue-700"
+                          onClick={handleDelegateTicket}
+                        >
+                          Confirmar Delegación
+                        </Button>
+                      </div>
+                    )}
+
+                    {commForm.escalatedTo && (
+                      <div className="mb-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Motivo de escalamiento</label>
+                        <Input
+                          placeholder="Explique por qué escala este ticket..."
+                          value={commForm.escalationReason || ""}
+                          onChange={(e) => setCommForm((prev) => ({ ...prev, escalationReason: e.target.value }))}
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="mt-2 bg-orange-600 hover:bg-orange-700"
+                          onClick={handleEscalateTicket}
+                        >
+                          Confirmar Escalamiento
+                        </Button>
+                      </div>
+                    )}
+
+                    {commForm.delegationHistory && commForm.delegationHistory.length > 0 && (
+                      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                        <h5 className="font-medium text-gray-900 mb-2">Historial de Trazabilidad</h5>
+                        <div className="space-y-2">
+                          {commForm.delegationHistory.map((entry, index) => (
+                            <div key={index} className="text-sm">
+                              <div className="flex items-center gap-2">
+                                <Badge variant={entry.action === "delegated" ? "default" : "destructive"}>
+                                  {entry.action === "delegated" ? "Delegado" : "Escalado"}
+                                </Badge>
+                                <span className="text-gray-600">
+                                  de {entry.from} a {entry.to}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {new Date(entry.date).toLocaleDateString("es-ES")}
+                                </span>
+                              </div>
+                              <p className="text-gray-700 mt-1 ml-2">{entry.reason}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Asignado actualmente a</label>
+                      <div className="p-2 bg-blue-50 rounded-lg text-sm text-blue-800">
+                        {commForm.assignedTo === "current-user"
+                          ? "Usuario Actual"
+                          : mockUsers.find((u) => u.id === commForm.assignedTo)?.name || "Usuario Desconocido"}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </>
               )}
 
               {commFormType === "meeting" && (
