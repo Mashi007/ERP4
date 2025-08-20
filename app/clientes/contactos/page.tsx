@@ -55,6 +55,7 @@ export default function ContactosPage() {
     job_title: "",
     sales_owner: "María García",
     stage: "Nuevo",
+    status: "lead",
   })
 
   const [editContact, setEditContact] = useState({
@@ -65,6 +66,7 @@ export default function ContactosPage() {
     job_title: "",
     sales_owner: "",
     stage: "",
+    status: "",
   })
 
   const stageOptions = [
@@ -75,6 +77,13 @@ export default function ContactosPage() {
     { value: "Cierre", label: "Cierre" },
     { value: "Ganado", label: "Ganado" },
     { value: "Perdido", label: "Perdido" },
+  ]
+
+  const statusOptions = [
+    { value: "lead", label: "Lead" },
+    { value: "qualified", label: "Calificado" },
+    { value: "client", label: "Cliente" },
+    { value: "inactive", label: "Inactivo" },
   ]
 
   useEffect(() => {
@@ -101,10 +110,7 @@ export default function ContactosPage() {
       const response = await fetch("/api/contacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...newContact,
-          status: "lead",
-        }),
+        body: JSON.stringify(newContact),
       })
 
       if (response.ok) {
@@ -118,6 +124,7 @@ export default function ContactosPage() {
           job_title: "",
           sales_owner: "María García",
           stage: "Nuevo",
+          status: "lead",
         })
         fetchContacts()
       } else {
@@ -186,6 +193,7 @@ export default function ContactosPage() {
       job_title: contact.job_title,
       sales_owner: contact.sales_owner,
       stage: contact.stage || "Nuevo",
+      status: contact.status,
     })
     setIsEditDialogOpen(true)
   }
@@ -205,6 +213,8 @@ export default function ContactosPage() {
         return "bg-emerald-50 text-emerald-700 border-emerald-200"
       case "client":
         return "bg-purple-50 text-purple-700 border-purple-200"
+      case "inactive":
+        return "bg-gray-50 text-gray-700 border-gray-200"
       default:
         return "bg-gray-50 text-gray-700 border-gray-200"
     }
@@ -213,11 +223,13 @@ export default function ContactosPage() {
   const getStatusText = (status: string) => {
     switch (status) {
       case "lead":
-        return "Nuevo"
+        return "Lead"
       case "qualified":
         return "Calificado"
       case "client":
         return "Cliente"
+      case "inactive":
+        return "Inactivo"
       default:
         return status
     }
@@ -254,6 +266,7 @@ export default function ContactosPage() {
       job_title: contact.job_title,
       sales_owner: contact.sales_owner,
       stage: contact.stage || "Nuevo",
+      status: contact.status,
     })
     setShowSuggestions(false)
     setContactSuggestions([])
@@ -429,6 +442,28 @@ export default function ContactosPage() {
                     {stageOptions.map((stage) => (
                       <SelectItem key={stage.value} value={stage.value}>
                         {stage.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status" className="text-sm font-medium flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-blue-600"></div>
+                  Estado
+                </Label>
+                <Select
+                  value={newContact.status}
+                  onValueChange={(value) => setNewContact({ ...newContact, status: value })}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((status) => (
+                      <SelectItem key={status.value} value={status.value}>
+                        {status.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -687,6 +722,28 @@ export default function ContactosPage() {
                   {stageOptions.map((stage) => (
                     <SelectItem key={stage.value} value={stage.value}>
                       {stage.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-status" className="text-sm font-medium flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full bg-blue-600"></div>
+                Estado
+              </Label>
+              <Select
+                value={editContact.status}
+                onValueChange={(value) => setEditContact({ ...editContact, status: value })}
+              >
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((status) => (
+                    <SelectItem key={status.value} value={status.value}>
+                      {status.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
