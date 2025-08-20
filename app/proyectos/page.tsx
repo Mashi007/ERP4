@@ -624,7 +624,8 @@ export default function ProyectosPage() {
         (client) =>
           client.name?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
           client.email?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-          client.company?.toLowerCase().includes(clientSearchTerm.toLowerCase()),
+          client.address?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+          client.phone?.toLowerCase().includes(clientSearchTerm.toLowerCase()),
       )
     : []
 
