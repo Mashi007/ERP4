@@ -888,49 +888,70 @@ export default function ProyectosPage() {
                             <span className="text-sm text-gray-700">Centro de Facturación Tiene Formación</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleShareDocuments(selectedProject)}
+                            onClick={() => {
+                              console.log("[v0] Share documents menu item clicked")
+                              handleShareDocuments(selectedProject)
+                            }}
                             className="flex items-center gap-3 py-3 hover:bg-gray-50 cursor-pointer"
                           >
                             <span className="text-lg">🔗</span>
                             <span className="text-sm text-gray-700">Compartir Documentos</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleUpdateStatus(selectedProject)}
+                            onClick={() => {
+                              console.log("[v0] Project status menu item clicked")
+                              handleUpdateStatus(selectedProject)
+                            }}
                             className="flex items-center gap-3 py-3 hover:bg-gray-50 cursor-pointer"
                           >
                             <span className="text-lg">📊</span>
                             <span className="text-sm text-gray-700">Estado Proyecto Documentos</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleEditStandards(selectedProject)}
+                            onClick={() => {
+                              console.log("[v0] Standards menu item clicked")
+                              handleEditStandards(selectedProject)
+                            }}
                             className="flex items-center gap-3 py-3 hover:bg-gray-50 cursor-pointer"
                           >
                             <span className="text-lg">🔄</span>
                             <span className="text-sm text-gray-700">Norma(s) Servicios Vinculados del Contrato</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleValidateProject(selectedProject)}
+                            onClick={() => {
+                              console.log("[v0] Validation menu item clicked")
+                              handleValidateProject(selectedProject)
+                            }}
                             className="flex items-center gap-3 py-3 hover:bg-gray-50 cursor-pointer"
                           >
                             <span className="text-lg">✓</span>
                             <span className="text-sm text-gray-700">Fecha Compartido Fecha Validación</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleAddCertifyingCompany(selectedProject)}
+                            onClick={() => {
+                              console.log("[v0] Certifying company menu item clicked")
+                              handleAddCertifyingCompany(selectedProject)
+                            }}
                             className="flex items-center gap-3 py-3 hover:bg-gray-50 cursor-pointer"
                           >
                             <span className="text-lg">🏢</span>
                             <span className="text-sm text-gray-700">Empresa Certificadora Auditores</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleAddAuditingCompany(selectedProject)}
+                            onClick={() => {
+                              console.log("[v0] Auditing company menu item clicked")
+                              handleAddAuditingCompany(selectedProject)
+                            }}
                             className="flex items-center gap-3 py-3 hover:bg-gray-50 cursor-pointer"
                           >
                             <span className="text-lg">🏛️</span>
                             <span className="text-sm text-gray-700">Empresa Certificadora Auditores</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleAddProjectManager(selectedProject)}
+                            onClick={() => {
+                              console.log("[v0] Project manager menu item clicked")
+                              handleAddProjectManager(selectedProject)
+                            }}
                             className="flex items-center gap-3 py-3 hover:bg-gray-50 cursor-pointer"
                           >
                             <span className="text-lg">👤</span>
