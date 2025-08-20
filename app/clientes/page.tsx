@@ -19,6 +19,15 @@ interface Client {
   created_at?: string
 }
 
+interface Communication {
+  id: string
+  type: "email" | "phone" | "meeting" | "note"
+  subject?: string
+  content: string
+  date: string
+  status: "sent" | "received" | "scheduled" | "completed"
+}
+
 export default function ClientesPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
@@ -26,6 +35,9 @@ export default function ClientesPage() {
   const [isEditClientDialogOpen, setIsEditClientDialogOpen] = useState(false)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [isClientDetailsOpen, setIsClientDetailsOpen] = useState(false)
+  const [isCommPageOpen, setIsCommPageOpen] = useState(false)
+  const [selectedCommClient, setSelectedCommClient] = useState<Client | null>(null)
+  const [communications, setCommunications] = useState<Communication[]>([])
   const { toast } = useToast()
 
   useEffect(() => {
@@ -247,6 +259,39 @@ export default function ClientesPage() {
     }
   }
 
+  const handleCommunications = (client: Client) => {
+    console.log("[v0] Opening communications for client:", client.name)
+    setSelectedCommClient(client)
+    setIsCommPageOpen(true)
+    // Load mock communications data
+    const mockComms: Communication[] = [
+      {
+        id: "1",
+        type: "email",
+        subject: "Propuesta comercial",
+        content: "Enviada propuesta comercial para servicios de consultoría",
+        date: new Date(Date.now() - 86400000).toISOString(),
+        status: "sent",
+      },
+      {
+        id: "2",
+        type: "phone",
+        content: "Llamada de seguimiento - Cliente interesado en ampliar servicios",
+        date: new Date(Date.now() - 172800000).toISOString(),
+        status: "completed",
+      },
+    ]
+    setCommunications(mockComms)
+  }
+
+  const handleNewCommunication = (type: string) => {
+    console.log("[v0] Creating new communication of type:", type)
+    toast({
+      title: "Nueva comunicación",
+      description: `Iniciando ${type} con ${selectedCommClient?.name}`,
+    })
+  }
+
   if (loading) {
     return (
       <div className="p-6">
@@ -258,6 +303,113 @@ export default function ClientesPage() {
                 <div key={i} className="h-48 bg-gray-200 rounded"></div>
               ))}
             </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isCommPageOpen && selectedCommClient) {
+    return (
+      <div className="p-6">
+        <div className="mb-6">
+          <Button variant="outline" onClick={() => setIsCommPageOpen(false)} className="mb-4">
+            ← Volver a Clientes
+          </Button>
+          <h1 className="text-2xl font-bold text-gray-900">{selectedCommClient.name}</h1>
+          <p className="text-gray-600">Centro de comunicaciones</p>
+        </div>
+
+        <div className="bg-white rounded-lg border border-gray-200 mb-6">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Opciones de Comunicación</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white h-20 flex-col gap-2"
+                onClick={() => handleNewCommunication("email")}
+              >
+                <Mail className="h-6 w-6" />
+                Enviar Email
+              </Button>
+              <Button
+                className="bg-green-600 hover:bg-green-700 text-white h-20 flex-col gap-2"
+                onClick={() => handleNewCommunication("llamada")}
+              >
+                <Phone className="h-6 w-6" />
+                Realizar Llamada
+              </Button>
+              <Button
+                className="bg-purple-600 hover:bg-purple-700 text-white h-20 flex-col gap-2"
+                onClick={() => handleNewCommunication("reunión")}
+              >
+                <Calendar className="h-6 w-6" />
+                Programar Reunión
+              </Button>
+              <Button
+                className="bg-orange-600 hover:bg-orange-700 text-white h-20 flex-col gap-2"
+                onClick={() => handleNewCommunication("nota")}
+              >
+                <User className="h-6 w-6" />
+                Agregar Nota
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Historial de Comunicaciones</h2>
+          </div>
+          <div className="p-6">
+            {communications.length > 0 ? (
+              <div className="space-y-4">
+                {communications.map((comm) => (
+                  <div key={comm.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        {comm.type === "email" && <Mail className="h-5 w-5 text-blue-600" />}
+                        {comm.type === "phone" && <Phone className="h-5 w-5 text-green-600" />}
+                        {comm.type === "meeting" && <Calendar className="h-5 w-5 text-purple-600" />}
+                        {comm.type === "note" && <User className="h-5 w-5 text-orange-600" />}
+                        <div>
+                          {comm.subject && <h3 className="font-medium text-gray-900">{comm.subject}</h3>}
+                          <p className="text-sm text-gray-600">{comm.content}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge
+                          variant={comm.status === "completed" ? "default" : "outline"}
+                          className={
+                            comm.status === "sent"
+                              ? "bg-blue-100 text-blue-800"
+                              : comm.status === "completed"
+                                ? "bg-green-100 text-green-800"
+                                : comm.status === "scheduled"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : "bg-gray-100 text-gray-800"
+                          }
+                        >
+                          {comm.status === "sent"
+                            ? "Enviado"
+                            : comm.status === "completed"
+                              ? "Completado"
+                              : comm.status === "scheduled"
+                                ? "Programado"
+                                : "Recibido"}
+                        </Badge>
+                        <p className="text-xs text-gray-500 mt-1">{new Date(comm.date).toLocaleDateString("es-ES")}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No hay comunicaciones registradas</h3>
+                <p className="text-gray-600">Las comunicaciones con este cliente aparecerán aquí</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -346,14 +498,24 @@ export default function ClientesPage() {
                   <div className="mt-4 pt-4 border-t border-gray-100">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-500">ID: {client.id}</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-purple-600 border-purple-200 hover:bg-purple-50 bg-transparent"
-                        onClick={() => handleViewDetails(client)}
-                      >
-                        Ver Detalles
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50 bg-transparent"
+                          onClick={() => handleCommunications(client)}
+                        >
+                          Comunicaciones
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-purple-600 border-purple-200 hover:bg-purple-50 bg-transparent"
+                          onClick={() => handleViewDetails(client)}
+                        >
+                          Ver Detalles
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
