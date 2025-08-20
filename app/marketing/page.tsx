@@ -101,10 +101,24 @@ export default function MarketingPage() {
   const fetchMarketingLists = async () => {
     try {
       const response = await fetch("/api/marketing/lists")
+
+      if (!response.ok) {
+        console.error("API response not ok:", response.status, response.statusText)
+        setMarketingLists([])
+        return
+      }
+
       const data = await response.json()
-      setMarketingLists(data)
+
+      if (Array.isArray(data)) {
+        setMarketingLists(data)
+      } else {
+        console.error("API returned non-array data:", data)
+        setMarketingLists([])
+      }
     } catch (error) {
       console.error("Error fetching lists:", error)
+      setMarketingLists([])
       toast.error("Error al cargar listas")
     }
   }
