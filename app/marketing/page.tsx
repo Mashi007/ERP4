@@ -27,6 +27,7 @@ import {
   Loader2,
 } from "lucide-react"
 import EmailMarketingSection from "@/components/marketing/email-marketing-section"
+import { DateFilters } from "@/components/dashboard/date-filters"
 
 export default function MarketingPage() {
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null)
@@ -48,10 +49,37 @@ export default function MarketingPage() {
   const [editListDescription, setEditListDescription] = useState("")
   const [editListTags, setEditListTags] = useState("")
 
+  const [industries, setIndustries] = useState<string[]>([])
+  const [sources, setSources] = useState<string[]>([])
+  const [responsibleUsers, setResponsibleUsers] = useState<Array<{ id: string; name: string }>>([])
+  const [filteredContacts, setFilteredContacts] = useState<any[]>([])
+
   useEffect(() => {
     fetchCampaigns()
     fetchMarketingLists()
+    fetchFilterData()
   }, [])
+
+  const fetchFilterData = async () => {
+    try {
+      // Fetch industries
+      const industriesResponse = await fetch("/api/contacts/industries")
+      const industriesData = await industriesResponse.json()
+      setIndustries(industriesData || [])
+
+      // Fetch sources
+      const sourcesResponse = await fetch("/api/contacts/sources")
+      const sourcesData = await sourcesResponse.json()
+      setSources(sourcesData || [])
+
+      // Fetch responsible users
+      const usersResponse = await fetch("/api/users")
+      const usersData = await usersResponse.json()
+      setResponsibleUsers(usersData || [])
+    } catch (error) {
+      console.error("Error fetching filter data:", error)
+    }
+  }
 
   const fetchCampaigns = async () => {
     try {
@@ -759,6 +787,17 @@ export default function MarketingPage() {
                   </div>
                 </div>
               </CardHeader>
+
+              <div className="px-6 pb-4 border-b border-gray-200">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200/50">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                    <Filter className="h-4 w-4 mr-2 text-blue-600" />
+                    Filtros de Contactos
+                  </h3>
+                  <DateFilters industries={industries} sources={sources} responsibleUsers={responsibleUsers} />
+                </div>
+              </div>
+
               <CardContent>
                 <div className="space-y-4">
                   {marketingLists.map((list) => (
