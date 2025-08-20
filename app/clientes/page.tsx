@@ -151,6 +151,24 @@ export default function ClientesPage() {
     }
   }
 
+  const handleDeleteClient = async (clientId: string) => {
+    try {
+      console.log("[v0] Deleting client with ID:", clientId)
+
+      setClients((prev) => prev.filter((client) => client.id !== clientId))
+
+      toast({
+        title: "Cliente eliminado",
+        description: `El cliente con ID "${clientId}" se eliminó correctamente`,
+      })
+
+      console.log("[v0] Client deleted successfully with ID:", clientId)
+    } catch (error) {
+      console.error("Error deleting client:", error)
+      throw error
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-6">
@@ -310,15 +328,8 @@ export default function ClientesPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-purple-600 border-purple-200 bg-transparent hover:bg-purple-50"
-                    onClick={() => handleEditClient(selectedClient)}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
                     className="text-red-600 border-red-200 bg-transparent hover:bg-red-50"
+                    onClick={() => handleDeleteClient(selectedClient.id)}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Eliminar
