@@ -488,6 +488,21 @@ export default function ProyectosPage() {
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="flex items-center gap-2">
+                        <input type="checkbox" className="rounded text-[#8B5CF6] focus:ring-[#8B5CF6]" />
+                        <span className="text-sm text-gray-700">Notificar por email</span>
+                      </label>
+                    </div>
+                    <div>
+                      <label className="flex items-center gap-2">
+                        <input type="checkbox" className="rounded text-[#8B5CF6] focus:ring-[#8B5CF6]" />
+                        <span className="text-sm text-gray-700">Requerir confirmación de lectura</span>
+                      </label>
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Descripción del Documento</label>
                     <textarea
@@ -638,7 +653,7 @@ export default function ProyectosPage() {
 
               <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
                 <Button onClick={handleSaveDocuments} className="bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white px-8">
-                  Compartir
+                  Guardar
                 </Button>
                 <Button onClick={handleCancelEdit} variant="outline" className="px-8 bg-transparent">
                   Cancelar
