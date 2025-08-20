@@ -516,11 +516,14 @@ export default function ProyectosPage() {
 
   const loadAvailableClients = async () => {
     try {
+      console.log("[v0] Loading clients from API...")
       const response = await fetch("/api/clients")
       if (response.ok) {
         const clients = await response.json()
-        setAvailableClients(clients)
+        console.log("[v0] API response:", clients)
+        setAvailableClients(Array.isArray(clients) ? clients : [])
       } else {
+        console.log("[v0] API failed, using fallback data")
         // Fallback to mock data if API fails
         setAvailableClients([
           {
@@ -559,7 +562,6 @@ export default function ProyectosPage() {
       }
     } catch (error) {
       console.error("[v0] Error loading clients:", error)
-      // Use fallback data
       setAvailableClients([
         {
           id: 1,
@@ -576,6 +578,22 @@ export default function ProyectosPage() {
           phone: "987654321",
           company: "ID Consulting",
           type: "Consultora",
+        },
+        {
+          id: 3,
+          name: "CERTIFICADORA AUDITORES",
+          email: "auditores@cert.com",
+          phone: "555666777",
+          company: "Certificadora",
+          type: "Auditora",
+        },
+        {
+          id: 4,
+          name: "EMPRESA ABC S.L.",
+          email: "contacto@empresaabc.com",
+          phone: "+34 912 345 678",
+          company: "Empresa ABC",
+          type: "Empresa",
         },
       ])
     }
@@ -601,12 +619,14 @@ export default function ProyectosPage() {
     }
   }
 
-  const filteredClients = availableClients.filter(
-    (client) =>
-      client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-      client.email.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-      client.company.toLowerCase().includes(clientSearchTerm.toLowerCase()),
-  )
+  const filteredClients = Array.isArray(availableClients)
+    ? availableClients.filter(
+        (client) =>
+          client.name?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+          client.email?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+          client.company?.toLowerCase().includes(clientSearchTerm.toLowerCase()),
+      )
+    : []
 
   if (showFullScreenDetails && selectedProject) {
     return (
