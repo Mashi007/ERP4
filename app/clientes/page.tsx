@@ -448,6 +448,7 @@ export default function ClientesPage() {
         }
         title="Editar Cliente"
         submitButtonText="Guardar Cambios"
+        mode="edit"
       />
     </div>
   )
