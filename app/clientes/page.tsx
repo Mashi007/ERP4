@@ -313,7 +313,6 @@ export default function ClientesPage() {
                     className="text-purple-600 border-purple-200 bg-transparent hover:bg-purple-50"
                     onClick={() => handleEditClient(selectedClient)}
                   >
-                    <Edit className="h-4 w-4 mr-1" />
                     Editar
                   </Button>
                   <Button
