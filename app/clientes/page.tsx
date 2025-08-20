@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Search, Plus, Building2, Mail, Phone, MapPin, Calendar, User, Trash2 } from "lucide-react"
 import DynamicContactForm from "@/components/contacts/dynamic-contact-form"
 import { useToast } from "@/hooks/use-toast"
@@ -381,12 +381,10 @@ export default function ClientesPage() {
 
       <Dialog open={isClientDetailsOpen} onOpenChange={setIsClientDetailsOpen}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              <Building2 className="h-6 w-6 text-purple-600" />
-              Detalles del Cliente
-            </DialogTitle>
-          </DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <Building2 className="h-6 w-6 text-purple-600" />
+            Detalles del Cliente
+          </DialogTitle>
 
           {selectedClient && (
             <div className="space-y-6">
