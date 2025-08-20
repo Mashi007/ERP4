@@ -667,7 +667,22 @@ export default function EmbudoPage() {
   // Organizar deals por etapa para el pipeline
   const pipelineStages = stages.map((stageName) => {
     const stageDeals = deals.filter((deal) => deal.stage === stageName)
-    const stageValue = stageDeals.reduce((sum, deal) => sum + deal.value, 0)
+
+    console.log(`[v0] Stage: ${stageName}`)
+    console.log(
+      `[v0] Stage deals:`,
+      stageDeals.map((d) => ({ title: d.title, value: d.value, type: typeof d.value })),
+    )
+
+    const stageValue = stageDeals.reduce((sum, deal) => {
+      const dealValue = Number(deal.value) || 0
+      console.log(
+        `[v0] Adding deal "${deal.title}": ${dealValue} (original: ${deal.value}, type: ${typeof deal.value})`,
+      )
+      return sum + dealValue
+    }, 0)
+
+    console.log(`[v0] Stage "${stageName}" total: ${stageValue}`)
 
     return {
       name: stageName,
