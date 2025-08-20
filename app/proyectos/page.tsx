@@ -102,6 +102,8 @@ export default function ProyectosPage() {
   const [editingValue, setEditingValue] = useState<string>("")
   const [editingProject, setEditingProject] = useState<any>(null)
   const [observations, setObservations] = useState<string>("")
+  const [sharedDocuments, setSharedDocuments] = useState<any[]>([])
+  const [showDocumentsDialog, setShowDocumentsDialog] = useState(false)
 
   const handleShowDetails = (project: any) => {
     setSelectedProject(project)
@@ -124,6 +126,7 @@ export default function ProyectosPage() {
     setEditingProject(project)
     setEditingField("documents")
     setEditingValue(project.details.documents)
+    setShowDocumentsDialog(true)
   }
 
   const handleUpdateStatus = (project: any) => {
@@ -194,6 +197,43 @@ export default function ProyectosPage() {
 
         console.log(`[v0] Updated hasTraining:`, editingValue)
         console.log(`[v0] Updated billingCenter with observations:`, observations)
+      } else if (editingField === "projectStatus") {
+        const updatedDocumentStatus =
+          editingValue === "Finalizado" || editingValue === "Iniciado"
+            ? "Ver Detalle Documentos Compartidos"
+            : "Documentos Sin Compartir"
+
+        setProjects((prevProjects) =>
+          prevProjects.map((project) =>
+            project.id === editingProject.id
+              ? {
+                  ...project,
+                  details: {
+                    ...project.details,
+                    projectStatus: editingValue,
+                    documents: updatedDocumentStatus,
+                  },
+                }
+              : project,
+          ),
+        )
+
+        if (selectedProject && selectedProject.id === editingProject.id) {
+          setSelectedProject({
+            ...selectedProject,
+            details: {
+              ...selectedProject.details,
+              projectStatus: editingValue,
+              documents: updatedDocumentStatus,
+            },
+          })
+        }
+
+        console.log(`[v0] Updated projectStatus:`, editingValue)
+        console.log(`[v0] Updated documents status:`, updatedDocumentStatus)
+        if (observations) {
+          console.log(`[v0] Project status observations:`, observations)
+        }
       } else {
         setProjects((prevProjects) =>
           prevProjects.map((project) =>
@@ -220,9 +260,6 @@ export default function ProyectosPage() {
         }
 
         console.log(`[v0] Updated ${editingField}:`, editingValue)
-        if (editingField === "projectStatus" && observations) {
-          console.log(`[v0] ${editingField} observations:`, observations)
-        }
       }
     }
     setEditingField(null)
@@ -231,11 +268,42 @@ export default function ProyectosPage() {
     setObservations("")
   }
 
+  const handleSaveDocuments = () => {
+    if (editingProject) {
+      setProjects((prevProjects) =>
+        prevProjects.map((project) =>
+          project.id === editingProject.id
+            ? {
+                ...project,
+                details: {
+                  ...project.details,
+                  documents: "Ver Detalle Documentos Compartidos",
+                },
+              }
+            : project,
+        ),
+      )
+
+      if (selectedProject && selectedProject.id === editingProject.id) {
+        setSelectedProject({
+          ...selectedProject,
+          details: {
+            ...selectedProject.details,
+            documents: "Ver Detalle Documentos Compartidos",
+          },
+        })
+      }
+    }
+    setShowDocumentsDialog(false)
+    setEditingProject(null)
+  }
+
   const handleCancelEdit = () => {
     setEditingField(null)
     setEditingValue("")
     setEditingProject(null)
     setObservations("")
+    setShowDocumentsDialog(false)
   }
 
   const getFieldDisplayName = (field: string) => {
@@ -255,7 +323,113 @@ export default function ProyectosPage() {
   if (showFullScreenDetails && selectedProject) {
     return (
       <div className="min-h-screen bg-gray-50">
-        {editingField && (
+        {showDocumentsDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg w-[90vw] h-[80vh] max-w-6xl flex flex-col">
+              <div className="flex items-center justify-between p-6 border-b">
+                <h3 className="text-xl font-semibold text-[#1A4F7A]">Compartir ISO</h3>
+                <button onClick={handleCancelEdit} className="text-gray-400 hover:text-gray-600 text-2xl">
+                  ×
+                </button>
+              </div>
+
+              <div className="flex-1 p-6 overflow-auto">
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Permisos Asignados:</h4>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2">
+                        <input type="radio" name="permission" value="lectura" className="text-red-500" defaultChecked />
+                        <span className="text-sm">Lectura</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input type="radio" name="permission" value="escritura" />
+                        <span className="text-sm">Escritura</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">Mostrar</span>
+                      <select className="border rounded-lg px-3 py-2 text-sm bg-white">
+                        <option>25</option>
+                        <option>50</option>
+                        <option>100</option>
+                      </select>
+                      <span className="text-sm text-gray-600">registros por página</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">Buscar:</span>
+                      <input
+                        type="text"
+                        className="border rounded-lg px-3 py-2 text-sm min-w-[200px]"
+                        placeholder="Buscar documentos..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            <input type="checkbox" className="rounded" />
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Documento</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Norma ISO</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td colSpan={4} className="px-4 py-12 text-center text-gray-500">
+                            No se ha encontrado ningún registro
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm text-gray-600">
+                    <span>No hay registros disponibles</span>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" disabled>
+                        Primero
+                      </Button>
+                      <Button variant="outline" size="sm" disabled>
+                        ← Anterior
+                      </Button>
+                      <Button variant="outline" size="sm" disabled>
+                        Siguiente →
+                      </Button>
+                      <Button variant="outline" size="sm" disabled>
+                        Último
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">
+                    Los campos marcados con <span className="text-red-500 font-bold">*</span> son obligatorios
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
+                <Button onClick={handleSaveDocuments} className="bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white px-8">
+                  Compartir
+                </Button>
+                <Button onClick={handleCancelEdit} variant="outline" className="px-8 bg-transparent">
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {editingField && !showDocumentsDialog && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-96 max-w-md">
               <h3 className="text-lg font-semibold mb-4 text-[#1A4F7A]">
@@ -379,10 +553,10 @@ export default function ProyectosPage() {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" className="bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white">
+                  <Button size="sm" variant="outline" className="flex-1 bg-transparent">
                     📊
                   </Button>
-                  <Button size="sm" className="bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white">
+                  <Button size="sm" className="flex-1 bg-[#8B5CF6] hover:bg-[#8B5CF6]/90">
                     📄
                   </Button>
                 </div>
@@ -460,7 +634,15 @@ export default function ProyectosPage() {
                         >
                           {selectedProject.details.projectStatus}
                         </Badge>
-                        <div className="text-red-600 text-xs font-medium">{selectedProject.details.documents}</div>
+                        <div
+                          className={`text-xs font-medium ${
+                            selectedProject.details.documents === "Ver Detalle Documentos Compartidos"
+                              ? "text-blue-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {selectedProject.details.documents}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-4 text-sm">
@@ -562,7 +744,11 @@ export default function ProyectosPage() {
             <div className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <span className="text-red-500 text-xl">📎</span>
-                <h2 className="text-xl font-bold text-blue-600">Documentos Compartidos</h2>
+                <h2 className="text-xl font-bold text-blue-600">
+                  {selectedProject.details.documents === "Ver Detalle Documentos Compartidos"
+                    ? "Documentos Compartidos"
+                    : "Documentos Sin Compartir"}
+                </h2>
               </div>
 
               <div className="flex items-center gap-4 mb-6">
