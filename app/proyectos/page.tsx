@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ArrowLeft } from "lucide-react"
+import { X, Check } from "lucide-react"
 
 export default function ProyectosPage() {
   const [projects, setProjects] = useState([
@@ -123,6 +124,22 @@ export default function ProyectosPage() {
     { id: 4, name: "Noelia Sanchez", email: "noe@icdgroup.es" },
     { id: 5, name: "Vicente Exposito", email: "vexpbv@gmail.com" },
   ])
+
+  const [showConsultantsDialog, setShowConsultantsDialog] = useState(false)
+  const [selectedConsultants, setSelectedConsultants] = useState<string[]>([])
+  const [consultantSearch, setConsultantSearch] = useState("")
+  const [newConsultantName, setNewConsultantName] = useState("")
+  const [newConsultantEmail, setNewConsultantEmail] = useState("")
+
+  const availableConsultants = [
+    "Daniel Casañas, d.casanas@kohde.us",
+    "INNOVACION CONOCIMIENTO Y DESARROLLO 2050 SL, manmenrt@gmail.es",
+    "Mamen Rodriguez Toro, manmenrt@hotmail.com",
+    "Noelia Sanchez, noe@icdgroup.es",
+    "Vicente Exposito, vexpbv@gmail.com",
+  ]
+
+  const currentUserPermissions: string[] = []
 
   const isAdmin = () => {
     return (
@@ -441,6 +458,48 @@ export default function ProyectosPage() {
       prof.name.toLowerCase().includes(searchProfessional.toLowerCase()) ||
       prof.email.toLowerCase().includes(searchProfessional.toLowerCase()),
   )
+
+  const handleEditConsultants = (project: any) => {
+    console.log("[v0] Opening consultants dialog for project:", project.id)
+    setEditingProject(project)
+    setSelectedConsultants(project.details.consultants.split(", ").filter(Boolean))
+    setShowConsultantsDialog(true)
+  }
+
+  const handleSaveConsultants = () => {
+    if (editingProject && selectedConsultants.length > 0) {
+      const updatedProjects = projects.map((p) =>
+        p.id === editingProject.id
+          ? { ...p, details: { ...p.details, consultants: selectedConsultants.join(", ") } }
+          : p,
+      )
+      setProjects(updatedProjects)
+
+      if (selectedProject?.id === editingProject.id) {
+        setSelectedProject({
+          ...editingProject,
+          details: { ...editingProject.details, consultants: selectedConsultants.join(", ") },
+        })
+      }
+
+      setShowConsultantsDialog(false)
+      setSelectedConsultants([])
+      setConsultantSearch("")
+      setNewConsultantName("")
+      setNewConsultantEmail("")
+      console.log("[v0] Consultants updated successfully")
+    }
+  }
+
+  const handleAddNewConsultant = () => {
+    if (newConsultantName.trim() && newConsultantEmail.trim()) {
+      const newConsultant = `${newConsultantName.trim()}, ${newConsultantEmail.trim()}`
+      setSelectedConsultants((prev) => [...prev, newConsultant])
+      setNewConsultantName("")
+      setNewConsultantEmail("")
+      console.log("[v0] New consultant added:", newConsultant)
+    }
+  }
 
   if (showFullScreenDetails && selectedProject) {
     return (
@@ -853,6 +912,167 @@ export default function ProyectosPage() {
           </div>
         )}
 
+        {showConsultantsDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between p-6 border-b">
+                <h2 className="text-xl font-semibold text-gray-900">Asignar Consultores</h2>
+                <button
+                  onClick={() => {
+                    setShowConsultantsDialog(false)
+                    setSelectedConsultants([])
+                    setConsultantSearch("")
+                    setNewConsultantName("")
+                    setNewConsultantEmail("")
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="p-6">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Buscar Consultores</label>
+                  <input
+                    type="text"
+                    value={consultantSearch}
+                    onChange={(e) => setConsultantSearch(e.target.value)}
+                    placeholder="Buscar por nombre o email..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Consultores Disponibles</label>
+                  <div className="border border-gray-200 rounded-md max-h-48 overflow-y-auto">
+                    {availableConsultants
+                      .filter((consultant) => consultant.toLowerCase().includes(consultantSearch.toLowerCase()))
+                      .map((consultant, index) => (
+                        <div
+                          key={index}
+                          className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-purple-50 transition-colors ${
+                            selectedConsultants.includes(consultant) ? "bg-purple-100" : ""
+                          }`}
+                          onClick={() => {
+                            setSelectedConsultants((prev) =>
+                              prev.includes(consultant) ? prev.filter((c) => c !== consultant) : [...prev, consultant],
+                            )
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-gray-900">{consultant.split(",")[0]}</div>
+                              <div className="text-sm text-gray-500">{consultant.split(",")[1]?.trim()}</div>
+                            </div>
+                            {selectedConsultants.includes(consultant) && <Check className="h-5 w-5 text-purple-600" />}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                {(currentUserRole === "Administrador" ||
+                  currentUserPermissions.includes("users_manage") ||
+                  currentUserPermissions.includes("system_admin")) && (
+                  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Agregar Nuevo Consultor</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
+                        <input
+                          type="text"
+                          value={newConsultantName}
+                          onChange={(e) => setNewConsultantName(e.target.value)}
+                          placeholder="Nombre del consultor"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                        <input
+                          type="email"
+                          value={newConsultantEmail}
+                          onChange={(e) => setNewConsultantEmail(e.target.value)}
+                          placeholder="email@ejemplo.com"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleAddNewConsultant}
+                      disabled={!newConsultantName.trim() || !newConsultantEmail.trim()}
+                      className="mt-3 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Agregar Consultor
+                    </button>
+                  </div>
+                )}
+
+                {!(
+                  currentUserRole === "Administrador" ||
+                  currentUserPermissions.includes("users_manage") ||
+                  currentUserPermissions.includes("system_admin")
+                ) && (
+                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <p className="text-sm text-yellow-800">
+                      No tienes permisos para agregar nuevos consultores. Contacta al administrador.
+                    </p>
+                  </div>
+                )}
+
+                {selectedConsultants.length > 0 && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Consultores Seleccionados ({selectedConsultants.length})
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedConsultants.map((consultant, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800"
+                        >
+                          {consultant.split(",")[0]}
+                          <button
+                            onClick={() => {
+                              setSelectedConsultants((prev) => prev.filter((c) => c !== consultant))
+                            }}
+                            className="ml-2 text-purple-600 hover:text-purple-800"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
+                <button
+                  onClick={() => {
+                    setShowConsultantsDialog(false)
+                    setSelectedConsultants([])
+                    setConsultantSearch("")
+                    setNewConsultantName("")
+                    setNewConsultantEmail("")
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveConsultants}
+                  disabled={selectedConsultants.length === 0}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  Guardar Consultores
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white border-b shadow-sm">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
@@ -1076,7 +1296,7 @@ export default function ProyectosPage() {
                       className="px-4 py-4 text-sm text-gray-600 cursor-pointer hover:bg-blue-50 transition-colors"
                       onDoubleClick={() => {
                         console.log("[v0] Double-clicked on consultants")
-                        handleEditStandards(selectedProject)
+                        handleEditConsultants(selectedProject)
                       }}
                     >
                       {selectedProject.details.consultants}
