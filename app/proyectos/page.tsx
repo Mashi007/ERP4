@@ -110,6 +110,16 @@ export default function ProyectosPage() {
   const [selectedDocumentType, setSelectedDocumentType] = useState<string>("ISO 9001")
   const [showUploadAnother, setShowUploadAnother] = useState<boolean>(false)
   const [showAdditionalUploadFields, setShowAdditionalUploadFields] = useState<boolean>(false)
+  const [showProjectManagerDialog, setShowProjectManagerDialog] = useState(false)
+  const [searchProfessional, setSearchProfessional] = useState("")
+
+  const professionals = [
+    { id: 1, name: "Daniel Casañas", email: "d.casanas@kohde.us" },
+    { id: 2, name: "INNOVACION CONOCIMIENTO Y DESARROLLO 2050 SL", email: "manmenrt@gmail.es" },
+    { id: 3, name: "Mamen Rodriguez Toro", email: "manmenrt@hotmail.com" },
+    { id: 4, name: "Noelia Sanchez", email: "noe@icdgroup.es" },
+    { id: 5, name: "Vicente Exposito", email: "vexpbv@gmail.com" },
+  ]
 
   const handleShowDetails = (project: any) => {
     setSelectedProject(project)
@@ -159,6 +169,43 @@ export default function ProyectosPage() {
     setEditingValue(project.details.validationDate)
   }
 
+  const handleAddProjectManager = (project: any) => {
+    setEditingProject(project)
+    setEditingField("projectManager")
+    setEditingValue(project.details.projectManager)
+    setShowProjectManagerDialog(true)
+    console.log("[v0] Opening project manager dialog")
+  }
+
+  const handleSelectProfessional = (professional: any) => {
+    const fullName = `${professional.name}, ${professional.email}`
+    setEditingValue(fullName)
+    console.log("[v0] Selected professional:", fullName)
+  }
+
+  const handleSaveProjectManager = () => {
+    if (editingProject && editingValue) {
+      const updatedProjects = projects.map((p) =>
+        p.id === editingProject.id ? { ...p, details: { ...p.details, projectManager: editingValue } } : p,
+      )
+      setProjects(updatedProjects)
+
+      if (selectedProject && selectedProject.id === editingProject.id) {
+        setSelectedProject({
+          ...selectedProject,
+          details: { ...selectedProject.details, projectManager: editingValue },
+        })
+      }
+
+      setShowProjectManagerDialog(false)
+      setEditingProject(null)
+      setEditingField("")
+      setEditingValue("")
+      setSearchProfessional("")
+      console.log("[v0] Project manager saved:", editingValue)
+    }
+  }
+
   const handleAddCertifyingCompany = (project: any) => {
     setEditingProject(project)
     setEditingField("certifyingCompany")
@@ -169,12 +216,6 @@ export default function ProyectosPage() {
     setEditingProject(project)
     setEditingField("auditors")
     setEditingValue(project.details.auditors)
-  }
-
-  const handleAddProjectManager = (project: any) => {
-    setEditingProject(project)
-    setEditingField("projectManager")
-    setEditingValue(project.details.projectManager)
   }
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -366,6 +407,12 @@ export default function ProyectosPage() {
     }
   }
 
+  const filteredProfessionals = professionals.filter(
+    (prof) =>
+      prof.name.toLowerCase().includes(searchProfessional.toLowerCase()) ||
+      prof.email.toLowerCase().includes(searchProfessional.toLowerCase()),
+  )
+
   if (showFullScreenDetails && selectedProject) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -389,7 +436,7 @@ export default function ProyectosPage() {
           </div>
         )}
 
-        {editingField && !showDocumentsDialog && (
+        {editingField && !showDocumentsDialog && !showProjectManagerDialog && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-96 max-w-md">
               <h3 className="text-lg font-semibold mb-4 text-[#1A4F7A]">
@@ -478,6 +525,86 @@ export default function ProyectosPage() {
                 <Button onClick={handleCancelEdit} variant="outline" className="flex-1 bg-transparent">
                   Cancelar
                 </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showProjectManagerDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg w-96 max-w-md">
+              <div className="flex items-center justify-between p-4 border-b">
+                <h3 className="text-lg font-semibold text-[#8B5CF6]">Añadir Jefe de Proyecto</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowProjectManagerDialog(false)
+                    setSearchProfessional("")
+                    console.log("[v0] Project manager dialog closed")
+                  }}
+                  className="p-1 hover:bg-gray-100"
+                >
+                  ✕
+                </Button>
+              </div>
+
+              <div className="p-4">
+                <p className="text-sm text-gray-600 mb-3">Escoja un Profesional</p>
+
+                <div className="relative mb-3">
+                  <input
+                    type="text"
+                    value={searchProfessional}
+                    onChange={(e) => setSearchProfessional(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+                    placeholder="Buscar profesional..."
+                  />
+                </div>
+
+                <div className="max-h-48 overflow-y-auto border rounded-lg">
+                  {filteredProfessionals.map((professional) => (
+                    <div
+                      key={professional.id}
+                      onClick={() => handleSelectProfessional(professional)}
+                      className="p-3 hover:bg-[#8B5CF6]/10 cursor-pointer border-b last:border-b-0 transition-colors"
+                    >
+                      <div className="text-sm font-medium text-gray-900">{professional.name}</div>
+                      <div className="text-xs text-gray-500">{professional.email}</div>
+                    </div>
+                  ))}
+                  {filteredProfessionals.length === 0 && (
+                    <div className="p-3 text-sm text-gray-500 text-center">No se encontraron profesionales</div>
+                  )}
+                </div>
+
+                {editingValue && (
+                  <div className="mt-3 p-2 bg-[#8B5CF6]/10 rounded-lg">
+                    <p className="text-xs text-gray-600">Seleccionado:</p>
+                    <p className="text-sm font-medium text-[#8B5CF6]">{editingValue}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3 mt-4">
+                  <Button
+                    onClick={handleSaveProjectManager}
+                    className="flex-1 bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white"
+                    disabled={!editingValue}
+                  >
+                    Guardar
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowProjectManagerDialog(false)
+                      setSearchProfessional("")
+                      setEditingValue("")
+                    }}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
