@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Search, Plus, Building2, Mail, Phone, MapPin, Calendar, User, Edit, Trash2 } from "lucide-react"
+import { Search, Plus, Building2, Mail, Phone, MapPin, Calendar, User, Trash2 } from "lucide-react"
 import DynamicContactForm from "@/components/contacts/dynamic-contact-form"
 import { useToast } from "@/hooks/use-toast"
 
@@ -403,13 +403,6 @@ export default function ClientesPage() {
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button variant="outline" onClick={handleCloseDetails}>
                   Cerrar
-                </Button>
-                <Button
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
-                  onClick={() => handleEditClient(selectedClient)}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar Cliente
                 </Button>
               </div>
             </div>
