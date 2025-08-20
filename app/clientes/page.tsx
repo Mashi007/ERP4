@@ -1,11 +1,125 @@
-import { listClients, type Client } from "./queries"
+"use client"
+
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Search, Plus, Building2, Mail, Phone, MapPin, Calendar } from "lucide-react"
+import DynamicContactForm from "@/components/contacts/dynamic-contact-form"
+import { useToast } from "@/hooks/use-toast"
 
-export default async function ClientesPage() {
-  const clients: Client[] = await listClients()
+interface Client {
+  id: string
+  name: string
+  email?: string
+  phone?: string
+  address?: string
+  type?: string
+  created_at?: string
+}
+
+export default function ClientesPage() {
+  const [clients, setClients] = useState<Client[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isNewClientDialogOpen, setIsNewClientDialogOpen] = useState(false)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    loadClients()
+  }, [])
+
+  const loadClients = async () => {
+    try {
+      setLoading(true)
+      // Simulate API call - in real implementation, fetch from database
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
+      // Mock data for demonstration
+      const mockClients: Client[] = [
+        {
+          id: "1",
+          name: "Empresa ABC S.L.",
+          email: "contacto@empresaabc.com",
+          phone: "+34 912 345 678",
+          address: "Calle Mayor 123, Madrid",
+          type: "Empresa",
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: "2",
+          name: "Consultoría XYZ",
+          email: "info@consultoriaxyz.com",
+          phone: "+34 987 654 321",
+          address: "Avenida Principal 456, Barcelona",
+          type: "Consultoría",
+          created_at: new Date().toISOString(),
+        },
+      ]
+
+      setClients(mockClients)
+    } catch (error) {
+      console.error("Error loading clients:", error)
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los clientes",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSaveNewClient = async (clientData: any) => {
+    try {
+      console.log("[v0] Saving new client:", clientData)
+
+      // Create new client object
+      const newClient: Client = {
+        id: Date.now().toString(),
+        name: clientData.name || clientData.company || "Cliente Sin Nombre",
+        email: clientData.email,
+        phone: clientData.phone,
+        address: clientData.address,
+        type: clientData.type || "Cliente",
+        created_at: new Date().toISOString(),
+      }
+
+      // Add to clients list
+      setClients((prev) => [newClient, ...prev])
+
+      toast({
+        title: "Cliente creado",
+        description: `El cliente "${newClient.name}" se creó correctamente`,
+      })
+
+      console.log("[v0] Client created successfully:", newClient)
+    } catch (error) {
+      console.error("Error creating client:", error)
+      throw error
+    }
+  }
+
+  const handleNewClientClick = () => {
+    console.log("[v0] Opening new client dialog")
+    setIsNewClientDialogOpen(true)
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-48 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-6">
@@ -30,7 +144,7 @@ export default async function ClientesPage() {
                   className="pl-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                 />
               </div>
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+              <Button className="bg-purple-600 hover:bg-purple-700 text-white" onClick={handleNewClientClick}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nuevo Cliente
               </Button>
@@ -108,7 +222,7 @@ export default async function ClientesPage() {
               <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No hay clientes registrados</h3>
               <p className="text-gray-600 mb-6">Comienza agregando tu primer cliente al directorio</p>
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+              <Button className="bg-purple-600 hover:bg-purple-700 text-white" onClick={handleNewClientClick}>
                 <Plus className="h-4 w-4 mr-2" />
                 Agregar Primer Cliente
               </Button>
@@ -116,6 +230,12 @@ export default async function ClientesPage() {
           )}
         </div>
       </div>
+
+      <DynamicContactForm
+        isOpen={isNewClientDialogOpen}
+        onClose={() => setIsNewClientDialogOpen(false)}
+        onSave={handleSaveNewClient}
+      />
     </div>
   )
 }
