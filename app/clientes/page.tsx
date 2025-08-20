@@ -5,7 +5,19 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { Search, Plus, Building2, Mail, Phone, MapPin, Calendar, User, Trash2 } from "lucide-react"
+import {
+  Search,
+  Plus,
+  Building2,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  User,
+  Trash2,
+  MessageCircle,
+  Ticket,
+} from "lucide-react"
 import DynamicContactForm from "@/components/contacts/dynamic-contact-form"
 import { useToast } from "@/hooks/use-toast"
 
@@ -21,21 +33,23 @@ interface Client {
 
 interface Communication {
   id: string
-  type: "email" | "phone" | "meeting" | "note"
+  type: "email" | "phone" | "meeting" | "note" | "whatsapp" | "ticket"
   subject?: string
   content: string
   date: string
-  status: "sent" | "received" | "scheduled" | "completed"
+  status: "sent" | "received" | "scheduled" | "completed" | "open" | "closed"
 }
 
 interface CommunicationForm {
-  type: "email" | "phone" | "meeting" | "note"
+  type: "email" | "phone" | "meeting" | "note" | "whatsapp" | "ticket"
   subject?: string
   content: string
   date?: string
   duration?: string
   participants?: string
   priority?: "low" | "medium" | "high"
+  ticketCategory?: string
+  ticketType?: string
 }
 
 export default function ClientesPage() {
@@ -49,7 +63,9 @@ export default function ClientesPage() {
   const [selectedCommClient, setSelectedCommClient] = useState<Client | null>(null)
   const [communications, setCommunications] = useState<Communication[]>([])
   const [isCommFormOpen, setIsCommFormOpen] = useState(false)
-  const [commFormType, setCommFormType] = useState<"email" | "phone" | "meeting" | "note">("email")
+  const [commFormType, setCommFormType] = useState<"email" | "phone" | "meeting" | "note" | "whatsapp" | "ticket">(
+    "email",
+  )
   const [commForm, setCommForm] = useState<CommunicationForm>({
     type: "email",
     content: "",
@@ -301,7 +317,7 @@ export default function ClientesPage() {
     setCommunications(mockComms)
   }
 
-  const handleNewCommunication = (type: "email" | "phone" | "meeting" | "note") => {
+  const handleNewCommunication = (type: "email" | "phone" | "meeting" | "note" | "whatsapp" | "ticket") => {
     console.log("[v0] Creating new communication of type:", type, "for client:", selectedCommClient?.name)
 
     const initialForm: CommunicationForm = {
@@ -315,6 +331,14 @@ export default function ClientesPage() {
       ...(type === "meeting" && {
         duration: "60",
         participants: selectedCommClient?.name || "",
+      }),
+      ...(type === "whatsapp" && {
+        subject: `WhatsApp con ${selectedCommClient?.name}`,
+      }),
+      ...(type === "ticket" && {
+        subject: `Ticket de soporte - ${selectedCommClient?.name}`,
+        ticketCategory: "general",
+        ticketType: "consulta",
       }),
     }
 
@@ -340,7 +364,11 @@ export default function ClientesPage() {
               ? "completed"
               : commForm.type === "meeting"
                 ? "scheduled"
-                : "completed",
+                : commForm.type === "whatsapp"
+                  ? "sent"
+                  : commForm.type === "ticket"
+                    ? "open"
+                    : "completed",
       }
 
       setCommunications((prev) => [newComm, ...prev])
@@ -354,7 +382,11 @@ export default function ClientesPage() {
               ? "Llamada registrada"
               : commForm.type === "meeting"
                 ? "Reunión programada"
-                : "Nota agregada"
+                : commForm.type === "whatsapp"
+                  ? "WhatsApp enviado"
+                  : commForm.type === "ticket"
+                    ? "Ticket creado"
+                    : "Nota agregada"
         } para ${selectedCommClient?.name}`,
       })
 
@@ -401,7 +433,7 @@ export default function ClientesPage() {
         <div className="bg-white rounded-lg border border-gray-200 mb-6">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Opciones de Comunicación</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
               <Button
                 className="bg-blue-600 hover:bg-blue-700 text-white h-20 flex-col gap-2"
                 onClick={() => handleNewCommunication("email")}
@@ -430,6 +462,20 @@ export default function ClientesPage() {
                 <User className="h-6 w-6" />
                 Agregar Nota
               </Button>
+              <Button
+                className="bg-emerald-600 hover:bg-emerald-700 text-white h-20 flex-col gap-2"
+                onClick={() => handleNewCommunication("whatsapp")}
+              >
+                <MessageCircle className="h-6 w-6" />
+                WhatsApp
+              </Button>
+              <Button
+                className="bg-red-600 hover:bg-red-700 text-white h-20 flex-col gap-2"
+                onClick={() => handleNewCommunication("ticket")}
+              >
+                <Ticket className="h-6 w-6" />
+                Ticket
+              </Button>
             </div>
           </div>
         </div>
@@ -441,13 +487,19 @@ export default function ClientesPage() {
               {commFormType === "phone" && <Phone className="h-6 w-6 text-green-600" />}
               {commFormType === "meeting" && <Calendar className="h-6 w-6 text-purple-600" />}
               {commFormType === "note" && <User className="h-6 w-6 text-orange-600" />}
+              {commFormType === "whatsapp" && <MessageCircle className="h-6 w-6 text-emerald-600" />}
+              {commFormType === "ticket" && <Ticket className="h-6 w-6 text-red-600" />}
               {commFormType === "email"
                 ? "Enviar Email"
                 : commFormType === "phone"
                   ? "Registrar Llamada"
                   : commFormType === "meeting"
                     ? "Programar Reunión"
-                    : "Agregar Nota"}
+                    : commFormType === "whatsapp"
+                      ? "Enviar WhatsApp"
+                      : commFormType === "ticket"
+                        ? "Crear Ticket"
+                        : "Agregar Nota"}
             </DialogTitle>
 
             <div className="space-y-4">
@@ -460,14 +512,55 @@ export default function ClientesPage() {
                 </div>
               </div>
 
-              {commFormType === "email" && (
+              {(commFormType === "email" || commFormType === "whatsapp" || commFormType === "ticket") && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Asunto</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {commFormType === "ticket" ? "Título del Ticket" : "Asunto"}
+                  </label>
                   <Input
                     value={commForm.subject || ""}
                     onChange={(e) => setCommForm((prev) => ({ ...prev, subject: e.target.value }))}
-                    placeholder="Asunto del email"
+                    placeholder={
+                      commFormType === "email"
+                        ? "Asunto del email"
+                        : commFormType === "whatsapp"
+                          ? "Asunto del WhatsApp"
+                          : "Título del ticket"
+                    }
                   />
+                </div>
+              )}
+
+              {commFormType === "ticket" && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+                    <select
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                      value={commForm.ticketCategory || "general"}
+                      onChange={(e) => setCommForm((prev) => ({ ...prev, ticketCategory: e.target.value }))}
+                    >
+                      <option value="general">General</option>
+                      <option value="tecnico">Técnico</option>
+                      <option value="comercial">Comercial</option>
+                      <option value="facturacion">Facturación</option>
+                      <option value="soporte">Soporte</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+                    <select
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                      value={commForm.ticketType || "consulta"}
+                      onChange={(e) => setCommForm((prev) => ({ ...prev, ticketType: e.target.value }))}
+                    >
+                      <option value="consulta">Consulta</option>
+                      <option value="incidencia">Incidencia</option>
+                      <option value="solicitud">Solicitud</option>
+                      <option value="reclamo">Reclamo</option>
+                      <option value="sugerencia">Sugerencia</option>
+                    </select>
+                  </div>
                 </div>
               )}
 
@@ -500,7 +593,11 @@ export default function ClientesPage() {
                       ? "Resumen de la llamada"
                       : commFormType === "meeting"
                         ? "Agenda de la reunión"
-                        : "Contenido de la nota"}
+                        : commFormType === "whatsapp"
+                          ? "Mensaje de WhatsApp"
+                          : commFormType === "ticket"
+                            ? "Descripción del ticket"
+                            : "Contenido de la nota"}
                 </label>
                 <textarea
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -514,7 +611,11 @@ export default function ClientesPage() {
                         ? "Describe el contenido de la llamada..."
                         : commFormType === "meeting"
                           ? "Agenda y objetivos de la reunión..."
-                          : "Escribe tu nota aquí..."
+                          : commFormType === "whatsapp"
+                            ? "Escribe tu mensaje de WhatsApp..."
+                            : commFormType === "ticket"
+                              ? "Describe el problema o solicitud..."
+                              : "Escribe tu nota aquí..."
                   }
                 />
               </div>
@@ -547,7 +648,11 @@ export default function ClientesPage() {
                       ? "bg-green-600 hover:bg-green-700"
                       : commFormType === "meeting"
                         ? "bg-purple-600 hover:bg-purple-700"
-                        : "bg-orange-600 hover:bg-orange-700"
+                        : commFormType === "whatsapp"
+                          ? "bg-emerald-600 hover:bg-emerald-700"
+                          : commFormType === "ticket"
+                            ? "bg-red-600 hover:bg-red-700"
+                            : "bg-orange-600 hover:bg-orange-700"
                 }
                 onClick={handleSaveCommunication}
                 disabled={!commForm.content.trim()}
@@ -558,7 +663,11 @@ export default function ClientesPage() {
                     ? "Registrar Llamada"
                     : commFormType === "meeting"
                       ? "Programar Reunión"
-                      : "Guardar Nota"}
+                      : commFormType === "whatsapp"
+                        ? "Enviar WhatsApp"
+                        : commFormType === "ticket"
+                          ? "Crear Ticket"
+                          : "Guardar Nota"}
               </Button>
             </div>
           </DialogContent>
@@ -579,6 +688,8 @@ export default function ClientesPage() {
                         {comm.type === "phone" && <Phone className="h-5 w-5 text-green-600" />}
                         {comm.type === "meeting" && <Calendar className="h-5 w-5 text-purple-600" />}
                         {comm.type === "note" && <User className="h-5 w-5 text-orange-600" />}
+                        {comm.type === "whatsapp" && <MessageCircle className="h-5 w-5 text-emerald-600" />}
+                        {comm.type === "ticket" && <Ticket className="h-5 w-5 text-red-600" />}
                         <div>
                           {comm.subject && <h3 className="font-medium text-gray-900">{comm.subject}</h3>}
                           <p className="text-sm text-gray-600">{comm.content}</p>
@@ -594,7 +705,11 @@ export default function ClientesPage() {
                                 ? "bg-green-100 text-green-800"
                                 : comm.status === "scheduled"
                                   ? "bg-purple-100 text-purple-800"
-                                  : "bg-gray-100 text-gray-800"
+                                  : comm.status === "open"
+                                    ? "bg-red-100 text-red-800"
+                                    : comm.status === "closed"
+                                      ? "bg-gray-100 text-gray-800"
+                                      : "bg-gray-100 text-gray-800"
                           }
                         >
                           {comm.status === "sent"
@@ -603,7 +718,11 @@ export default function ClientesPage() {
                               ? "Completado"
                               : comm.status === "scheduled"
                                 ? "Programado"
-                                : "Recibido"}
+                                : comm.status === "open"
+                                  ? "Abierto"
+                                  : comm.status === "closed"
+                                    ? "Cerrado"
+                                    : "Recibido"}
                         </Badge>
                         <p className="text-xs text-gray-500 mt-1">{new Date(comm.date).toLocaleDateString("es-ES")}</p>
                       </div>
