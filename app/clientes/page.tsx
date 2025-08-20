@@ -434,21 +434,7 @@ export default function ClientesPage() {
           setSelectedClient(null)
         }}
         onSave={handleSaveEditedClient}
-        initialData={
-          selectedClient
-            ? {
-                name: selectedClient.name,
-                company: selectedClient.name,
-                email: selectedClient.email,
-                phone: selectedClient.phone,
-                address: selectedClient.address,
-                type: selectedClient.type,
-              }
-            : undefined
-        }
-        title="Editar Cliente"
-        submitButtonText="Guardar Cambios"
-        mode="edit"
+        editingContact={selectedClient}
       />
     </div>
   )
