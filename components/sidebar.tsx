@@ -123,30 +123,36 @@ export function Sidebar({ className }: SidebarProps) {
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
-      <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 mt-10 bg-gradient-to-r from-[#1A4F7A] to-[#2563eb] shadow-lg">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
+      <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 mt-10 bg-gradient-to-r from-primary via-primary/90 to-secondary shadow-xl relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent"></div>
+        <Link href="/" className="flex items-center gap-2 font-semibold relative z-10">
           <img
             src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20Norma.jpg-YPDdPAzITwhmyNAXSwzvRsneG7Uhf4.jpeg"
             alt="NormaPymes"
-            className="h-72 w-auto object-contain drop-shadow-lg"
+            className="h-72 w-auto object-contain drop-shadow-2xl"
           />
         </Link>
       </div>
-      <ScrollArea className="flex-1 bg-gradient-to-b from-slate-50 to-white">
-        <nav className="grid items-start px-2 text-sm font-medium lg:px-4 py-4">
+      <ScrollArea className="flex-1 bg-gradient-to-b from-muted/30 via-background to-muted/20">
+        <nav className="grid items-start px-2 text-sm font-medium lg:px-4 py-6">
           {navigation.map((item) => {
             const Icon = item.icon
             const hasSubItems = item.subItems && item.subItems.length > 0
             const expanded = isExpanded(item.name)
 
             return (
-              <div key={item.name} className="mb-1">
+              <div key={item.name} className="mb-2">
                 <div
                   className={cn(
-                    "flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 transition-all duration-200 cursor-pointer font-medium shadow-sm hover:shadow-md",
-                    "hover:bg-gradient-to-r hover:from-[#1A4F7A]/10 hover:to-[#2563eb]/10 hover:text-[#1A4F7A] hover:scale-[1.02]",
+                    "group flex items-center gap-3 rounded-xl px-4 py-3 text-muted-foreground transition-all duration-300 cursor-pointer font-medium relative overflow-hidden",
+                    "hover:bg-gradient-to-r hover:from-primary/10 hover:via-primary/5 hover:to-secondary/10",
+                    "hover:text-primary hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/20",
+                    "before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/20 before:to-secondary/20 before:opacity-0 before:transition-opacity before:duration-300",
+                    "hover:before:opacity-100",
+                    "after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/20 after:to-transparent after:translate-x-[-100%] after:transition-transform after:duration-700",
+                    "hover:after:translate-x-[100%]",
                     isActive(item.href) &&
-                      "bg-gradient-to-r from-[#1A4F7A] to-[#2563eb] text-white shadow-lg scale-[1.02]",
+                      "bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow-xl shadow-primary/30 scale-[1.02] pulse-glow",
                   )}
                   onClick={() => {
                     if (hasSubItems) {
@@ -154,33 +160,56 @@ export function Sidebar({ className }: SidebarProps) {
                     }
                   }}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon
+                    className={cn(
+                      "h-5 w-5 transition-all duration-300 relative z-10",
+                      "group-hover:scale-110 group-hover:drop-shadow-lg",
+                      isActive(item.href) && "drop-shadow-lg",
+                    )}
+                  />
                   {hasSubItems ? (
                     <>
-                      <span className="flex-1">{item.name}</span>
-                      {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      <span className="flex-1 relative z-10 font-semibold">{item.name}</span>
+                      <div className="relative z-10">
+                        {expanded ? (
+                          <ChevronDown className="h-4 w-4 transition-transform duration-300 rotate-180" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 transition-transform duration-300" />
+                        )}
+                      </div>
                     </>
                   ) : (
-                    <Link href={item.href} className="flex-1">
+                    <Link href={item.href} className="flex-1 relative z-10 font-semibold">
                       {item.name}
                     </Link>
                   )}
                 </div>
                 {hasSubItems && expanded && (
-                  <div className="ml-8 mt-2 space-y-1 border-l-2 border-[#1A4F7A]/20 pl-4">
-                    {item.subItems?.map((subItem) => (
+                  <div className="ml-8 mt-3 space-y-2 border-l-2 border-gradient-to-b from-primary/40 to-secondary/40 pl-4 relative">
+                    <div className="absolute left-0 top-0 w-0.5 h-full bg-gradient-to-b from-primary to-secondary opacity-60"></div>
+                    {item.subItems?.map((subItem, index) => (
                       <Link
                         key={subItem.name}
                         href={subItem.href}
                         className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2 text-slate-500 transition-all duration-200 text-sm font-medium",
-                          "hover:bg-[#1A4F7A]/5 hover:text-[#1A4F7A] hover:translate-x-1",
+                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-all duration-300 text-sm font-medium group relative overflow-hidden",
+                          "hover:bg-gradient-to-r hover:from-primary/5 hover:to-secondary/5 hover:text-primary hover:translate-x-2 hover:shadow-md",
+                          "before:absolute before:left-0 before:top-0 before:w-0 before:h-full before:bg-gradient-to-r before:from-primary before:to-secondary before:transition-all before:duration-300",
+                          "hover:before:w-1",
                           isSubItemActive(subItem.href) &&
-                            "bg-[#1A4F7A]/10 text-[#1A4F7A] font-semibold border-l-2 border-[#1A4F7A]",
+                            "bg-gradient-to-r from-primary/10 to-secondary/10 text-primary font-semibold translate-x-2 shadow-md before:w-1",
                         )}
+                        style={{ animationDelay: `${index * 50}ms` }}
                       >
-                        <div className="w-2 h-2 rounded-full bg-current opacity-50"></div>
-                        {subItem.name}
+                        <div
+                          className={cn(
+                            "w-2 h-2 rounded-full transition-all duration-300",
+                            "bg-gradient-to-r from-primary to-secondary opacity-60",
+                            "group-hover:opacity-100 group-hover:scale-125 group-hover:shadow-lg group-hover:shadow-primary/50",
+                            isSubItemActive(subItem.href) && "opacity-100 scale-125 shadow-lg shadow-primary/50",
+                          )}
+                        ></div>
+                        <span className="relative z-10">{subItem.name}</span>
                       </Link>
                     ))}
                   </div>
@@ -195,7 +224,9 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      <div className={cn("hidden border-r bg-white shadow-xl md:block", className)}>
+      <div
+        className={cn("hidden border-r bg-card/50 backdrop-blur-sm shadow-2xl md:block border-border/50", className)}
+      >
         <SidebarContent />
       </div>
       <Sheet>
@@ -203,13 +234,13 @@ export function Sidebar({ className }: SidebarProps) {
           <Button
             variant="outline"
             size="icon"
-            className="shrink-0 md:hidden bg-[#1A4F7A] text-white border-[#1A4F7A] hover:bg-[#1A4F7A]/90"
+            className="shrink-0 md:hidden bg-gradient-to-r from-primary to-secondary text-primary-foreground border-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 hover:scale-105"
           >
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="flex flex-col bg-white">
+        <SheetContent side="left" className="flex flex-col bg-card/95 backdrop-blur-sm">
           <SidebarContent />
         </SheetContent>
       </Sheet>

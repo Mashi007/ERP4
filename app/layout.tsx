@@ -21,9 +21,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="es">
       <body className={inter.className}>
         <CurrencyProvider initialCode={orgCurrency}>
-          <div className="flex h-screen bg-gray-50">
+          <div className="flex h-screen bg-gradient-to-br from-background via-muted/20 to-background">
             <Sidebar />
-            <main className="flex-1 overflow-auto">{children}</main>
+            <main className="flex-1 overflow-auto bg-gradient-to-b from-transparent to-muted/10 backdrop-blur-sm">
+              <div className="min-h-full p-6">{children}</div>
+            </main>
           </div>
         </CurrencyProvider>
       </body>
