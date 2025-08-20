@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ArrowLeft } from "lucide-react"
-import { X, Check } from "lucide-react"
+import { X, Check, Users, Building, Mail, Phone, Search } from "lucide-react"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 
 export default function ProyectosPage() {
   const [projects, setProjects] = useState([
@@ -130,6 +132,10 @@ export default function ProyectosPage() {
   const [consultantSearch, setConsultantSearch] = useState("")
   const [newConsultantName, setNewConsultantName] = useState("")
   const [newConsultantEmail, setNewConsultantEmail] = useState("")
+
+  const [showClientSelectionDialog, setShowClientSelectionDialog] = useState(false)
+  const [availableClients, setAvailableClients] = useState<any[]>([])
+  const [clientSearchTerm, setClientSearchTerm] = useState("")
 
   const availableConsultants = [
     "Daniel Casañas, d.casanas@kohde.us",
@@ -500,6 +506,107 @@ export default function ProyectosPage() {
       console.log("[v0] New consultant added:", newConsultant)
     }
   }
+
+  const handleSelectClient = (project: any) => {
+    setEditingProject(project)
+    setShowClientSelectionDialog(true)
+    loadAvailableClients()
+    console.log("[v0] Opening client selection dialog for project:", project.id)
+  }
+
+  const loadAvailableClients = async () => {
+    try {
+      const response = await fetch("/api/clients")
+      if (response.ok) {
+        const clients = await response.json()
+        setAvailableClients(clients)
+      } else {
+        // Fallback to mock data if API fails
+        setAvailableClients([
+          {
+            id: 1,
+            name: "OCA INSTITUTO DE CERTIFICACION SL",
+            email: "contacto@oca.com",
+            phone: "123456789",
+            company: "OCA",
+            type: "Instituto",
+          },
+          {
+            id: 2,
+            name: "ID CONSULTING 2060 SL",
+            email: "info@idconsulting.com",
+            phone: "987654321",
+            company: "ID Consulting",
+            type: "Consultora",
+          },
+          {
+            id: 3,
+            name: "CERTIFICADORA AUDITORES",
+            email: "auditores@cert.com",
+            phone: "555666777",
+            company: "Certificadora",
+            type: "Auditora",
+          },
+          {
+            id: 4,
+            name: "EMPRESA ABC S.L.",
+            email: "contacto@empresaabc.com",
+            phone: "+34 912 345 678",
+            company: "Empresa ABC",
+            type: "Empresa",
+          },
+        ])
+      }
+    } catch (error) {
+      console.error("[v0] Error loading clients:", error)
+      // Use fallback data
+      setAvailableClients([
+        {
+          id: 1,
+          name: "OCA INSTITUTO DE CERTIFICACION SL",
+          email: "contacto@oca.com",
+          phone: "123456789",
+          company: "OCA",
+          type: "Instituto",
+        },
+        {
+          id: 2,
+          name: "ID CONSULTING 2060 SL",
+          email: "info@idconsulting.com",
+          phone: "987654321",
+          company: "ID Consulting",
+          type: "Consultora",
+        },
+      ])
+    }
+  }
+
+  const handleSaveSelectedClient = (selectedClient: any) => {
+    if (editingProject && selectedClient) {
+      const updatedProjects = projects.map((p) =>
+        p.id === editingProject.id ? { ...p, details: { ...p.details, client: selectedClient.name } } : p,
+      )
+      setProjects(updatedProjects)
+
+      if (selectedProject?.id === editingProject.id) {
+        setSelectedProject({
+          ...editingProject,
+          details: { ...editingProject.details, client: selectedClient.name },
+        })
+      }
+
+      setShowClientSelectionDialog(false)
+      setClientSearchTerm("")
+      console.log("[v0] Client updated successfully:", selectedClient.name)
+    }
+  }
+
+  const filteredClients = availableClients.filter(
+    (client) =>
+      client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+      client.email.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+      client.company.toLowerCase().includes(clientSearchTerm.toLowerCase()),
+  )
 
   if (showFullScreenDetails && selectedProject) {
     return (
@@ -1181,7 +1288,7 @@ export default function ProyectosPage() {
                       className="px-4 py-4 text-sm text-blue-600 font-medium cursor-pointer hover:bg-blue-50 transition-colors"
                       onDoubleClick={() => {
                         console.log("[v0] Double-clicked on client")
-                        handleEditStandards(selectedProject)
+                        handleSelectClient(selectedProject)
                       }}
                     >
                       {selectedProject.details.client}
@@ -1407,6 +1514,95 @@ export default function ProyectosPage() {
             </div>
           </div>
         </div>
+
+        <Dialog open={showClientSelectionDialog} onOpenChange={setShowClientSelectionDialog}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+            <div className="flex flex-col h-full">
+              <div className="flex items-center justify-between p-6 border-b">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Users className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">Seleccionar Cliente</h2>
+                    <p className="text-sm text-gray-600">Busca y selecciona un cliente del directorio</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Buscar por nombre, email o empresa..."
+                    value={clientSearchTerm}
+                    onChange={(e) => setClientSearchTerm(e.target.value)}
+                    className="pl-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500"
+                  />
+                </div>
+
+                {/* Clients List */}
+                <div className="max-h-96 overflow-y-auto border rounded-lg">
+                  {filteredClients.length > 0 ? (
+                    <div className="divide-y divide-gray-200">
+                      {filteredClients.map((client) => (
+                        <div
+                          key={client.id}
+                          className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                          onClick={() => handleSaveSelectedClient(client)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-purple-100 rounded-lg">
+                                <Building className="h-4 w-4 text-purple-600" />
+                              </div>
+                              <div>
+                                <h3 className="font-medium text-gray-900">{client.name}</h3>
+                                <p className="text-sm text-gray-600">{client.company}</p>
+                                <div className="flex items-center gap-4 mt-1">
+                                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                                    <Mail className="h-3 w-3" />
+                                    {client.email}
+                                  </span>
+                                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                                    <Phone className="h-3 w-3" />
+                                    {client.phone}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="text-purple-600 border-purple-200">
+                              {client.type}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center text-gray-500">
+                      <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>No se encontraron clientes</p>
+                      <p className="text-sm">Intenta con otros términos de búsqueda</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowClientSelectionDialog(false)
+                    setClientSearchTerm("")
+                  }}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     )
   }
