@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ArrowLeft } from "lucide-react"
 
 export default function ProyectosPage() {
-  const [projects] = useState([
+  const [projects, setProjects] = useState([
     {
       id: 1,
       name: "Implementación CRM Enterprise",
@@ -165,8 +165,19 @@ export default function ProyectosPage() {
 
   const handleSaveField = () => {
     if (editingProject && editingField) {
-      // Update the project data and selectedProject state to reflect changes in table
-      editingProject.details[editingField] = editingValue
+      setProjects((prevProjects) =>
+        prevProjects.map((project) =>
+          project.id === editingProject.id
+            ? {
+                ...project,
+                details: {
+                  ...project.details,
+                  [editingField]: editingValue,
+                },
+              }
+            : project,
+        ),
+      )
 
       // Update selectedProject if it's the same project being edited
       if (selectedProject && selectedProject.id === editingProject.id) {
