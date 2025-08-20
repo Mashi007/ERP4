@@ -108,6 +108,8 @@ export default function ProyectosPage() {
   const [showDocumentsDialog, setShowDocumentsDialog] = useState(false)
   const [uploadedDocuments, setUploadedDocuments] = useState<any[]>([])
   const [selectedDocumentType, setSelectedDocumentType] = useState<string>("")
+  const [showUploadAnother, setShowUploadAnother] = useState<boolean>(false)
+  const [showAdditionalUploadFields, setShowAdditionalUploadFields] = useState<boolean>(false)
 
   const handleShowDetails = (project: any) => {
     setSelectedProject(project)
@@ -185,8 +187,8 @@ export default function ProyectosPage() {
         }
         setUploadedDocuments((prev) => [...prev, newDocument])
       })
+      setShowUploadAnother(true)
     }
-    // Reset file input
     event.target.value = ""
   }
 
@@ -348,6 +350,14 @@ export default function ProyectosPage() {
     return fieldNames[field] || field
   }
 
+  const handleUploadAnotherResponse = (uploadAnother: boolean) => {
+    setShowUploadAnother(false)
+    if (uploadAnother) {
+      setShowAdditionalUploadFields(true)
+      setSelectedDocumentType("") // Reset document type for new upload
+    }
+  }
+
   if (showFullScreenDetails && selectedProject) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -402,6 +412,49 @@ export default function ProyectosPage() {
                         </label>
                       </div>
                     </div>
+
+                    {showAdditionalUploadFields && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Tipo de Documento Adicional <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            className="w-full border rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-[#8B5CF6]"
+                            value={selectedDocumentType}
+                            onChange={(e) => setSelectedDocumentType(e.target.value)}
+                          >
+                            <option value="">Seleccionar tipo</option>
+                            <option value="ISO 9001">ISO 9001</option>
+                            <option value="ISO 14001">ISO 14001</option>
+                            <option value="ISO 45001">ISO 45001</option>
+                            <option value="ISO 27001">ISO 27001</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Cargar Documento Adicional <span className="text-red-500">*</span>
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="file"
+                              multiple
+                              accept=".pdf,.doc,.docx,.xls,.xlsx"
+                              onChange={handleFileUpload}
+                              className="hidden"
+                              id="additional-document-upload"
+                            />
+                            <label
+                              htmlFor="additional-document-upload"
+                              className="flex-1 border-2 border-dashed border-gray-300 rounded-lg px-4 py-2 text-center cursor-pointer hover:border-[#8B5CF6] hover:bg-gray-50 transition-colors"
+                            >
+                              <span className="text-sm text-gray-600">📎 Seleccionar archivos o arrastrar aquí</span>
+                            </label>
+                          </div>
+                        </div>
+                      </>
+                    )}
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -589,6 +642,26 @@ export default function ProyectosPage() {
                 </Button>
                 <Button onClick={handleCancelEdit} variant="outline" className="px-8 bg-transparent">
                   Cancelar
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showUploadAnother && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Documento Cargado Exitosamente</h3>
+              <p className="text-gray-600 mb-6">¿Desea cargar otro documento?</p>
+              <div className="flex gap-3 justify-end">
+                <Button variant="outline" onClick={() => handleUploadAnotherResponse(false)} className="px-4 py-2">
+                  No
+                </Button>
+                <Button
+                  onClick={() => handleUploadAnotherResponse(true)}
+                  className="px-4 py-2 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white"
+                >
+                  Sí, cargar otro
                 </Button>
               </div>
             </div>
