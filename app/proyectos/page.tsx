@@ -326,6 +326,9 @@ export default function ProyectosPage() {
     }
     setShowDocumentsDialog(false)
     setEditingProject(null)
+    setUploadedDocuments([])
+    setSelectedDocumentType("")
+    setShowAdditionalUploadFields(false)
   }
 
   const handleCancelEdit = () => {
