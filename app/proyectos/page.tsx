@@ -107,7 +107,7 @@ export default function ProyectosPage() {
   const [sharedDocuments, setSharedDocuments] = useState<any[]>([])
   const [showDocumentsDialog, setShowDocumentsDialog] = useState(false)
   const [uploadedDocuments, setUploadedDocuments] = useState<any[]>([])
-  const [selectedDocumentType, setSelectedDocumentType] = useState<string>("")
+  const [selectedDocumentType, setSelectedDocumentType] = useState<string>("ISO 9001")
   const [showUploadAnother, setShowUploadAnother] = useState<boolean>(false)
   const [showAdditionalUploadFields, setShowAdditionalUploadFields] = useState<boolean>(false)
 
@@ -134,6 +134,10 @@ export default function ProyectosPage() {
     setEditingField("documents")
     setEditingValue(project.details.documents)
     setShowDocumentsDialog(true)
+    setUploadedDocuments([]) // Reset uploaded documents
+    setSelectedDocumentType("ISO 9001") // Set default document type
+    setShowAdditionalUploadFields(false) // Reset additional fields
+    console.log("[v0] Share documents form activated for project:", project.id)
   }
 
   const handleUpdateStatus = (project: any) => {
@@ -474,6 +478,155 @@ export default function ProyectosPage() {
                 <Button onClick={handleCancelEdit} variant="outline" className="flex-1 bg-transparent">
                   Cancelar
                 </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showDocumentsDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto mx-4">
+              <div className="flex items-center justify-between p-6 border-b">
+                <h2 className="text-xl font-semibold text-[#1A4F7A]">Compartir ISO</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCancelEdit}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </Button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Tipo de Documento <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={selectedDocumentType}
+                      onChange={(e) => {
+                        setSelectedDocumentType(e.target.value)
+                        console.log("[v0] Document type selected:", e.target.value)
+                      }}
+                      className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6] bg-white"
+                      required
+                    >
+                      <option value="">Seleccionar tipo</option>
+                      <option value="ISO 9001">ISO 9001</option>
+                      <option value="ISO 14001">ISO 14001</option>
+                      <option value="ISO 45001">ISO 45001</option>
+                      <option value="ISO 27001">ISO 27001</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Cargar Documento <span className="text-red-500">*</span>
+                    </label>
+                    <div className="border-2 border-dashed border-[#8B5CF6] rounded-lg p-4 text-center hover:border-[#7C3AED] transition-colors">
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        id="file-upload"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx"
+                      />
+                      <label
+                        htmlFor="file-upload"
+                        className="cursor-pointer text-[#8B5CF6] hover:text-[#7C3AED] flex items-center justify-center gap-2"
+                      >
+                        <span>📎</span>
+                        Seleccionar archivos o arrastrar aquí
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Fecha de Vencimiento <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Usuarios Asignados <span className="text-red-500">*</span>
+                    </label>
+                    <select className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6] bg-white">
+                      <option value="">Seleccionar usuarios</option>
+                      <option value="admin">Administrador</option>
+                      <option value="user1">Usuario 1</option>
+                      <option value="user2">Usuario 2</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nivel de Acceso</label>
+                  <select className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6] bg-white">
+                    <option value="read">Solo visualización</option>
+                    <option value="write">Lectura y escritura</option>
+                    <option value="admin">Administrador</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" className="rounded border-gray-300 text-[#8B5CF6] focus:ring-[#8B5CF6]" />
+                    <span className="text-sm text-gray-700">Notificar por email</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" className="rounded border-gray-300 text-[#8B5CF6] focus:ring-[#8B5CF6]" />
+                    <span className="text-sm text-gray-700">Requerir confirmación de lectura</span>
+                  </label>
+                </div>
+
+                {uploadedDocuments.length > 0 && (
+                  <div className="border rounded-lg p-4">
+                    <h3 className="font-medium text-gray-900 mb-3">Documentos Cargados</h3>
+                    <div className="space-y-2">
+                      {uploadedDocuments.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div className="flex items-center gap-2">
+                            <span className="text-blue-500">📄</span>
+                            <span className="text-sm font-medium">{doc.name}</span>
+                            <Badge className="bg-[#8B5CF6] text-white text-xs">{doc.normaISO}</Badge>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveDocument(doc.id)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            🗑️
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                  <Button onClick={handleCancelEdit} variant="outline" className="px-6 py-2 bg-transparent">
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleSaveDocuments}
+                    className="px-6 py-2 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white"
+                    disabled={!selectedDocumentType || uploadedDocuments.length === 0}
+                  >
+                    Guardar
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
