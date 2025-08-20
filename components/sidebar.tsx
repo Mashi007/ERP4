@@ -32,7 +32,10 @@ const navigation = [
     name: "Clientes",
     href: "/clientes",
     icon: Users,
-    subItems: [],
+    subItems: [
+      { name: "Clientes", href: "/clientes" },
+      { name: "Contactos", href: "/clientes/contactos" },
+    ],
   },
   {
     name: "Ventas",

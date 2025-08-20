@@ -15,13 +15,13 @@ export async function GET() {
 
     const contacts = await sql`
       SELECT 
-        id, name, email, phone, company, job_title, nif, status,
+        id, name, email, phone, company, job_title, nif, status, sales_owner,
         created_at, updated_at
       FROM contacts
       ORDER BY created_at DESC
     `
 
-    return NextResponse.json({ contacts })
+    return NextResponse.json(contacts)
   } catch (error) {
     console.error("Error fetching contacts:", error)
 
@@ -58,8 +58,17 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
-    // Extract standard fields
-    const { name, email, phone, company, job_title, nif, status = "Nuevo", ...customFields } = body
+    const {
+      name,
+      email,
+      phone,
+      company,
+      job_title,
+      nif,
+      sales_owner = "María García",
+      status = "lead",
+      ...customFields
+    } = body
 
     if (!name?.trim()) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 })
@@ -69,11 +78,11 @@ export async function POST(request: NextRequest) {
     try {
       const result = await sql`
         INSERT INTO contacts (
-          name, email, phone, company, job_title, nif, status
+          name, email, phone, company, job_title, nif, status, sales_owner
         )
         VALUES (
           ${name.trim()}, ${email || null}, ${phone || null}, 
-          ${company || null}, ${job_title || null}, ${nif || null}, ${status}
+          ${company || null}, ${job_title || null}, ${nif || null}, ${status}, ${sales_owner}
         )
         RETURNING *
       `
