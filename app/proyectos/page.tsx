@@ -625,7 +625,7 @@ export default function ProyectosPage() {
                   <Button size="sm" variant="outline" className="flex-1 bg-transparent">
                     📊
                   </Button>
-                  <Button size="sm" className="flex-1 bg-[#8B5CF6] hover:bg-[#8B5CF6]/90">
+                  <Button size="sm" className="flex-1 bg-[#1A4F7A] hover:bg-[#1A4F7A]/90">
                     📄
                   </Button>
                 </div>
@@ -703,15 +703,25 @@ export default function ProyectosPage() {
                         >
                           {selectedProject.details.projectStatus}
                         </Badge>
-                        <div
-                          className={`text-xs font-medium ${
-                            selectedProject.details.documents === "Ver Detalle Documentos Compartidos"
-                              ? "text-blue-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {selectedProject.details.documents}
-                        </div>
+                        {selectedProject.details.documents === "Ver Detalle Documentos Compartidos" ? (
+                          <div
+                            className="text-xs font-medium text-blue-600 cursor-pointer hover:text-blue-800 hover:underline flex items-center gap-1"
+                            onClick={() => {
+                              const documentsSection = document.getElementById("documentos-compartidos-section")
+                              if (documentsSection) {
+                                documentsSection.scrollIntoView({ behavior: "smooth" })
+                              }
+                            }}
+                          >
+                            <span className="text-blue-500">📎</span>
+                            {selectedProject.details.documents}
+                          </div>
+                        ) : (
+                          <div className="text-xs font-medium text-red-600 flex items-center gap-1">
+                            <span className="text-red-500">❌</span>
+                            {selectedProject.details.documents}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-4 text-sm">
@@ -809,28 +819,44 @@ export default function ProyectosPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border shadow-sm">
+          <div className="bg-white rounded-lg border shadow-sm" id="documentos-compartidos-section">
             <div className="p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-red-500 text-xl">📎</span>
-                <h2 className="text-xl font-bold text-blue-600">
-                  {selectedProject.details.documents === "Ver Detalle Documentos Compartidos"
-                    ? "Documentos Compartidos"
-                    : "Documentos Sin Compartir"}
-                </h2>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`text-xl ${selectedProject.details.documents === "Ver Detalle Documentos Compartidos" ? "text-blue-500" : "text-red-500"}`}
+                  >
+                    {selectedProject.details.documents === "Ver Detalle Documentos Compartidos" ? "📎" : "❌"}
+                  </span>
+                  <h2
+                    className={`text-xl font-bold ${selectedProject.details.documents === "Ver Detalle Documentos Compartidos" ? "text-blue-600" : "text-red-600"}`}
+                  >
+                    {selectedProject.details.documents === "Ver Detalle Documentos Compartidos"
+                      ? "Documentos Compartidos"
+                      : "Documentos Sin Compartir"}
+                  </h2>
+                </div>
+                {selectedProject.details.documents === "Ver Detalle Documentos Compartidos" && (
+                  <Badge className="bg-green-100 text-green-800 px-3 py-1">✓ Activo</Badge>
+                )}
               </div>
 
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Mostrar</span>
-                  <select className="border rounded-lg px-3 py-2 text-sm bg-white">
-                    <option>10</option>
-                    <option>25</option>
-                    <option>50</option>
-                  </select>
-                  <span className="text-sm text-gray-600">registros por página</span>
+              {selectedProject.details.documents === "Ver Detalle Documentos Compartidos" ? (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-700 flex items-center gap-2">
+                    <span className="text-blue-500">ℹ️</span>
+                    Los documentos han sido compartidos y están disponibles para visualización.
+                  </p>
                 </div>
-              </div>
+              ) : (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-700 flex items-center gap-2">
+                    <span className="text-red-500">⚠️</span>
+                    Los documentos aún no han sido compartidos. Actualice el estado del proyecto para habilitar el
+                    compartir documentos.
+                  </p>
+                </div>
+              )}
 
               <div className="overflow-x-auto">
                 <table className="w-full">
