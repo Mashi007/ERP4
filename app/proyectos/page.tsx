@@ -157,6 +157,16 @@ export default function ProyectosPage() {
   const handleEditProject = (project: any) => {
     console.log("[v0] Opening edit dialog for project:", project.id)
     setEditingProject(project)
+    setEditProjectForm({
+      title: project.title || "",
+      description: project.description || "",
+      priority: project.priority || "",
+      status: project.status || "",
+      startDate: project.startDate || "",
+      endDate: project.endDate || "",
+      teamMembers: project.teamMembers || "",
+      progress: project.progress || 0,
+    })
     setShowEditProjectDialog(true)
   }
 
