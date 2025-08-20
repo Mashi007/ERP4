@@ -12,7 +12,7 @@ export default async function ClientesPage() {
       </div>
 
       <Tabs defaultValue="directorio" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1 rounded-lg">
+        <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
           <TabsTrigger
             value="directorio"
             className="data-[state=active]:bg-white data-[state=active]:text-purple-600 data-[state=active]:shadow-sm font-medium"
@@ -24,12 +24,6 @@ export default async function ClientesPage() {
             className="data-[state=active]:bg-white data-[state=active]:text-purple-600 data-[state=active]:shadow-sm font-medium"
           >
             Contactos
-          </TabsTrigger>
-          <TabsTrigger
-            value="todos"
-            className="data-[state=active]:bg-white data-[state=active]:text-purple-600 data-[state=active]:shadow-sm font-medium"
-          >
-            Vista Unificada
           </TabsTrigger>
         </TabsList>
 
@@ -45,14 +39,6 @@ export default async function ClientesPage() {
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="text-center py-12">
               <p className="text-gray-500">Contenido de contactos no disponible</p>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="todos" className="mt-6">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="text-center py-12">
-              <p className="text-gray-500">Vista unificada no disponible</p>
             </div>
           </div>
         </TabsContent>
