@@ -157,5 +157,3 @@ export function DateFilters({
     </div>
   )
 }
-
-export default DateFilters
