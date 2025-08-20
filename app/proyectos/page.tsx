@@ -130,6 +130,7 @@ export default function ProyectosPage() {
     setEditingProject(project)
     setEditingField("projectStatus")
     setEditingValue(project.details.projectStatus)
+    setObservations("")
   }
 
   const handleEditStandards = (project: any) => {
@@ -167,8 +168,8 @@ export default function ProyectosPage() {
       // Update the project data
       editingProject.details[editingField] = editingValue
       console.log(`[v0] Updated ${editingField}:`, editingValue)
-      if (editingField === "hasTraining" && observations) {
-        console.log(`[v0] Training observations:`, observations)
+      if ((editingField === "hasTraining" || editingField === "projectStatus") && observations) {
+        console.log(`[v0] ${editingField} observations:`, observations)
       }
     }
     setEditingField(null)
