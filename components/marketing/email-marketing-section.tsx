@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import { Mail, Users, Send, Bot, Sparkles, Loader2, Search, CheckCircle, User, Building, AtSign } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Contact {
   id: number
@@ -18,6 +19,9 @@ interface Contact {
   company?: string
   phone?: string
   status: string
+  industry?: string
+  source?: string
+  sales_owner?: string
 }
 
 export default function EmailMarketingSection() {
@@ -29,14 +33,46 @@ export default function EmailMarketingSection() {
   const [isGeneratingEmail, setIsGeneratingEmail] = useState(false)
   const [isSendingEmail, setIsSendingEmail] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedIndustry, setSelectedIndustry] = useState("all")
+  const [selectedSource, setSelectedSource] = useState("all")
+  const [selectedResponsible, setSelectedResponsible] = useState("all")
+  const [industries, setIndustries] = useState<string[]>([])
+  const [sources, setSources] = useState<string[]>([])
+  const [responsibleUsers, setResponsibleUsers] = useState<Array<{ id: string; name: string }>>([])
 
   useEffect(() => {
     fetchContacts()
-  }, [])
+    fetchFilterOptions()
+  }, [selectedIndustry, selectedSource, selectedResponsible])
+
+  const fetchFilterOptions = async () => {
+    try {
+      const [industriesRes, sourcesRes, usersRes] = await Promise.all([
+        fetch("/api/contacts/industries"),
+        fetch("/api/contacts/sources"),
+        fetch("/api/users"),
+      ])
+
+      const industriesData = await industriesRes.json()
+      const sourcesData = await sourcesRes.json()
+      const usersData = await usersRes.json()
+
+      setIndustries(industriesData.industries || [])
+      setSources(sourcesData.sources || [])
+      setResponsibleUsers(usersData.map((user: any) => ({ id: user.id.toString(), name: user.name })) || [])
+    } catch (error) {
+      console.error("Error fetching filter options:", error)
+    }
+  }
 
   const fetchContacts = async () => {
     try {
-      const response = await fetch("/api/contacts")
+      const params = new URLSearchParams()
+      if (selectedIndustry !== "all") params.append("industry", selectedIndustry)
+      if (selectedSource !== "all") params.append("source", selectedSource)
+      if (selectedResponsible !== "all") params.append("responsible", selectedResponsible)
+
+      const response = await fetch(`/api/contacts?${params.toString()}`)
       const data = await response.json()
 
       if (Array.isArray(data)) {
@@ -88,7 +124,6 @@ export default function EmailMarketingSection() {
         setEmailSubject(emailData.subject || "Asunto generado por IA")
         setEmailContent(emailData.content || result)
       } catch {
-        // If not JSON, treat as plain text content
         const lines = result.split("\n")
         const subjectLine = lines.find(
           (line) => line.toLowerCase().includes("asunto:") || line.toLowerCase().includes("subject:"),
@@ -176,6 +211,12 @@ export default function EmailMarketingSection() {
     setSelectedContacts([])
   }
 
+  const handleFilterChange = (filters: any) => {
+    setSelectedIndustry(filters.industry || "all")
+    setSelectedSource(filters.source || "all")
+    setSelectedResponsible(filters.responsible || "all")
+  }
+
   const filteredContacts = Array.isArray(contacts)
     ? contacts.filter(
         (contact) =>
@@ -209,6 +250,59 @@ export default function EmailMarketingSection() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
+                <div className="grid gap-3">
+                  <div className="grid gap-1">
+                    <Label>Industria</Label>
+                    <Select value={selectedIndustry} onValueChange={setSelectedIndustry}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        {industries.map((industry) => (
+                          <SelectItem key={industry} value={industry}>
+                            {industry}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-1">
+                    <Label>Fuente</Label>
+                    <Select value={selectedSource} onValueChange={setSelectedSource}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        {sources.map((source) => (
+                          <SelectItem key={source} value={source}>
+                            {source}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-1">
+                    <Label>Responsable Comercial</Label>
+                    <Select value={selectedResponsible} onValueChange={setSelectedResponsible}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todos" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        {responsibleUsers.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
