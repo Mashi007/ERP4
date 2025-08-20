@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Search, Plus, Building2, Mail, Phone, MapPin, Calendar, User, Trash2 } from "lucide-react"
 import DynamicContactForm from "@/components/contacts/dynamic-contact-form"
 import { useToast } from "@/hooks/use-toast"
+import { neon } from "@neondatabase/serverless"
 
 interface Client {
   id: string
@@ -35,8 +36,40 @@ export default function ClientesPage() {
   const loadClients = async () => {
     try {
       setLoading(true)
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      console.log("[v0] Loading clients from database...")
 
+      const sql = neon(process.env.DATABASE_URL!)
+      const result = await sql`
+        SELECT 
+          id::text,
+          name,
+          email,
+          phone,
+          company as address,
+          'Cliente' as type,
+          created_at::text
+        FROM contacts 
+        ORDER BY created_at DESC
+      `
+
+      console.log("[v0] Database clients query result:", result.length, "clients found")
+
+      const dbClients: Client[] = result.map((row: any) => ({
+        id: row.id,
+        name: row.name || "Cliente Sin Nombre",
+        email: row.email,
+        phone: row.phone,
+        address: row.address,
+        type: row.type || "Cliente",
+        created_at: row.created_at,
+      }))
+
+      setClients(dbClients)
+      console.log("[v0] Clients loaded successfully:", dbClients)
+    } catch (error) {
+      console.error("[v0] Error loading clients from database:", error)
+      // Fallback to mock data if database fails
+      console.log("[v0] Falling back to mock data")
       const mockClients: Client[] = [
         {
           id: "1",
@@ -57,13 +90,11 @@ export default function ClientesPage() {
           created_at: new Date().toISOString(),
         },
       ]
-
       setClients(mockClients)
-    } catch (error) {
-      console.error("Error loading clients:", error)
+
       toast({
-        title: "Error",
-        description: "No se pudieron cargar los clientes",
+        title: "Advertencia",
+        description: "Se cargaron datos de ejemplo. Verifica la conexión a la base de datos.",
         variant: "destructive",
       })
     } finally {
@@ -73,28 +104,50 @@ export default function ClientesPage() {
 
   const handleSaveNewClient = async (clientData: any) => {
     try {
-      console.log("[v0] Saving new client:", clientData)
+      console.log("[v0] Saving new client to database:", clientData)
+
+      const sql = neon(process.env.DATABASE_URL!)
+
+      const clientName =
+        clientData.nombre || clientData.name || clientData.empresa || clientData.company || "Cliente Sin Nombre"
+      const clientEmail = clientData.email
+      const clientPhone = clientData.telefono || clientData.phone
+      const clientCompany = clientData.empresa || clientData.company || clientName
+
+      const result = await sql`
+        INSERT INTO contacts (name, email, phone, company, job_title, status, sales_owner)
+        VALUES (${clientName}, ${clientEmail}, ${clientPhone}, ${clientCompany}, ${clientData.cargo || ""}, 'active', 'system')
+        RETURNING id::text, name, email, phone, company, created_at::text
+      `
+
+      console.log("[v0] Database insert result:", result)
 
       const newClient: Client = {
-        id: Date.now().toString(),
-        name: clientData.nombre || clientData.name || clientData.empresa || clientData.company || "Cliente Sin Nombre",
-        email: clientData.email,
-        phone: clientData.telefono || clientData.phone,
-        address: clientData.direccion || clientData.address,
-        type: clientData.type || "Cliente",
-        created_at: new Date().toISOString(),
+        id: result[0].id,
+        name: result[0].name,
+        email: result[0].email,
+        phone: result[0].phone,
+        address: result[0].company,
+        type: "Cliente",
+        created_at: result[0].created_at,
       }
 
       setClients((prev) => [newClient, ...prev])
 
       toast({
         title: "Cliente creado",
-        description: `El cliente "${newClient.name}" se creó correctamente`,
+        description: `El cliente "${newClient.name}" se guardó en la base de datos`,
       })
 
-      console.log("[v0] Client created successfully:", newClient)
+      console.log("[v0] Client saved to database successfully:", newClient)
+      setIsNewClientDialogOpen(false)
     } catch (error) {
-      console.error("Error creating client:", error)
+      console.error("[v0] Error saving client to database:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo guardar el cliente en la base de datos",
+        variant: "destructive",
+      })
       throw error
     }
   }
@@ -139,18 +192,41 @@ export default function ClientesPage() {
 
   const handleSaveEditedClient = async (clientData: any) => {
     try {
-      console.log("[v0] Saving edited client:", clientData)
+      console.log("[v0] Saving edited client to database:", clientData)
       console.log("[v0] Selected client before update:", selectedClient)
 
       if (!selectedClient) return
 
+      const sql = neon(process.env.DATABASE_URL!)
+
+      const clientName =
+        clientData.nombre || clientData.name || clientData.empresa || clientData.company || selectedClient.name
+      const clientEmail = clientData.email || selectedClient.email
+      const clientPhone = clientData.telefono || clientData.phone || selectedClient.phone
+      const clientCompany = clientData.empresa || clientData.company || clientName
+
+      const result = await sql`
+        UPDATE contacts 
+        SET 
+          name = ${clientName},
+          email = ${clientEmail},
+          phone = ${clientPhone},
+          company = ${clientCompany},
+          job_title = ${clientData.cargo || ""},
+          updated_at = NOW()
+        WHERE id = ${Number.parseInt(selectedClient.id)}
+        RETURNING id::text, name, email, phone, company, created_at::text, updated_at::text
+      `
+
+      console.log("[v0] Database update result:", result)
+
       const updatedClient: Client = {
         ...selectedClient,
-        name: clientData.nombre || clientData.name || clientData.empresa || clientData.company || selectedClient.name,
-        email: clientData.email || selectedClient.email,
-        phone: clientData.telefono || clientData.phone || selectedClient.phone,
-        address: clientData.direccion || clientData.address || selectedClient.address,
-        type: clientData.type || selectedClient.type,
+        name: result[0].name,
+        email: result[0].email,
+        phone: result[0].phone,
+        address: result[0].company,
+        type: selectedClient.type,
       }
 
       console.log("[v0] Updated client data:", updatedClient)
@@ -159,19 +235,19 @@ export default function ClientesPage() {
 
       toast({
         title: "Cliente actualizado",
-        description: `El cliente "${updatedClient.name}" se actualizó correctamente`,
+        description: `El cliente "${updatedClient.name}" se actualizó en la base de datos`,
       })
 
-      console.log("[v0] Client updated successfully:", updatedClient)
+      console.log("[v0] Client updated in database successfully:", updatedClient)
 
       setIsEditClientDialogOpen(false)
       setSelectedClient(null)
       console.log("[v0] Edit dialog closed and state reset")
     } catch (error) {
-      console.error("Error updating client:", error)
+      console.error("[v0] Error updating client in database:", error)
       toast({
         title: "Error",
-        description: "No se pudo actualizar el cliente",
+        description: "No se pudo actualizar el cliente en la base de datos",
         variant: "destructive",
       })
       throw error
@@ -180,18 +256,32 @@ export default function ClientesPage() {
 
   const handleDeleteClient = async (clientId: string) => {
     try {
-      console.log("[v0] Deleting client with ID:", clientId)
+      console.log("[v0] Deleting client from database with ID:", clientId)
+
+      const sql = neon(process.env.DATABASE_URL!)
+
+      await sql`
+        DELETE FROM contacts 
+        WHERE id = ${Number.parseInt(clientId)}
+      `
 
       setClients((prev) => prev.filter((client) => client.id !== clientId))
 
       toast({
         title: "Cliente eliminado",
-        description: `El cliente con ID "${clientId}" se eliminó correctamente`,
+        description: `El cliente se eliminó de la base de datos correctamente`,
       })
 
-      console.log("[v0] Client deleted successfully with ID:", clientId)
+      console.log("[v0] Client deleted from database successfully with ID:", clientId)
+      setIsClientDetailsOpen(false)
+      setSelectedClient(null)
     } catch (error) {
-      console.error("Error deleting client:", error)
+      console.error("[v0] Error deleting client from database:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el cliente de la base de datos",
+        variant: "destructive",
+      })
       throw error
     }
   }
