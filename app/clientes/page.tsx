@@ -151,8 +151,14 @@ export default function ClientesPage() {
 
       setIsEditClientDialogOpen(false)
       setSelectedClient(null)
+      console.log("[v0] Edit dialog closed and state reset")
     } catch (error) {
       console.error("Error updating client:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el cliente",
+        variant: "destructive",
+      })
       throw error
     }
   }
