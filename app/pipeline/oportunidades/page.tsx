@@ -476,15 +476,32 @@ export default function OportunidadesPage() {
       try {
         if (contactAbort.current) contactAbort.current.abort()
         contactAbort.current = new AbortController()
-        const res = await fetch(`/api/contacts/search?q=${encodeURIComponent(q)}&by=any`, {
+
+        const res = await fetch(`/api/clients?search=${encodeURIComponent(q)}`, {
           signal: contactAbort.current.signal,
         })
-        const data = (await res.json()) as { results: Contact[] }
-        setContactResults(data.results || [])
+        const data = await res.json()
+
+        // Transform clients data to match Contact interface
+        const transformedResults = (data.clients || []).map((client: any) => ({
+          id: client.id,
+          name: client.name,
+          email: client.email,
+          phone: client.phone,
+          company: client.company || client.empresa,
+          job_title: client.position || client.cargo,
+          address: client.address || client.direccion,
+          city: client.city || client.ciudad,
+          country: client.country || client.pais,
+          notes: client.notes || client.notas,
+          avatar_url: null,
+        }))
+
+        setContactResults(transformedResults)
         setContactOpen(true)
       } catch (e) {
         if ((e as any).name !== "AbortError") {
-          console.error("Search contacts failed", e)
+          console.error("Search clients failed", e)
         }
       }
     }, 250)
@@ -507,7 +524,6 @@ export default function OportunidadesPage() {
 
   const handleSelectContact = (c: Contact) => {
     setSelectedContact(c)
-    // Auto-fill opportunity fields from selected contact
     setNewOpportunity((prev) => ({
       ...prev,
       contact_name: c.name || "",
@@ -515,9 +531,19 @@ export default function OportunidadesPage() {
       contact_phone: c.phone || "",
       company: c.company || "",
       job_title: c.job_title || "",
+      // Additional fields from clients database
+      contact_address: c.address || "",
+      contact_city: c.city || "",
+      contact_country: c.country || "",
+      notes: prev.notes ? `${prev.notes}\n\nContacto: ${c.notes || ""}` : c.notes || "",
     }))
     setContactQuery(c.name || "")
     setContactOpen(false)
+
+    toast({
+      title: "Cliente seleccionado",
+      description: `Datos de ${c.name} copiados al formulario`,
+    })
   }
 
   const isFieldVisible = (fieldName: string) => {
@@ -978,19 +1004,16 @@ export default function OportunidadesPage() {
                               >
                                 <Avatar className="h-7 w-7">
                                   <AvatarImage src={c.avatar_url || ""} alt={c.name || "Contacto"} />
-                                  <AvatarFallback>
-                                    {(c.name || "?")
-                                      .split(" ")
-                                      .map((s) => s[0])
-                                      .slice(0, 2)
-                                      .join("")
-                                      .toUpperCase()}
+                                  <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                                    {(c.name || "C").charAt(0).toUpperCase()}
                                   </AvatarFallback>
                                 </Avatar>
-                                <div className="min-w-0">
-                                  <div className="text-sm font-medium text-gray-900 truncate">{c.name}</div>
-                                  <div className="text-xs text-gray-600 break-words">{c.company || "Sin empresa"}</div>
-                                  {c.email && <div className="text-xs text-gray-500 break-words">{c.email}</div>}
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium text-sm truncate">{c.name}</div>
+                                  <div className="text-xs text-gray-500 truncate">
+                                    {c.email}
+                                    {c.company && ` • ${c.company}`}
+                                  </div>
                                 </div>
                               </button>
                             ))}
