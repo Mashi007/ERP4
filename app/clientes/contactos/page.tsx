@@ -180,13 +180,26 @@ export default function ContactosPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "lead":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-50 text-blue-700 border-blue-200"
       case "qualified":
-        return "bg-green-100 text-green-800"
+        return "bg-emerald-50 text-emerald-700 border-emerald-200"
       case "client":
-        return "bg-purple-100 text-purple-800"
+        return "bg-purple-50 text-purple-700 border-purple-200"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-50 text-gray-700 border-gray-200"
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "lead":
+        return "Nuevo"
+      case "qualified":
+        return "Calificado"
+      case "client":
+        return "Cliente"
+      default:
+        return status
     }
   }
 
@@ -317,47 +330,80 @@ export default function ContactosPage() {
         />
       </div>
 
-      <div className="rounded-md border">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Empresa</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Teléfono</TableHead>
-              <TableHead>Cargo</TableHead>
-              <TableHead>Responsable</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Acciones</TableHead>
+            <TableRow className="bg-gray-50/80 border-b border-gray-200">
+              <TableHead className="font-semibold text-gray-900 py-4 px-6">Nombre</TableHead>
+              <TableHead className="font-semibold text-gray-900 py-4 px-4">Empresa</TableHead>
+              <TableHead className="font-semibold text-gray-900 py-4 px-4">Email</TableHead>
+              <TableHead className="font-semibold text-gray-900 py-4 px-4">Teléfono</TableHead>
+              <TableHead className="font-semibold text-gray-900 py-4 px-4">Cargo</TableHead>
+              <TableHead className="font-semibold text-gray-900 py-4 px-4">Responsable</TableHead>
+              <TableHead className="font-semibold text-gray-900 py-4 px-4 text-center">Estado</TableHead>
+              <TableHead className="font-semibold text-gray-900 py-4 px-4 text-center">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredContacts.map((contact) => (
+            {filteredContacts.map((contact, index) => (
               <TableRow
                 key={contact.id}
-                className="cursor-pointer hover:bg-muted/50"
+                className={`cursor-pointer transition-all duration-200 hover:bg-blue-50/50 border-b border-gray-100 ${
+                  index % 2 === 0 ? "bg-white" : "bg-gray-50/30"
+                }`}
                 onDoubleClick={() => handleRowDoubleClick(contact)}
               >
-                <TableCell className="font-medium">{contact.name}</TableCell>
-                <TableCell>{contact.company}</TableCell>
-                <TableCell>{contact.email}</TableCell>
-                <TableCell>{contact.phone}</TableCell>
-                <TableCell>{contact.job_title}</TableCell>
-                <TableCell>{contact.sales_owner}</TableCell>
-                <TableCell>
-                  <Badge className={getStatusColor(contact.status)}>
-                    {contact.status === "lead"
-                      ? "Lead"
-                      : contact.status === "qualified"
-                        ? "Calificado"
-                        : contact.status === "client"
-                          ? "Cliente"
-                          : contact.status}
+                <TableCell className="font-medium text-gray-900 py-4 px-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <User className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span className="font-medium">{contact.name}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-gray-700 py-4 px-4">
+                  <div className="flex items-center gap-2">
+                    <Building className="h-4 w-4 text-gray-400" />
+                    <span>{contact.company}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-gray-600 py-4 px-4">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm">{contact.email}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-gray-600 py-4 px-4">
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm">{contact.phone}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-gray-700 py-4 px-4">
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm">{contact.job_title}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-gray-700 py-4 px-4">
+                  <span className="text-sm font-medium">{contact.sales_owner}</span>
+                </TableCell>
+                <TableCell className="py-4 px-4 text-center">
+                  <Badge
+                    variant="outline"
+                    className={`${getStatusColor(contact.status)} font-medium px-3 py-1 text-xs border`}
+                  >
+                    {getStatusText(contact.status)}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleRowDoubleClick(contact)}>
+                <TableCell className="py-4 px-4">
+                  <div className="flex items-center justify-center space-x-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRowDoubleClick(contact)}
+                      className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600 transition-colors"
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
                     {contact.status === "lead" && (
@@ -368,6 +414,7 @@ export default function ContactosPage() {
                           setSelectedContact(contact)
                           setIsConvertDialogOpen(true)
                         }}
+                        className="h-8 w-8 p-0 hover:bg-emerald-100 hover:text-emerald-600 transition-colors"
                       >
                         <ArrowRight className="h-4 w-4" />
                       </Button>
@@ -381,8 +428,14 @@ export default function ContactosPage() {
       </div>
 
       {filteredContacts.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">No se encontraron contactos</p>
+        <div className="text-center py-16 bg-white rounded-lg border border-gray-200">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+              <User className="h-6 w-6 text-gray-400" />
+            </div>
+            <p className="text-gray-500 font-medium">No se encontraron contactos</p>
+            <p className="text-gray-400 text-sm">Intenta ajustar los filtros de búsqueda</p>
+          </div>
         </div>
       )}
 
