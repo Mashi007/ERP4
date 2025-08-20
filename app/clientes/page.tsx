@@ -415,6 +415,12 @@ export default function ClientesPage() {
                 <Button variant="outline" onClick={handleCloseDetails}>
                   Cerrar
                 </Button>
+                <Button
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                  onClick={() => handleEditClient(selectedClient)}
+                >
+                  Editar
+                </Button>
               </div>
             </div>
           )}
