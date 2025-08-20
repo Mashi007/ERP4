@@ -369,105 +369,111 @@ export default function ContactosPage() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-blue-600" />
-                  Correo electrónico
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="juan.perez@empresa.com"
-                  value={newContact.email}
-                  onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
-                  className="h-11"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-blue-600" />
+                    Correo electrónico
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="juan.perez@empresa.com"
+                    value={newContact.email}
+                    onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
+                    className="h-11"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-blue-600" />
+                    Teléfono
+                  </Label>
+                  <Input
+                    id="phone"
+                    placeholder="+34 600 123 456"
+                    value={newContact.phone}
+                    onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
+                    className="h-11"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-blue-600" />
-                  Teléfono
-                </Label>
-                <Input
-                  id="phone"
-                  placeholder="+34 600 123 456"
-                  value={newContact.phone}
-                  onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
-                  className="h-11"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="company" className="text-sm font-medium flex items-center gap-2">
+                    <Building className="h-4 w-4 text-blue-600" />
+                    Empresa
+                  </Label>
+                  <Input
+                    id="company"
+                    placeholder="Nombre de la empresa"
+                    value={newContact.company}
+                    onChange={(e) => setNewContact({ ...newContact, company: e.target.value })}
+                    className="h-11"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="job_title" className="text-sm font-medium flex items-center gap-2">
+                    <Briefcase className="h-4 w-4 text-blue-600" />
+                    Cargo
+                  </Label>
+                  <Input
+                    id="job_title"
+                    placeholder="Director de Marketing"
+                    value={newContact.job_title}
+                    onChange={(e) => setNewContact({ ...newContact, job_title: e.target.value })}
+                    className="h-11"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="company" className="text-sm font-medium flex items-center gap-2">
-                  <Building className="h-4 w-4 text-blue-600" />
-                  Empresa
-                </Label>
-                <Input
-                  id="company"
-                  placeholder="Nombre de la empresa"
-                  value={newContact.company}
-                  onChange={(e) => setNewContact({ ...newContact, company: e.target.value })}
-                  className="h-11"
-                />
-              </div>
+              <div className="grid grid-cols-2 gap-4 p-4 bg-blue-50/30 rounded-lg border border-blue-200">
+                <div className="space-y-2">
+                  <Label htmlFor="status" className="text-sm font-semibold flex items-center gap-2 text-blue-800">
+                    <div className="w-4 h-4 rounded-full bg-blue-600"></div>
+                    Estado
+                  </Label>
+                  <Select
+                    value={newContact.status}
+                    onValueChange={(value) => setNewContact({ ...newContact, status: value })}
+                  >
+                    <SelectTrigger className="h-11 bg-white border-blue-300 focus:border-blue-500">
+                      <SelectValue placeholder="Seleccionar estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((status) => (
+                        <SelectItem key={status.value} value={status.value}>
+                          {status.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="job_title" className="text-sm font-medium flex items-center gap-2">
-                  <Briefcase className="h-4 w-4 text-blue-600" />
-                  Cargo
-                </Label>
-                <Input
-                  id="job_title"
-                  placeholder="Director de Marketing"
-                  value={newContact.job_title}
-                  onChange={(e) => setNewContact({ ...newContact, job_title: e.target.value })}
-                  className="h-11"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="stage" className="text-sm font-medium flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-blue-600" />
-                  Etapa
-                </Label>
-                <Select
-                  value={newContact.stage}
-                  onValueChange={(value) => setNewContact({ ...newContact, stage: value })}
-                >
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Seleccionar etapa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {stageOptions.map((stage) => (
-                      <SelectItem key={stage.value} value={stage.value}>
-                        {stage.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="status" className="text-sm font-medium flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-blue-600"></div>
-                  Estado
-                </Label>
-                <Select
-                  value={newContact.status}
-                  onValueChange={(value) => setNewContact({ ...newContact, status: value })}
-                >
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Seleccionar estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((status) => (
-                      <SelectItem key={status.value} value={status.value}>
-                        {status.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Label htmlFor="stage" className="text-sm font-semibold flex items-center gap-2 text-blue-800">
+                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                    Etapa
+                  </Label>
+                  <Select
+                    value={newContact.stage}
+                    onValueChange={(value) => setNewContact({ ...newContact, stage: value })}
+                  >
+                    <SelectTrigger className="h-11 bg-white border-blue-300 focus:border-blue-500">
+                      <SelectValue placeholder="Seleccionar etapa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stageOptions.map((stage) => (
+                        <SelectItem key={stage.value} value={stage.value}>
+                          {stage.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
@@ -635,61 +641,65 @@ export default function ContactosPage() {
           </DialogHeader>
 
           <div className="space-y-6 py-6">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name" className="text-sm font-medium flex items-center gap-2">
-                <User className="h-4 w-4 text-blue-600" />
-                Nombre completo
-              </Label>
-              <Input
-                id="edit-name"
-                placeholder="Ej: Juan Pérez"
-                value={editContact.name}
-                onChange={(e) => setEditContact({ ...editContact, name: e.target.value })}
-                className="h-11"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name" className="text-sm font-medium flex items-center gap-2">
+                  <User className="h-4 w-4 text-blue-600" />
+                  Nombre completo
+                </Label>
+                <Input
+                  id="edit-name"
+                  placeholder="Ej: Juan Pérez"
+                  value={editContact.name}
+                  onChange={(e) => setEditContact({ ...editContact, name: e.target.value })}
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-email" className="text-sm font-medium flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-blue-600" />
+                  Correo electrónico
+                </Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  placeholder="juan.perez@empresa.com"
+                  value={editContact.email}
+                  onChange={(e) => setEditContact({ ...editContact, email: e.target.value })}
+                  className="h-11"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-email" className="text-sm font-medium flex items-center gap-2">
-                <Mail className="h-4 w-4 text-blue-600" />
-                Correo electrónico
-              </Label>
-              <Input
-                id="edit-email"
-                type="email"
-                placeholder="juan.perez@empresa.com"
-                value={editContact.email}
-                onChange={(e) => setEditContact({ ...editContact, email: e.target.value })}
-                className="h-11"
-              />
-            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-phone" className="text-sm font-medium flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-blue-600" />
+                  Teléfono
+                </Label>
+                <Input
+                  id="edit-phone"
+                  placeholder="+34 600 123 456"
+                  value={editContact.phone}
+                  onChange={(e) => setEditContact({ ...editContact, phone: e.target.value })}
+                  className="h-11"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-phone" className="text-sm font-medium flex items-center gap-2">
-                <Phone className="h-4 w-4 text-blue-600" />
-                Teléfono
-              </Label>
-              <Input
-                id="edit-phone"
-                placeholder="+34 600 123 456"
-                value={editContact.phone}
-                onChange={(e) => setEditContact({ ...editContact, phone: e.target.value })}
-                className="h-11"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-company" className="text-sm font-medium flex items-center gap-2">
-                <Building className="h-4 w-4 text-blue-600" />
-                Empresa
-              </Label>
-              <Input
-                id="edit-company"
-                placeholder="Nombre de la empresa"
-                value={editContact.company}
-                onChange={(e) => setEditContact({ ...editContact, company: e.target.value })}
-                className="h-11"
-              />
+              <div className="space-y-2">
+                <Label htmlFor="edit-company" className="text-sm font-medium flex items-center gap-2">
+                  <Building className="h-4 w-4 text-blue-600" />
+                  Empresa
+                </Label>
+                <Input
+                  id="edit-company"
+                  placeholder="Nombre de la empresa"
+                  value={editContact.company}
+                  onChange={(e) => setEditContact({ ...editContact, company: e.target.value })}
+                  className="h-11"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -706,48 +716,50 @@ export default function ContactosPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-stage" className="text-sm font-medium flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-blue-600" />
-                Etapa
-              </Label>
-              <Select
-                value={editContact.stage}
-                onValueChange={(value) => setEditContact({ ...editContact, stage: value })}
-              >
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder="Seleccionar etapa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {stageOptions.map((stage) => (
-                    <SelectItem key={stage.value} value={stage.value}>
-                      {stage.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <div className="grid grid-cols-2 gap-4 p-4 bg-blue-50/30 rounded-lg border border-blue-200">
+              <div className="space-y-2">
+                <Label htmlFor="edit-status" className="text-sm font-semibold flex items-center gap-2 text-blue-800">
+                  <div className="w-4 h-4 rounded-full bg-blue-600"></div>
+                  Estado
+                </Label>
+                <Select
+                  value={editContact.status}
+                  onValueChange={(value) => setEditContact({ ...editContact, status: value })}
+                >
+                  <SelectTrigger className="h-11 bg-white border-blue-300 focus:border-blue-500">
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((status) => (
+                      <SelectItem key={status.value} value={status.value}>
+                        {status.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-status" className="text-sm font-medium flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-blue-600"></div>
-                Estado
-              </Label>
-              <Select
-                value={editContact.status}
-                onValueChange={(value) => setEditContact({ ...editContact, status: value })}
-              >
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder="Seleccionar estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusOptions.map((status) => (
-                    <SelectItem key={status.value} value={status.value}>
-                      {status.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label htmlFor="edit-stage" className="text-sm font-semibold flex items-center gap-2 text-blue-800">
+                  <TrendingUp className="h-4 w-4 text-blue-600" />
+                  Etapa
+                </Label>
+                <Select
+                  value={editContact.stage}
+                  onValueChange={(value) => setEditContact({ ...editContact, stage: value })}
+                >
+                  <SelectTrigger className="h-11 bg-white border-blue-300 focus:border-blue-500">
+                    <SelectValue placeholder="Seleccionar etapa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stageOptions.map((stage) => (
+                      <SelectItem key={stage.value} value={stage.value}>
+                        {stage.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
