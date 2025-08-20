@@ -726,20 +726,52 @@ export default function ProyectosPage() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   <tr className="hover:bg-gray-50">
-                    <td className="px-4 py-4 text-sm">
+                    <td
+                      className="px-4 py-4 text-sm cursor-pointer hover:bg-blue-50 transition-colors"
+                      onDoubleClick={() => {
+                        console.log("[v0] Double-clicked on project number")
+                        handleUpdateStatus(selectedProject)
+                      }}
+                    >
                       <div className="text-blue-600 font-medium">{selectedProject.details.number}</div>
                       <div className="text-blue-500 text-xs">{selectedProject.details.project}</div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-blue-600 font-medium">{selectedProject.details.client}</td>
-                    <td className="px-4 py-4 text-sm">
+                    <td
+                      className="px-4 py-4 text-sm text-blue-600 font-medium cursor-pointer hover:bg-blue-50 transition-colors"
+                      onDoubleClick={() => {
+                        console.log("[v0] Double-clicked on client")
+                        handleEditStandards(selectedProject)
+                      }}
+                    >
+                      {selectedProject.details.client}
+                    </td>
+                    <td
+                      className="px-4 py-4 text-sm cursor-pointer hover:bg-blue-50 transition-colors"
+                      onDoubleClick={() => {
+                        console.log("[v0] Double-clicked on project")
+                        handleEditStandards(selectedProject)
+                      }}
+                    >
                       <div className="font-medium text-gray-900">{selectedProject.details.project}</div>
                     </td>
-                    <td className="px-4 py-4 text-sm">
+                    <td
+                      className="px-4 py-4 text-sm cursor-pointer hover:bg-blue-50 transition-colors"
+                      onDoubleClick={() => {
+                        console.log("[v0] Double-clicked on linked services")
+                        handleEditStandards(selectedProject)
+                      }}
+                    >
                       <div className="text-blue-600 font-medium">{selectedProject.details.linkedServices}</div>
                       <div className="text-gray-600 text-xs">Certificación ISO</div>
                       <div className="text-blue-600 text-xs mt-1">🔗 {selectedProject.details.associatedStandards}</div>
                     </td>
-                    <td className="px-4 py-4 text-sm">
+                    <td
+                      className="px-4 py-4 text-sm cursor-pointer hover:bg-blue-50 transition-colors"
+                      onDoubleClick={() => {
+                        console.log("[v0] Double-clicked on project status")
+                        handleUpdateStatus(selectedProject)
+                      }}
+                    >
                       <div className="space-y-1">
                         <Badge
                           className={`${
@@ -755,19 +787,39 @@ export default function ProyectosPage() {
                           {selectedProject.details.projectStatus}
                         </Badge>
                         {selectedProject.details.documents === "Ver Detalle Documentos Compartidos" ? (
-                          <div className="text-xs font-medium text-blue-600 flex items-center gap-1">
+                          <div
+                            className="text-xs font-medium text-blue-600 flex items-center gap-1 cursor-pointer hover:text-blue-800"
+                            onDoubleClick={(e) => {
+                              e.stopPropagation()
+                              console.log("[v0] Double-clicked on shared documents")
+                              handleShareDocuments(selectedProject)
+                            }}
+                          >
                             <span className="text-blue-500">📎</span>
                             {selectedProject.details.documents}
                           </div>
                         ) : (
-                          <div className="text-xs font-medium text-red-600 flex items-center gap-1">
+                          <div
+                            className="text-xs font-medium text-red-600 flex items-center gap-1 cursor-pointer hover:text-red-800"
+                            onDoubleClick={(e) => {
+                              e.stopPropagation()
+                              console.log("[v0] Double-clicked on documents not shared")
+                              handleShareDocuments(selectedProject)
+                            }}
+                          >
                             <span className="text-red-500">❌</span>
                             {selectedProject.details.documents}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-sm">
+                    <td
+                      className="px-4 py-4 text-sm cursor-pointer hover:bg-blue-50 transition-colors"
+                      onDoubleClick={() => {
+                        console.log("[v0] Double-clicked on training center")
+                        handleUpdateTraining(selectedProject)
+                      }}
+                    >
                       <div className="text-gray-900 mb-1 font-medium">{selectedProject.details.billingCenter}</div>
                       <Badge
                         className={
@@ -779,16 +831,44 @@ export default function ProyectosPage() {
                         {selectedProject.details.hasTraining}
                       </Badge>
                     </td>
-                    <td className="px-4 py-4 text-sm">
+                    <td
+                      className="px-4 py-4 text-sm cursor-pointer hover:bg-blue-50 transition-colors"
+                      onDoubleClick={() => {
+                        console.log("[v0] Double-clicked on certifying company")
+                        handleAddCertifyingCompany(selectedProject)
+                      }}
+                    >
                       <div className="text-blue-600 mb-1 font-medium">{selectedProject.details.certifyingCompany}</div>
                       <div className="text-blue-600 font-medium">{selectedProject.details.auditors}</div>
                     </td>
-                    <td className="px-4 py-4 text-sm">
+                    <td
+                      className="px-4 py-4 text-sm cursor-pointer hover:bg-blue-50 transition-colors"
+                      onDoubleClick={() => {
+                        console.log("[v0] Double-clicked on validation dates")
+                        handleValidateProject(selectedProject)
+                      }}
+                    >
                       <div className="text-gray-600 text-xs mb-1">{selectedProject.details.sharedDate}</div>
                       <div className="text-gray-600 text-xs">{selectedProject.details.validationDate}</div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-600">{selectedProject.details.consultants}</td>
-                    <td className="px-4 py-4 text-sm text-gray-600">{selectedProject.details.projectManager}</td>
+                    <td
+                      className="px-4 py-4 text-sm text-gray-600 cursor-pointer hover:bg-blue-50 transition-colors"
+                      onDoubleClick={() => {
+                        console.log("[v0] Double-clicked on consultants")
+                        handleEditStandards(selectedProject)
+                      }}
+                    >
+                      {selectedProject.details.consultants}
+                    </td>
+                    <td
+                      className="px-4 py-4 text-sm text-gray-600 cursor-pointer hover:bg-blue-50 transition-colors"
+                      onDoubleClick={() => {
+                        console.log("[v0] Double-clicked on project manager")
+                        handleAddProjectManager(selectedProject)
+                      }}
+                    >
+                      {selectedProject.details.projectManager}
+                    </td>
                     <td className="px-4 py-4 text-sm">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
