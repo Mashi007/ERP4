@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Label } from "@/components/ui/label"
-import { Plus, Search, ArrowRight, Edit } from "lucide-react"
+import { Plus, Search, ArrowRight, Edit, User, Mail, Phone, Building, Briefcase } from "lucide-react"
 import { toast } from "sonner"
 
 interface Contact {
@@ -207,76 +207,101 @@ export default function ContactosPage() {
         </div>
         <Dialog open={isNewContactOpen} onOpenChange={setIsNewContactOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-blue-600 hover:bg-blue-700">
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Contacto
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Crear Nuevo Contacto</DialogTitle>
-              <DialogDescription>Agrega un nuevo contacto a tu base de datos de leads.</DialogDescription>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader className="space-y-3">
+              <div className="flex items-center justify-between">
+                <DialogTitle className="text-xl font-semibold">Crear Nuevo Contacto</DialogTitle>
+              </div>
+              <DialogDescription className="text-sm text-muted-foreground">
+                Agrega un nuevo contacto a tu base de datos de leads.
+              </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Nombre
+
+            <div className="space-y-6 py-6">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
+                  <User className="h-4 w-4 text-blue-600" />
+                  Nombre completo
                 </Label>
                 <Input
                   id="name"
+                  placeholder="Ej: Juan Pérez"
                   value={newContact.name}
                   onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
-                  className="col-span-3"
+                  className="h-11"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Email
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-blue-600" />
+                  Correo electrónico
                 </Label>
                 <Input
                   id="email"
                   type="email"
+                  placeholder="juan.perez@empresa.com"
                   value={newContact.email}
                   onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
-                  className="col-span-3"
+                  className="h-11"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">
+
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-blue-600" />
                   Teléfono
                 </Label>
                 <Input
                   id="phone"
+                  placeholder="+34 600 123 456"
                   value={newContact.phone}
                   onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
-                  className="col-span-3"
+                  className="h-11"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="company" className="text-right">
+
+              <div className="space-y-2">
+                <Label htmlFor="company" className="text-sm font-medium flex items-center gap-2">
+                  <Building className="h-4 w-4 text-blue-600" />
                   Empresa
                 </Label>
                 <Input
                   id="company"
+                  placeholder="Nombre de la empresa"
                   value={newContact.company}
                   onChange={(e) => setNewContact({ ...newContact, company: e.target.value })}
-                  className="col-span-3"
+                  className="h-11"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="job_title" className="text-right">
+
+              <div className="space-y-2">
+                <Label htmlFor="job_title" className="text-sm font-medium flex items-center gap-2">
+                  <Briefcase className="h-4 w-4 text-blue-600" />
                   Cargo
                 </Label>
                 <Input
                   id="job_title"
+                  placeholder="Director de Marketing"
                   value={newContact.job_title}
                   onChange={(e) => setNewContact({ ...newContact, job_title: e.target.value })}
-                  className="col-span-3"
+                  className="h-11"
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button onClick={handleCreateContact}>Crear Contacto</Button>
+
+            <DialogFooter className="flex gap-3 pt-6 border-t">
+              <Button variant="outline" onClick={() => setIsNewContactOpen(false)} className="flex-1">
+                Cancelar
+              </Button>
+              <Button onClick={handleCreateContact} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                Crear Contacto
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -362,74 +387,94 @@ export default function ContactosPage() {
       )}
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Editar Contacto</DialogTitle>
-            <DialogDescription>Modifica la información del contacto.</DialogDescription>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="text-xl font-semibold">Editar Contacto</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Modifica la información del contacto.
+            </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-name" className="text-right">
-                Nombre
+
+          <div className="space-y-6 py-6">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name" className="text-sm font-medium flex items-center gap-2">
+                <User className="h-4 w-4 text-blue-600" />
+                Nombre completo
               </Label>
               <Input
                 id="edit-name"
+                placeholder="Ej: Juan Pérez"
                 value={editContact.name}
                 onChange={(e) => setEditContact({ ...editContact, name: e.target.value })}
-                className="col-span-3"
+                className="h-11"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-email" className="text-right">
-                Email
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-email" className="text-sm font-medium flex items-center gap-2">
+                <Mail className="h-4 w-4 text-blue-600" />
+                Correo electrónico
               </Label>
               <Input
                 id="edit-email"
                 type="email"
+                placeholder="juan.perez@empresa.com"
                 value={editContact.email}
                 onChange={(e) => setEditContact({ ...editContact, email: e.target.value })}
-                className="col-span-3"
+                className="h-11"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-phone" className="text-right">
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone" className="text-sm font-medium flex items-center gap-2">
+                <Phone className="h-4 w-4 text-blue-600" />
                 Teléfono
               </Label>
               <Input
                 id="edit-phone"
+                placeholder="+34 600 123 456"
                 value={editContact.phone}
                 onChange={(e) => setEditContact({ ...editContact, phone: e.target.value })}
-                className="col-span-3"
+                className="h-11"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-company" className="text-right">
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-company" className="text-sm font-medium flex items-center gap-2">
+                <Building className="h-4 w-4 text-blue-600" />
                 Empresa
               </Label>
               <Input
                 id="edit-company"
+                placeholder="Nombre de la empresa"
                 value={editContact.company}
                 onChange={(e) => setEditContact({ ...editContact, company: e.target.value })}
-                className="col-span-3"
+                className="h-11"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-job-title" className="text-right">
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-job-title" className="text-sm font-medium flex items-center gap-2">
+                <Briefcase className="h-4 w-4 text-blue-600" />
                 Cargo
               </Label>
               <Input
                 id="edit-job-title"
+                placeholder="Director de Marketing"
                 value={editContact.job_title}
                 onChange={(e) => setEditContact({ ...editContact, job_title: e.target.value })}
-                className="col-span-3"
+                className="h-11"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+
+          <DialogFooter className="flex gap-3 pt-6 border-t">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1">
               Cancelar
             </Button>
-            <Button onClick={handleEditContact}>Guardar Cambios</Button>
+            <Button onClick={handleEditContact} className="flex-1 bg-blue-600 hover:bg-blue-700">
+              Guardar Cambios
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
