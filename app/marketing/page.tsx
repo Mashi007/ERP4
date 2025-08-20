@@ -108,7 +108,21 @@ export default function MarketingPage() {
         return
       }
 
-      const data = await response.json()
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("API returned non-JSON response:", contentType)
+        setMarketingLists([])
+        return
+      }
+
+      let data
+      try {
+        data = await response.json()
+      } catch (parseError) {
+        console.error("Error parsing JSON response:", parseError)
+        setMarketingLists([])
+        return
+      }
 
       if (Array.isArray(data)) {
         setMarketingLists(data)
