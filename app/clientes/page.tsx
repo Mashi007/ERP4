@@ -27,6 +27,7 @@ interface Client {
   email?: string
   phone?: string
   address?: string
+  stage?: string // Added stage field to Client interface
   type?: string
   created_at?: string
 }
@@ -1088,6 +1089,28 @@ export default function ClientesPage() {
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-gray-400" />
                         <span className="truncate">{client.address}</span>
+                      </div>
+                    )}
+                    {client.stage && (
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className={`text-xs ${
+                            client.stage === "Ganado"
+                              ? "bg-green-50 text-green-700 border-green-200"
+                              : client.stage === "Perdido"
+                                ? "bg-red-50 text-red-700 border-red-200"
+                                : client.stage === "Negociación"
+                                  ? "bg-orange-50 text-orange-700 border-orange-200"
+                                  : client.stage === "Propuesta"
+                                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                                    : client.stage === "Calificación"
+                                      ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                      : "bg-gray-50 text-gray-700 border-gray-200"
+                          }`}
+                        >
+                          Etapa: {client.stage}
+                        </Badge>
                       </div>
                     )}
                     {client.created_at && (

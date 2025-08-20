@@ -12,6 +12,7 @@ export async function GET() {
         email,
         phone,
         company as address,
+        stage,
         'Cliente' as type,
         created_at::text
       FROM contacts 
@@ -24,6 +25,7 @@ export async function GET() {
       email: row.email,
       phone: row.phone,
       address: row.address,
+      stage: row.stage || "Nuevo",
       type: row.type || "Cliente",
       created_at: row.created_at,
     }))
@@ -44,11 +46,12 @@ export async function POST(request: NextRequest) {
     const clientEmail = clientData.email
     const clientPhone = clientData.telefono || clientData.phone
     const clientCompany = clientData.empresa || clientData.company || clientName
+    const clientStage = clientData.stage || "Nuevo"
 
     const result = await sql`
-      INSERT INTO contacts (name, email, phone, company, job_title, status, sales_owner)
-      VALUES (${clientName}, ${clientEmail}, ${clientPhone}, ${clientCompany}, ${clientData.cargo || ""}, 'active', 'system')
-      RETURNING id::text, name, email, phone, company, created_at::text
+      INSERT INTO contacts (name, email, phone, company, job_title, stage, status, sales_owner)
+      VALUES (${clientName}, ${clientEmail}, ${clientPhone}, ${clientCompany}, ${clientData.cargo || ""}, ${clientStage}, 'active', 'system')
+      RETURNING id::text, name, email, phone, company, stage, created_at::text
     `
 
     const newClient = {
@@ -57,6 +60,7 @@ export async function POST(request: NextRequest) {
       email: result[0].email,
       phone: result[0].phone,
       address: result[0].company,
+      stage: result[0].stage,
       type: "Cliente",
       created_at: result[0].created_at,
     }
