@@ -165,8 +165,20 @@ export default function ProyectosPage() {
 
   const handleSaveField = () => {
     if (editingProject && editingField) {
-      // Update the project data
+      // Update the project data and selectedProject state to reflect changes in table
       editingProject.details[editingField] = editingValue
+
+      // Update selectedProject if it's the same project being edited
+      if (selectedProject && selectedProject.id === editingProject.id) {
+        setSelectedProject({
+          ...selectedProject,
+          details: {
+            ...selectedProject.details,
+            [editingField]: editingValue,
+          },
+        })
+      }
+
       console.log(`[v0] Updated ${editingField}:`, editingValue)
       if ((editingField === "hasTraining" || editingField === "projectStatus") && observations) {
         console.log(`[v0] ${editingField} observations:`, observations)
@@ -412,7 +424,15 @@ export default function ProyectosPage() {
                     </td>
                     <td className="px-4 py-4 text-sm">
                       <div className="text-gray-900 mb-1 font-medium">{selectedProject.details.billingCenter}</div>
-                      <Badge className="bg-red-500 text-white">{selectedProject.details.hasTraining}</Badge>
+                      <Badge
+                        className={
+                          selectedProject.details.hasTraining === "SI"
+                            ? "bg-green-500 text-white"
+                            : "bg-red-500 text-white"
+                        }
+                      >
+                        {selectedProject.details.hasTraining}
+                      </Badge>
                     </td>
                     <td className="px-4 py-4 text-sm">
                       <div className="text-blue-600 mb-1 font-medium">{selectedProject.details.certifyingCompany}</div>
