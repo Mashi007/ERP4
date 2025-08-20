@@ -165,34 +165,64 @@ export default function ProyectosPage() {
 
   const handleSaveField = () => {
     if (editingProject && editingField) {
-      setProjects((prevProjects) =>
-        prevProjects.map((project) =>
-          project.id === editingProject.id
-            ? {
-                ...project,
-                details: {
-                  ...project.details,
-                  [editingField]: editingValue,
-                },
-              }
-            : project,
-        ),
-      )
+      if (editingField === "hasTraining") {
+        setProjects((prevProjects) =>
+          prevProjects.map((project) =>
+            project.id === editingProject.id
+              ? {
+                  ...project,
+                  details: {
+                    ...project.details,
+                    hasTraining: editingValue,
+                    billingCenter: observations || project.details.billingCenter,
+                  },
+                }
+              : project,
+          ),
+        )
 
-      // Update selectedProject if it's the same project being edited
-      if (selectedProject && selectedProject.id === editingProject.id) {
-        setSelectedProject({
-          ...selectedProject,
-          details: {
-            ...selectedProject.details,
-            [editingField]: editingValue,
-          },
-        })
-      }
+        if (selectedProject && selectedProject.id === editingProject.id) {
+          setSelectedProject({
+            ...selectedProject,
+            details: {
+              ...selectedProject.details,
+              hasTraining: editingValue,
+              billingCenter: observations || selectedProject.details.billingCenter,
+            },
+          })
+        }
 
-      console.log(`[v0] Updated ${editingField}:`, editingValue)
-      if ((editingField === "hasTraining" || editingField === "projectStatus") && observations) {
-        console.log(`[v0] ${editingField} observations:`, observations)
+        console.log(`[v0] Updated hasTraining:`, editingValue)
+        console.log(`[v0] Updated billingCenter with observations:`, observations)
+      } else {
+        setProjects((prevProjects) =>
+          prevProjects.map((project) =>
+            project.id === editingProject.id
+              ? {
+                  ...project,
+                  details: {
+                    ...project.details,
+                    [editingField]: editingValue,
+                  },
+                }
+              : project,
+          ),
+        )
+
+        if (selectedProject && selectedProject.id === editingProject.id) {
+          setSelectedProject({
+            ...selectedProject,
+            details: {
+              ...selectedProject.details,
+              [editingField]: editingValue,
+            },
+          })
+        }
+
+        console.log(`[v0] Updated ${editingField}:`, editingValue)
+        if (editingField === "projectStatus" && observations) {
+          console.log(`[v0] ${editingField} observations:`, observations)
+        }
       }
     }
     setEditingField(null)
