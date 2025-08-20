@@ -77,10 +77,10 @@ export default function ClientesPage() {
 
       const newClient: Client = {
         id: Date.now().toString(),
-        name: clientData.name || clientData.company || "Cliente Sin Nombre",
+        name: clientData.nombre || clientData.name || clientData.empresa || clientData.company || "Cliente Sin Nombre",
         email: clientData.email,
-        phone: clientData.phone,
-        address: clientData.address,
+        phone: clientData.telefono || clientData.phone,
+        address: clientData.direccion || clientData.address,
         type: clientData.type || "Cliente",
         created_at: new Date().toISOString(),
       }
@@ -131,10 +131,10 @@ export default function ClientesPage() {
 
       const updatedClient: Client = {
         ...selectedClient,
-        name: clientData.name || clientData.company || selectedClient.name,
+        name: clientData.nombre || clientData.name || clientData.empresa || clientData.company || selectedClient.name,
         email: clientData.email || selectedClient.email,
-        phone: clientData.phone || selectedClient.phone,
-        address: clientData.address || selectedClient.address,
+        phone: clientData.telefono || clientData.phone || selectedClient.phone,
+        address: clientData.direccion || clientData.address || selectedClient.address,
         type: clientData.type || selectedClient.type,
       }
 
