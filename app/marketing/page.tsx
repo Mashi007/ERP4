@@ -486,27 +486,30 @@ export default function MarketingPage() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="assistant" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-2xl bg-white border-0 shadow-lg rounded-2xl p-2 mb-8">
+          <TabsList className="grid w-full grid-cols-3 max-w-2xl bg-gradient-to-r from-gray-50 to-white border border-gray-200/50 shadow-2xl rounded-3xl p-3 mb-8 backdrop-blur-sm">
             <TabsTrigger
               value="assistant"
-              className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-xl px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
+              className="group flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:via-blue-700 data-[state=active]:to-blue-800 data-[state=active]:text-white data-[state=active]:shadow-2xl data-[state=active]:shadow-blue-300/40 data-[state=active]:scale-105 transition-all duration-500 ease-out rounded-2xl px-6 py-4 text-sm font-bold hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-50 hover:shadow-lg hover:scale-102 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-900 text-gray-700 data-[state=active]:text-white border-0 relative overflow-hidden"
             >
-              <Bot className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="truncate text-center">Asistente IA</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-blue-600/20 opacity-0 group-hover:opacity-100 data-[state=active]:opacity-0 transition-opacity duration-300"></div>
+              <Bot className="h-5 w-5 mr-3 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 relative z-10" />
+              <span className="truncate text-center relative z-10 tracking-wide">Asistente IA</span>
             </TabsTrigger>
             <TabsTrigger
               value="email-marketing"
-              className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-xl px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
+              className="group flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:via-blue-700 data-[state=active]:to-blue-800 data-[state=active]:text-white data-[state=active]:shadow-2xl data-[state=active]:shadow-blue-300/40 data-[state=active]:scale-105 transition-all duration-500 ease-out rounded-2xl px-6 py-4 text-sm font-bold hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-50 hover:shadow-lg hover:scale-102 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-900 text-gray-700 data-[state=active]:text-white border-0 relative overflow-hidden"
             >
-              <Mail className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="truncate text-center">Email Marketing</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-blue-600/20 opacity-0 group-hover:opacity-100 data-[state=active]:opacity-0 transition-opacity duration-300"></div>
+              <Mail className="h-5 w-5 mr-3 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 relative z-10" />
+              <span className="truncate text-center relative z-10 tracking-wide">Email Marketing</span>
             </TabsTrigger>
             <TabsTrigger
               value="contacts"
-              className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-xl px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
+              className="group flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:via-blue-700 data-[state=active]:to-blue-800 data-[state=active]:text-white data-[state=active]:shadow-2xl data-[state=active]:shadow-blue-300/40 data-[state=active]:scale-105 transition-all duration-500 ease-out rounded-2xl px-6 py-4 text-sm font-bold hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-50 hover:shadow-lg hover:scale-102 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-900 text-gray-700 data-[state=active]:text-white border-0 relative overflow-hidden"
             >
-              <Users className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="truncate text-center">Contactos</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-blue-600/20 opacity-0 group-hover:opacity-100 data-[state=active]:opacity-0 transition-opacity duration-300"></div>
+              <Users className="h-5 w-5 mr-3 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 relative z-10" />
+              <span className="truncate text-center relative z-10 tracking-wide">Contactos</span>
             </TabsTrigger>
           </TabsList>
 
