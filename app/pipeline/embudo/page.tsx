@@ -40,6 +40,9 @@ import { formatEUR } from "@/lib/currency"
 import { useCurrency } from "@/components/providers/currency-provider"
 import { formatDateEs } from "@/lib/date"
 
+import { Mail, MessageCircle, Send } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+
 interface Deal {
   id: number
   title: string
@@ -344,6 +347,13 @@ export default function EmbudoPage() {
     next_steps: "",
   })
 
+  const [showMassComm, setShowMassComm] = useState(false)
+  const [commType, setCommType] = useState<"email" | "whatsapp">("email")
+  const [selectedStages, setSelectedStages] = useState<string[]>([])
+  const [selectedContacts, setSelectedContacts] = useState<number[]>([])
+  const [messageTemplate, setMessageTemplate] = useState("")
+  const [customMessage, setCustomMessage] = useState("")
+
   const stages = ["Nuevo", "Calificación", "Propuesta", "Negociación", "Cierre", "Ganado", "Perdido"]
   const leadSources = [
     "Website",
@@ -358,6 +368,51 @@ export default function EmbudoPage() {
   const companySizes = ["1-10", "11-50", "51-200", "201-1000", "1000+"]
   const budgetRanges = ["< $1,000", "$1,000 - $5,000", "$5,000 - $25,000", "$25,000 - $100,000", "$100,000+"]
   const decisionTimelines = ["Inmediato", "1-3 meses", "3-6 meses", "6-12 meses", "12+ meses"]
+
+  const emailTemplates = [
+    {
+      id: "follow-up",
+      name: "Seguimiento General",
+      subject: "Seguimiento de su interés en nuestros servicios",
+      content:
+        "Estimado/a {nombre},\n\nEsperamos que se encuentre bien. Nos ponemos en contacto para dar seguimiento a su interés en nuestros servicios.\n\n¿Podríamos programar una llamada para discutir cómo podemos ayudarle?\n\nSaludos cordiales,\n{empresa}",
+    },
+    {
+      id: "proposal",
+      name: "Envío de Propuesta",
+      subject: "Propuesta comercial - {empresa}",
+      content:
+        "Estimado/a {nombre},\n\nAdjunto encontrará nuestra propuesta comercial según lo conversado.\n\nQuedamos atentos a sus comentarios y disponibles para cualquier consulta.\n\nSaludos cordiales,\n{empresa}",
+    },
+    {
+      id: "closing",
+      name: "Cierre de Oportunidad",
+      subject: "Próximos pasos - {empresa}",
+      content:
+        "Estimado/a {nombre},\n\nNos complace saber de su interés en avanzar con nuestros servicios.\n\n¿Podríamos coordinar una reunión para definir los próximos pasos?\n\nSaludos cordiales,\n{empresa}",
+    },
+  ]
+
+  const whatsappTemplates = [
+    {
+      id: "follow-up-wa",
+      name: "Seguimiento WhatsApp",
+      content:
+        "Hola {nombre}! 👋\n\nEsperamos que estés bien. Te escribimos para dar seguimiento a tu interés en nuestros servicios.\n\n¿Tienes unos minutos para conversar? 📞",
+    },
+    {
+      id: "proposal-wa",
+      name: "Propuesta WhatsApp",
+      content:
+        "Hola {nombre}! 👋\n\nTe enviamos nuestra propuesta comercial según lo conversado.\n\n¿Podrías revisarla y nos das tu feedback? 📋✨",
+    },
+    {
+      id: "closing-wa",
+      name: "Cierre WhatsApp",
+      content:
+        "Hola {nombre}! 🎉\n\n¡Excelente que quieras avanzar con nosotros!\n\n¿Coordinamos una reunión para los próximos pasos? 📅",
+    },
+  ]
 
   const getStageColor = (stage: string) => {
     switch (stage) {
@@ -468,6 +523,93 @@ export default function EmbudoPage() {
   const isFieldRequired = (fieldName: string) => {
     const field = formFields.find((f) => f.name === fieldName)
     return field ? field.required : false
+  }
+
+  const getContactsFromStages = () => {
+    const contacts: Array<{ id: number; name: string; email: string; phone: string; company: string; stage: string }> =
+      []
+
+    pipelineStages.forEach((stage) => {
+      if (selectedStages.includes(stage.name)) {
+        stage.deals.forEach((deal) => {
+          if (deal.contact_name && deal.contact_email) {
+            contacts.push({
+              id: deal.contact_id || deal.id,
+              name: deal.contact_name,
+              email: deal.contact_email,
+              phone: deal.contact_phone || "",
+              company: deal.company,
+              stage: stage.name,
+            })
+          }
+        })
+      }
+    })
+
+    return contacts
+  }
+
+  const handleStageSelection = (stageName: string, checked: boolean) => {
+    if (checked) {
+      setSelectedStages((prev) => [...prev, stageName])
+    } else {
+      setSelectedStages((prev) => prev.filter((s) => s !== stageName))
+      // Remove contacts from deselected stage
+      const stageContacts =
+        pipelineStages.find((s) => s.name === stageName)?.deals.map((d) => d.contact_id || d.id) || []
+      setSelectedContacts((prev) => prev.filter((id) => !stageContacts.includes(id)))
+    }
+  }
+
+  const handleContactSelection = (contactId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedContacts((prev) => [...prev, contactId])
+    } else {
+      setSelectedContacts((prev) => prev.filter((id) => id !== contactId))
+    }
+  }
+
+  const handleSendMassComm = async () => {
+    const contacts = getContactsFromStages().filter((c) => selectedContacts.includes(c.id))
+    const message = customMessage || messageTemplate
+
+    if (contacts.length === 0) {
+      alert("Por favor selecciona al menos un contacto")
+      return
+    }
+
+    if (!message.trim()) {
+      alert("Por favor ingresa un mensaje")
+      return
+    }
+
+    try {
+      const response = await fetch("/api/communications/mass-send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: commType,
+          contacts: contacts,
+          message: message,
+          subject:
+            commType === "email" ? emailTemplates.find((t) => t.content === messageTemplate)?.subject : undefined,
+        }),
+      })
+
+      if (response.ok) {
+        alert(`${commType === "email" ? "Emails" : "Mensajes de WhatsApp"} enviados exitosamente`)
+        setShowMassComm(false)
+        setSelectedStages([])
+        setSelectedContacts([])
+        setMessageTemplate("")
+        setCustomMessage("")
+      } else {
+        alert("Error al enviar los mensajes")
+      }
+    } catch (error) {
+      console.error("Error:", error)
+      alert("Error al enviar los mensajes")
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -719,7 +861,165 @@ export default function EmbudoPage() {
   }, [])
 
   return (
-    <div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Embudo de Ventas</h1>
+          <p className="text-gray-600">Gestiona y visualiza todas tus oportunidades</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Button
+            onClick={() => {
+              setCommType("email")
+              setShowMassComm(true)
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Mail className="h-4 w-4 mr-2" />
+            Email Masivo
+          </Button>
+          <Button
+            onClick={() => {
+              setCommType("whatsapp")
+              setShowMassComm(true)
+            }}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            WhatsApp Masivo
+          </Button>
+        </div>
+      </div>
+
+      {showMassComm && (
+        <Card className="border-2 border-blue-200 bg-blue-50">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center space-x-2">
+                {commType === "email" ? <Mail className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />}
+                <span>{commType === "email" ? "Envío Masivo de Emails" : "Envío Masivo de WhatsApp"}</span>
+              </CardTitle>
+              <Button variant="ghost" onClick={() => setShowMassComm(false)}>
+                ✕
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Stage Selection */}
+            <div>
+              <h4 className="font-medium mb-2">Seleccionar Etapas:</h4>
+              <div className="flex flex-wrap gap-3">
+                {stages.map((stageName) => (
+                  <div key={stageName} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`stage-${stageName}`}
+                      checked={selectedStages.includes(stageName)}
+                      onCheckedChange={(checked) => handleStageSelection(stageName, checked as boolean)}
+                    />
+                    <label htmlFor={`stage-${stageName}`} className="text-sm font-medium">
+                      {stageName}
+                    </label>
+                    <Badge className={`${getStageColor(stageName)} text-xs`}>
+                      {pipelineStages.find((s) => s.name === stageName)?.count || 0}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Contact Selection */}
+            {selectedStages.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-2">Seleccionar Contactos:</h4>
+                <div className="max-h-40 overflow-y-auto space-y-2 border rounded p-3">
+                  {getContactsFromStages().map((contact) => (
+                    <div key={contact.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`contact-${contact.id}`}
+                        checked={selectedContacts.includes(contact.id)}
+                        onCheckedChange={(checked) => handleContactSelection(contact.id, checked as boolean)}
+                      />
+                      <label htmlFor={`contact-${contact.id}`} className="text-sm flex-1">
+                        <span className="font-medium">{contact.name}</span>
+                        <span className="text-gray-500 ml-2">({contact.company})</span>
+                        <Badge className={`${getStageColor(contact.stage)} text-xs ml-2`}>{contact.stage}</Badge>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-sm text-gray-600">{selectedContacts.length} contactos seleccionados</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const allContacts = getContactsFromStages().map((c) => c.id)
+                      setSelectedContacts(allContacts)
+                    }}
+                  >
+                    Seleccionar Todos
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Template Selection */}
+            {selectedContacts.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-2">Plantillas:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {(commType === "email" ? emailTemplates : whatsappTemplates).map((template) => (
+                    <Button
+                      key={template.id}
+                      variant={messageTemplate === template.content ? "default" : "outline"}
+                      className="text-left h-auto p-3"
+                      onClick={() => {
+                        setMessageTemplate(template.content)
+                        setCustomMessage("")
+                      }}
+                    >
+                      <div>
+                        <div className="font-medium">{template.name}</div>
+                        <div className="text-xs text-gray-500 mt-1">{template.content.substring(0, 50)}...</div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Message Editor */}
+            {selectedContacts.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-2">Mensaje:</h4>
+                <Textarea
+                  placeholder="Escribe tu mensaje personalizado o selecciona una plantilla..."
+                  value={customMessage || messageTemplate}
+                  onChange={(e) => {
+                    setCustomMessage(e.target.value)
+                    setMessageTemplate("")
+                  }}
+                  rows={6}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Variables disponibles: {"{nombre}"}, {"{empresa}"}
+                </p>
+              </div>
+            )}
+
+            {/* Send Button */}
+            {selectedContacts.length > 0 && (customMessage || messageTemplate) && (
+              <div className="flex justify-end">
+                <Button onClick={handleSendMassComm} className="bg-blue-600 hover:bg-blue-700">
+                  <Send className="h-4 w-4 mr-2" />
+                  Enviar a {selectedContacts.length} contactos
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* CTA (título vive en el layout) */}
       <div className="flex justify-end items-center mb-6">
         <Dialog
