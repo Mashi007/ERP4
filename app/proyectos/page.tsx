@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -104,6 +106,8 @@ export default function ProyectosPage() {
   const [observations, setObservations] = useState<string>("")
   const [sharedDocuments, setSharedDocuments] = useState<any[]>([])
   const [showDocumentsDialog, setShowDocumentsDialog] = useState(false)
+  const [uploadedDocuments, setUploadedDocuments] = useState<any[]>([])
+  const [selectedDocumentType, setSelectedDocumentType] = useState<string>("")
 
   const handleShowDetails = (project: any) => {
     setSelectedProject(project)
@@ -164,6 +168,30 @@ export default function ProyectosPage() {
     setEditingProject(project)
     setEditingField("projectManager")
     setEditingValue(project.details.projectManager)
+  }
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (files) {
+      Array.from(files).forEach((file) => {
+        const newDocument = {
+          id: Date.now() + Math.random(),
+          name: file.name,
+          type: selectedDocumentType || "ISO 9001",
+          normaISO: selectedDocumentType || "ISO 9001",
+          size: file.size,
+          uploadDate: new Date().toLocaleDateString(),
+          file: file,
+        }
+        setUploadedDocuments((prev) => [...prev, newDocument])
+      })
+    }
+    // Reset file input
+    event.target.value = ""
+  }
+
+  const handleRemoveDocument = (documentId: number) => {
+    setUploadedDocuments((prev) => prev.filter((doc) => doc.id !== documentId))
   }
 
   const handleSaveField = () => {
@@ -340,13 +368,39 @@ export default function ProyectosPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Tipo de Documento <span className="text-red-500">*</span>
                       </label>
-                      <select className="w-full border rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-[#8B5CF6]">
+                      <select
+                        className="w-full border rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-[#8B5CF6]"
+                        value={selectedDocumentType}
+                        onChange={(e) => setSelectedDocumentType(e.target.value)}
+                      >
                         <option value="">Seleccionar tipo</option>
-                        <option value="iso-9001">ISO 9001</option>
-                        <option value="iso-14001">ISO 14001</option>
-                        <option value="iso-45001">ISO 45001</option>
-                        <option value="iso-27001">ISO 27001</option>
+                        <option value="ISO 9001">ISO 9001</option>
+                        <option value="ISO 14001">ISO 14001</option>
+                        <option value="ISO 45001">ISO 45001</option>
+                        <option value="ISO 27001">ISO 27001</option>
                       </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Cargar Documento <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          multiple
+                          accept=".pdf,.doc,.docx,.xls,.xlsx"
+                          onChange={handleFileUpload}
+                          className="hidden"
+                          id="document-upload"
+                        />
+                        <label
+                          htmlFor="document-upload"
+                          className="flex-1 border-2 border-dashed border-gray-300 rounded-lg px-4 py-2 text-center cursor-pointer hover:border-[#8B5CF6] hover:bg-gray-50 transition-colors"
+                        >
+                          <span className="text-sm text-gray-600">📎 Seleccionar archivos o arrastrar aquí</span>
+                        </label>
+                      </div>
                     </div>
 
                     <div>
@@ -448,14 +502,57 @@ export default function ProyectosPage() {
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Documento</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Norma ISO</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td colSpan={4} className="px-4 py-12 text-center text-gray-500">
-                            No se ha encontrado ningún registro
-                          </td>
-                        </tr>
+                        {uploadedDocuments.length > 0 ? (
+                          uploadedDocuments.map((doc) => (
+                            <tr key={doc.id} className="border-b hover:bg-gray-50">
+                              <td className="px-4 py-3">
+                                <input type="checkbox" className="rounded" />
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-blue-500">📄</span>
+                                  <div>
+                                    <div className="font-medium text-gray-900">{doc.name}</div>
+                                    <div className="text-xs text-gray-500">
+                                      {(doc.size / 1024).toFixed(1)} KB • {doc.uploadDate}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <Badge className="bg-blue-100 text-blue-800">{doc.type}</Badge>
+                              </td>
+                              <td className="px-4 py-3">
+                                <Badge className="bg-purple-100 text-purple-800">{doc.normaISO}</Badge>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex gap-2">
+                                  <Button size="sm" variant="outline" className="text-xs bg-transparent">
+                                    Ver
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs text-red-600 hover:text-red-700 bg-transparent"
+                                    onClick={() => handleRemoveDocument(doc.id)}
+                                  >
+                                    Eliminar
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={5} className="px-4 py-12 text-center text-gray-500">
+                              No se ha encontrado ningún registro
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
