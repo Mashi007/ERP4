@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Search, Plus, Building2, Mail, Phone, MapPin, Calendar, User, Trash2 } from "lucide-react"
 import DynamicContactForm from "@/components/contacts/dynamic-contact-form"
 import { useToast } from "@/hooks/use-toast"
-import { neon } from "@neondatabase/serverless"
 
 interface Client {
   id: string
@@ -38,34 +37,17 @@ export default function ClientesPage() {
       setLoading(true)
       console.log("[v0] Loading clients from database...")
 
-      const sql = neon(process.env.DATABASE_URL!)
-      const result = await sql`
-        SELECT 
-          id::text,
-          name,
-          email,
-          phone,
-          company as address,
-          'Cliente' as type,
-          created_at::text
-        FROM contacts 
-        ORDER BY created_at DESC
-      `
+      const response = await fetch("/api/clients")
 
-      console.log("[v0] Database clients query result:", result.length, "clients found")
+      if (!response.ok) {
+        throw new Error("Failed to fetch clients")
+      }
 
-      const dbClients: Client[] = result.map((row: any) => ({
-        id: row.id,
-        name: row.name || "Cliente Sin Nombre",
-        email: row.email,
-        phone: row.phone,
-        address: row.address,
-        type: row.type || "Cliente",
-        created_at: row.created_at,
-      }))
+      const data = await response.json()
+      console.log("[v0] Database clients query result:", data.clients.length, "clients found")
 
-      setClients(dbClients)
-      console.log("[v0] Clients loaded successfully:", dbClients)
+      setClients(data.clients)
+      console.log("[v0] Clients loaded successfully:", data.clients)
     } catch (error) {
       console.error("[v0] Error loading clients from database:", error)
       // Fallback to mock data if database fails
@@ -106,40 +88,29 @@ export default function ClientesPage() {
     try {
       console.log("[v0] Saving new client to database:", clientData)
 
-      const sql = neon(process.env.DATABASE_URL!)
+      const response = await fetch("/api/clients", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(clientData),
+      })
 
-      const clientName =
-        clientData.nombre || clientData.name || clientData.empresa || clientData.company || "Cliente Sin Nombre"
-      const clientEmail = clientData.email
-      const clientPhone = clientData.telefono || clientData.phone
-      const clientCompany = clientData.empresa || clientData.company || clientName
-
-      const result = await sql`
-        INSERT INTO contacts (name, email, phone, company, job_title, status, sales_owner)
-        VALUES (${clientName}, ${clientEmail}, ${clientPhone}, ${clientCompany}, ${clientData.cargo || ""}, 'active', 'system')
-        RETURNING id::text, name, email, phone, company, created_at::text
-      `
-
-      console.log("[v0] Database insert result:", result)
-
-      const newClient: Client = {
-        id: result[0].id,
-        name: result[0].name,
-        email: result[0].email,
-        phone: result[0].phone,
-        address: result[0].company,
-        type: "Cliente",
-        created_at: result[0].created_at,
+      if (!response.ok) {
+        throw new Error("Failed to save client")
       }
 
-      setClients((prev) => [newClient, ...prev])
+      const data = await response.json()
+      console.log("[v0] Database insert result:", data.client)
+
+      setClients((prev) => [data.client, ...prev])
 
       toast({
         title: "Cliente creado",
-        description: `El cliente "${newClient.name}" se guardó en la base de datos`,
+        description: `El cliente "${data.client.name}" se guardó en la base de datos`,
       })
 
-      console.log("[v0] Client saved to database successfully:", newClient)
+      console.log("[v0] Client saved to database successfully:", data.client)
       setIsNewClientDialogOpen(false)
     } catch (error) {
       console.error("[v0] Error saving client to database:", error)
@@ -197,35 +168,24 @@ export default function ClientesPage() {
 
       if (!selectedClient) return
 
-      const sql = neon(process.env.DATABASE_URL!)
+      const response = await fetch(`/api/clients/${selectedClient.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(clientData),
+      })
 
-      const clientName =
-        clientData.nombre || clientData.name || clientData.empresa || clientData.company || selectedClient.name
-      const clientEmail = clientData.email || selectedClient.email
-      const clientPhone = clientData.telefono || clientData.phone || selectedClient.phone
-      const clientCompany = clientData.empresa || clientData.company || clientName
+      if (!response.ok) {
+        throw new Error("Failed to update client")
+      }
 
-      const result = await sql`
-        UPDATE contacts 
-        SET 
-          name = ${clientName},
-          email = ${clientEmail},
-          phone = ${clientPhone},
-          company = ${clientCompany},
-          job_title = ${clientData.cargo || ""},
-          updated_at = NOW()
-        WHERE id = ${Number.parseInt(selectedClient.id)}
-        RETURNING id::text, name, email, phone, company, created_at::text, updated_at::text
-      `
-
-      console.log("[v0] Database update result:", result)
+      const data = await response.json()
+      console.log("[v0] Database update result:", data.client)
 
       const updatedClient: Client = {
         ...selectedClient,
-        name: result[0].name,
-        email: result[0].email,
-        phone: result[0].phone,
-        address: result[0].company,
+        ...data.client,
         type: selectedClient.type,
       }
 
@@ -258,12 +218,13 @@ export default function ClientesPage() {
     try {
       console.log("[v0] Deleting client from database with ID:", clientId)
 
-      const sql = neon(process.env.DATABASE_URL!)
+      const response = await fetch(`/api/clients/${clientId}`, {
+        method: "DELETE",
+      })
 
-      await sql`
-        DELETE FROM contacts 
-        WHERE id = ${Number.parseInt(clientId)}
-      `
+      if (!response.ok) {
+        throw new Error("Failed to delete client")
+      }
 
       setClients((prev) => prev.filter((client) => client.id !== clientId))
 
