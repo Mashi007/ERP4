@@ -562,6 +562,16 @@ export default function ClientesPage() {
     }
   }
 
+  const handleContractedServices = (client: Client) => {
+    console.log("[v0] Opening contracted services for client:", client.name)
+    // TODO: Implement contracted services logic
+  }
+
+  const handlePotentialServices = (client: Client) => {
+    console.log("[v0] Opening potential services for client:", client.name)
+    // TODO: Implement potential services logic
+  }
+
   if (loading) {
     return (
       <div className="p-6">
@@ -1122,25 +1132,43 @@ export default function ClientesPage() {
                   </div>
 
                   <div className="mt-4 pt-4 border-t border-gray-100">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">ID: {client.id}</span>
+                    <div className="space-y-3">
                       <div className="flex gap-2">
                         <Button
-                          variant="outline"
                           size="sm"
-                          className="text-blue-600 border-blue-200 hover:bg-blue-50 bg-transparent"
-                          onClick={() => handleCommunications(client)}
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white border-0"
+                          onClick={() => handleContractedServices(client)}
                         >
-                          Comunicaciones
+                          Servicios contratados
                         </Button>
                         <Button
-                          variant="outline"
                           size="sm"
-                          className="text-purple-600 border-purple-200 hover:bg-purple-50 bg-transparent"
-                          onClick={() => handleViewDetails(client)}
+                          className="flex-1 bg-red-600 hover:bg-red-700 text-white border-0"
+                          onClick={() => handlePotentialServices(client)}
                         >
-                          Ver Detalles
+                          Servicios potenciales
                         </Button>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-500">ID: {client.id}</span>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600 border-blue-200 hover:bg-blue-50 bg-transparent"
+                            onClick={() => handleCommunications(client)}
+                          >
+                            Comunicaciones
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-purple-600 border-purple-200 hover:bg-purple-50 bg-transparent"
+                            onClick={() => handleViewDetails(client)}
+                          >
+                            Ver Detalles
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
