@@ -335,6 +335,75 @@ export default function ProyectosPage() {
 
               <div className="flex-1 p-6 overflow-auto">
                 <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Tipo de Documento <span className="text-red-500">*</span>
+                      </label>
+                      <select className="w-full border rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-[#8B5CF6]">
+                        <option value="">Seleccionar tipo</option>
+                        <option value="iso-9001">ISO 9001</option>
+                        <option value="iso-14001">ISO 14001</option>
+                        <option value="iso-45001">ISO 45001</option>
+                        <option value="iso-27001">ISO 27001</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Fecha de Vencimiento <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#8B5CF6]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Usuarios Asignados <span className="text-red-500">*</span>
+                      </label>
+                      <select className="w-full border rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-[#8B5CF6]">
+                        <option value="">Seleccionar usuarios</option>
+                        <option value="all">Todos los usuarios</option>
+                        <option value="admin">Solo administradores</option>
+                        <option value="specific">Usuarios específicos</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Nivel de Acceso</label>
+                      <select className="w-full border rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-[#8B5CF6]">
+                        <option value="view">Solo visualización</option>
+                        <option value="download">Visualización y descarga</option>
+                        <option value="edit">Edición completa</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Descripción del Documento</label>
+                    <textarea
+                      className="w-full border rounded-lg px-3 py-2 h-20 resize-none focus:ring-2 focus:ring-[#8B5CF6]"
+                      placeholder="Ingrese una descripción detallada del documento..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="flex items-center gap-2">
+                        <input type="checkbox" className="rounded text-[#8B5CF6] focus:ring-[#8B5CF6]" />
+                        <span className="text-sm text-gray-700">Notificar por email</span>
+                      </label>
+                    </div>
+                    <div>
+                      <label className="flex items-center gap-2">
+                        <input type="checkbox" className="rounded text-[#8B5CF6] focus:ring-[#8B5CF6]" />
+                        <span className="text-sm text-gray-700">Requerir confirmación de lectura</span>
+                      </label>
+                    </div>
+                  </div>
+
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 mb-3">Permisos Asignados:</h4>
                     <div className="flex gap-4">
