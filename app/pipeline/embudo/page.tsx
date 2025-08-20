@@ -313,6 +313,9 @@ export default function EmbudoPage() {
     },
   ])
 
+  const [formFields, setFormFields] = useState<any[]>([])
+  const [isLoadingFields, setIsLoadingFields] = useState(true)
+
   const [newOpportunity, setNewOpportunity] = useState({
     // Datos de la Oportunidad
     title: "",
@@ -437,6 +440,34 @@ export default function EmbudoPage() {
     }))
     setContactQuery(c.name)
     setContactOpen(false)
+  }
+
+  useEffect(() => {
+    const loadFormFields = async () => {
+      try {
+        const response = await fetch("/api/settings/funnel/active-fields")
+        const data = await response.json()
+        if (data.success) {
+          setFormFields(data.fields)
+        }
+      } catch (error) {
+        console.error("Error loading form fields:", error)
+      } finally {
+        setIsLoadingFields(false)
+      }
+    }
+
+    loadFormFields()
+  }, [])
+
+  const isFieldVisible = (fieldName: string) => {
+    const field = formFields.find((f) => f.name === fieldName)
+    return field ? field.visible : true
+  }
+
+  const isFieldRequired = (fieldName: string) => {
+    const field = formFields.find((f) => f.name === fieldName)
+    return field ? field.required : false
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -636,7 +667,22 @@ export default function EmbudoPage() {
   // Organizar deals por etapa para el pipeline
   const pipelineStages = stages.map((stageName) => {
     const stageDeals = deals.filter((deal) => deal.stage === stageName)
-    const stageValue = stageDeals.reduce((sum, deal) => sum + (deal.value * deal.probability) / 100, 0)
+
+    console.log(`[v0] Stage: ${stageName}`)
+    console.log(
+      `[v0] Stage deals:`,
+      stageDeals.map((d) => ({ title: d.title, value: d.value, type: typeof d.value })),
+    )
+
+    const stageValue = stageDeals.reduce((sum, deal) => {
+      const dealValue = Number(deal.value) || 0
+      console.log(
+        `[v0] Adding deal "${deal.title}": ${dealValue} (original: ${deal.value}, type: ${typeof deal.value})`,
+      )
+      return sum + dealValue
+    }, 0)
+
+    console.log(`[v0] Stage "${stageName}" total: ${stageValue}`)
 
     return {
       name: stageName,

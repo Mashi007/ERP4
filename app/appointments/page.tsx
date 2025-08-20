@@ -284,7 +284,7 @@ export default function AppointmentsPage() {
         <TabsList className="grid w-full max-w-md grid-cols-2 mt-4">
           <TabsTrigger value="list" className="flex items-center space-x-2">
             <List className="h-4 w-4" />
-            <span>Lista</span>
+            <span>Reuniones</span>
           </TabsTrigger>
           <TabsTrigger value="calendar" className="flex items-center space-x-2">
             <CalendarIcon className="h-4 w-4" />

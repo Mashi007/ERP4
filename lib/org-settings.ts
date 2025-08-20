@@ -2,9 +2,14 @@ import { neon } from "@neondatabase/serverless"
 
 export type CurrencyCode = "EUR" | "USD" | "MXN"
 
-const sql = neon(process.env.DATABASE_URL as string)
+const isDatabaseAvailable = !!(process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL)
+const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL
+
+export const sql = isDatabaseAvailable ? neon(databaseUrl!) : null
 
 async function ensureTables() {
+  if (!sql) return // Skip table creation if no database connection
+
   await sql /*sql*/`
     create table if not exists org_settings (
       org_id text primary key,
@@ -17,6 +22,10 @@ async function ensureTables() {
  * Devuelve la moneda guardada para la org. Por defecto 'EUR'.
  */
 export async function getOrgCurrency(orgId = "default"): Promise<CurrencyCode> {
+  if (!sql || !isDatabaseAvailable) {
+    return "EUR"
+  }
+
   await ensureTables()
   const rows = await sql /*sql*/`
     select currency_code from org_settings
@@ -32,6 +41,10 @@ export async function getOrgCurrency(orgId = "default"): Promise<CurrencyCode> {
  * Upsert de la moneda de la organización.
  */
 export async function setOrgCurrency(orgId: string, currency: CurrencyCode) {
+  if (!sql || !isDatabaseAvailable) {
+    return currency
+  }
+
   await ensureTables()
   await sql /*sql*/`
     insert into org_settings (org_id, currency_code)

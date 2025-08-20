@@ -11,22 +11,24 @@ type Props = {
   // Optional arrays of options; if not provided, component still works using just date filters.
   industries?: string[]
   sources?: string[]
+  responsibleUsers?: Array<{ id: string; name: string }>
   // Optional initial values (falls back to URL)
   initialFrom?: string
   initialTo?: string
   initialIndustry?: string
   initialSource?: string
-  initialSegmentBy?: string
+  initialResponsibleUser?: string
 }
 
 export function DateFilters({
   industries = [],
   sources = [],
+  responsibleUsers = [],
   initialFrom = "",
   initialTo = "",
   initialIndustry = "",
   initialSource = "",
-  initialSegmentBy = "",
+  initialResponsibleUser = "",
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -38,13 +40,13 @@ export function DateFilters({
   const urlTo = sp.get("to") || initialTo
   const urlIndustry = sp.get("industry") || initialIndustry
   const urlSource = sp.get("source") || initialSource
-  const urlSegmentBy = sp.get("segmentBy") || initialSegmentBy
+  const urlResponsibleUser = sp.get("responsibleUser") || initialResponsibleUser
 
   const [from, setFrom] = useState(urlFrom)
   const [to, setTo] = useState(urlTo)
   const [industry, setIndustry] = useState(urlIndustry)
   const [source, setSource] = useState(urlSource)
-  const [segmentBy, setSegmentBy] = useState(urlSegmentBy)
+  const [responsibleUser, setResponsibleUser] = useState(urlResponsibleUser)
 
   // keep state in sync if URL changes elsewhere
   useEffect(() => {
@@ -52,9 +54,9 @@ export function DateFilters({
     if (urlTo !== to) setTo(urlTo)
     if (urlIndustry !== industry) setIndustry(urlIndustry)
     if (urlSource !== source) setSource(urlSource)
-    if (urlSegmentBy !== segmentBy) setSegmentBy(urlSegmentBy)
+    if (urlResponsibleUser !== responsibleUser) setResponsibleUser(urlResponsibleUser)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlFrom, urlTo, urlIndustry, urlSource, urlSegmentBy])
+  }, [urlFrom, urlTo, urlIndustry, urlSource, urlResponsibleUser])
 
   const canApply = useMemo(() => true, [])
 
@@ -70,9 +72,8 @@ export function DateFilters({
     else params.delete("industry")
     if (source) params.set("source", source)
     else params.delete("source")
-    // segmentBy (optional)
-    if (segmentBy) params.set("segmentBy", segmentBy)
-    else params.delete("segmentBy")
+    if (responsibleUser) params.set("responsibleUser", responsibleUser)
+    else params.delete("responsibleUser")
 
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`)
@@ -81,7 +82,7 @@ export function DateFilters({
 
   function reset() {
     const params = new URLSearchParams(sp.toString())
-    ;["from", "to", "industry", "source", "segmentBy"].forEach((k) => params.delete(k))
+    ;["from", "to", "industry", "source", "responsibleUser"].forEach((k) => params.delete(k))
     startTransition(() => {
       router.push(`${pathname}${params.toString() ? `?${params.toString()}` : ""}`)
     })
@@ -130,15 +131,18 @@ export function DateFilters({
         </Select>
       </div>
       <div className="grid gap-1 min-w-44">
-        <Label>Comparar por</Label>
-        <Select value={segmentBy} onValueChange={setSegmentBy}>
+        <Label>Responsable Comercial</Label>
+        <Select value={responsibleUser} onValueChange={setResponsibleUser}>
           <SelectTrigger>
-            <SelectValue placeholder="—" />
+            <SelectValue placeholder="Todos" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">—</SelectItem>
-            <SelectItem value="industry">Industria</SelectItem>
-            <SelectItem value="source">Fuente</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
+            {(responsibleUsers ?? []).map((user) => (
+              <SelectItem key={user.id} value={user.id}>
+                {user.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

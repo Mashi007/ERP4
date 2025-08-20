@@ -2,57 +2,51 @@ import { NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
 
 export async function GET() {
-  const url = process.env.DATABASE_URL
-  if (!url) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "DATABASE_URL is not set",
-        details: null,
-      },
-      { status: 200 },
-    )
-  }
-
-  const sql = neon(url)
   try {
-    // Probar conexión
-    await sql /*sql*/`select 1;`
-
-    // Intentar contar filas por tabla (si no existen, atrapamos error)
-    async function safeCount(table: string) {
-      try {
-        const rows = await sql /*sql*/`select count(*)::int as c from ${sql(table)};`
-        const c = (rows as any)?.[0]?.c ?? 0
-        return c
-      } catch {
-        return null
-      }
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "DATABASE_URL not configured",
+          details: null,
+        },
+        { status: 500 },
+      )
     }
 
-    const [deals, contacts, activities, appointments] = await Promise.all([
-      safeCount("deals"),
-      safeCount("contacts"),
-      safeCount("activities"),
-      safeCount("appointments"),
+    const sql = neon(process.env.DATABASE_URL)
+
+    // Test basic connectivity with a simple query
+    const result = await sql`SELECT 1 as test`
+
+    // Get basic table counts for health check
+    const [deals, contacts, activities, appointments] = await Promise.allSettled([
+      sql`SELECT COUNT(*) as count FROM deals LIMIT 1`.catch(() => ({ count: null })),
+      sql`SELECT COUNT(*) as count FROM contacts LIMIT 1`.catch(() => ({ count: null })),
+      sql`SELECT COUNT(*) as count FROM activities LIMIT 1`.catch(() => ({ count: null })),
+      sql`SELECT COUNT(*) as count FROM appointments LIMIT 1`.catch(() => ({ count: null })),
     ])
 
-    return NextResponse.json(
-      {
-        ok: true,
-        error: null,
-        details: { deals, contacts, activities, appointments },
+    return NextResponse.json({
+      ok: true,
+      error: null,
+      details: {
+        deals: null,
+        contacts: null,
+        activities: null,
+        appointments: null,
       },
-      { status: 200 },
-    )
-  } catch (error: any) {
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error("Neon health check failed:", error)
     return NextResponse.json(
       {
         ok: false,
-        error: String(error?.message || error),
+        error: error instanceof Error ? error.message : "Database connection failed",
         details: null,
       },
-      { status: 200 },
+      { status: 500 },
     )
   }
 }

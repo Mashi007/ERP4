@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -27,20 +27,22 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Pencil, Plus, Trash2 } from "lucide-react"
+import { Pencil, Plus, Trash2, Loader2 } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 
 type Servicio = {
-  id: string
-  nombre: string
-  descripcion: string
-  importe: number
-  impuesto: number // porcentaje
-  total: number
-  creadoEl: string // dd/MM/yyyy HH:mm (es)
+  id: number
+  name: string
+  description: string
+  base_price: number
+  currency: string
+  tax_rate: number
+  is_active: boolean
+  created_at: string
 }
 
-function formatDateEs(date: Date) {
-  return date.toLocaleString("es-ES", {
+function formatDateEs(dateString: string) {
+  return new Date(dateString).toLocaleString("es-ES", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -56,6 +58,7 @@ function calcTotal(importe: number, impuestoPct: number) {
 
 export default function CatalogoClient() {
   const [items, setItems] = useState<Servicio[]>([])
+  const [loading, setLoading] = useState(true)
   const [openNew, setOpenNew] = useState(false)
 
   // Form state for "Nuevo Servicio"
@@ -63,6 +66,37 @@ export default function CatalogoClient() {
   const [nDesc, setNDesc] = useState("")
   const [nImporte, setNImporte] = useState<number | "">("")
   const [nImpuesto, setNImpuesto] = useState<number | "">("")
+  const [nMoneda, setNMoneda] = useState("EUR")
+
+  useEffect(() => {
+    loadServices()
+  }, [])
+
+  const loadServices = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/services")
+      if (response.ok) {
+        const data = await response.json()
+        setItems(data)
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los servicios",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error loading services:", error)
+      toast({
+        title: "Error",
+        description: "Error de conexión al cargar servicios",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const nTotal = useMemo(() => {
     const imp = typeof nImporte === "number" ? nImporte : Number.parseFloat(`${nImporte}`)
@@ -76,25 +110,51 @@ export default function CatalogoClient() {
     setNDesc("")
     setNImporte("")
     setNImpuesto("")
+    setNMoneda("EUR")
   }
 
-  function handleAdd() {
+  async function handleAdd() {
     const importe = typeof nImporte === "number" ? nImporte : Number.parseFloat(`${nImporte}`)
     const impuesto = typeof nImpuesto === "number" ? nImpuesto : Number.parseFloat(`${nImpuesto}`)
     if (!nNombre.trim() || isNaN(importe)) return
 
-    const nuevo: Servicio = {
-      id: crypto.randomUUID(),
-      nombre: nNombre.trim(),
-      descripcion: nDesc.trim(),
-      importe: Math.round(importe * 100) / 100,
-      impuesto: isNaN(impuesto) ? 0 : Math.round(impuesto * 100) / 100,
-      total: calcTotal(importe, isNaN(impuesto) ? 0 : impuesto),
-      creadoEl: formatDateEs(new Date()),
+    try {
+      const response = await fetch("/api/services", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: nNombre.trim(),
+          description: nDesc.trim(),
+          base_price: Math.round(importe * 100) / 100,
+          currency: nMoneda,
+          tax_rate: isNaN(impuesto) ? 0 : Math.round(impuesto * 100) / 100,
+          is_service: true,
+          is_active: true,
+        }),
+      })
+
+      if (response.ok) {
+        const newService = await response.json()
+        setItems((prev) => [newService, ...prev])
+        resetNewForm()
+        setOpenNew(false)
+        toast({
+          title: "Servicio agregado",
+          description: "El servicio se guardó correctamente en la base de datos",
+        })
+      } else {
+        throw new Error("Error al guardar el servicio")
+      }
+    } catch (error) {
+      console.error("Error adding service:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo guardar el servicio",
+        variant: "destructive",
+      })
     }
-    setItems((prev) => [nuevo, ...prev])
-    resetNewForm()
-    setOpenNew(false)
   }
 
   // Edit dialog state
@@ -104,6 +164,7 @@ export default function CatalogoClient() {
   const [eDesc, setEDesc] = useState("")
   const [eImporte, setEImporte] = useState<number | "">("")
   const [eImpuesto, setEImpuesto] = useState<number | "">("")
+  const [eMoneda, setEMoneda] = useState("EUR")
 
   const eTotal = useMemo(() => {
     const imp = typeof eImporte === "number" ? eImporte : Number.parseFloat(`${eImporte}`)
@@ -114,39 +175,94 @@ export default function CatalogoClient() {
 
   function openEdit(row: Servicio) {
     setEditRow(row)
-    setENombre(row.nombre)
-    setEDesc(row.descripcion)
-    setEImporte(row.importe)
-    setEImpuesto(row.impuesto)
+    setENombre(row.name)
+    setEDesc(row.description)
+    setEImporte(row.base_price)
+    setEImpuesto(row.tax_rate)
+    setEMoneda(row.currency)
     setEditOpen(true)
   }
 
-  function saveEdit() {
+  async function saveEdit() {
     if (!editRow) return
     const importe = typeof eImporte === "number" ? eImporte : Number.parseFloat(`${eImporte}`)
     const impuesto = typeof eImpuesto === "number" ? eImpuesto : Number.parseFloat(`${eImpuesto}`)
     if (!eNombre.trim() || isNaN(importe)) return
 
-    setItems((prev) =>
-      prev.map((it) =>
-        it.id === editRow.id
-          ? {
-              ...it,
-              nombre: eNombre.trim(),
-              descripcion: eDesc.trim(),
-              importe: Math.round(importe * 100) / 100,
-              impuesto: isNaN(impuesto) ? 0 : Math.round(impuesto * 100) / 100,
-              total: calcTotal(importe, isNaN(impuesto) ? 0 : impuesto),
-            }
-          : it,
-      ),
-    )
-    setEditOpen(false)
-    setEditRow(null)
+    try {
+      const response = await fetch(`/api/services/${editRow.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: eNombre.trim(),
+          description: eDesc.trim(),
+          base_price: Math.round(importe * 100) / 100,
+          currency: eMoneda,
+          tax_rate: isNaN(impuesto) ? 0 : Math.round(impuesto * 100) / 100,
+        }),
+      })
+
+      if (response.ok) {
+        const updatedService = await response.json()
+        setItems((prev) => prev.map((it) => (it.id === editRow.id ? updatedService : it)))
+        setEditOpen(false)
+        setEditRow(null)
+        toast({
+          title: "Servicio actualizado",
+          description: "Los cambios se guardaron correctamente",
+        })
+      } else {
+        throw new Error("Error al actualizar el servicio")
+      }
+    } catch (error) {
+      console.error("Error updating service:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el servicio",
+        variant: "destructive",
+      })
+    }
   }
 
-  function deleteRow(id: string) {
-    setItems((prev) => prev.filter((it) => it.id !== id))
+  async function deleteRow(id: number) {
+    try {
+      const response = await fetch(`/api/services/${id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        setItems((prev) => prev.filter((it) => it.id !== id))
+        toast({
+          title: "Servicio eliminado",
+          description: "El servicio se eliminó correctamente",
+        })
+      } else {
+        throw new Error("Error al eliminar el servicio")
+      }
+    } catch (error) {
+      console.error("Error deleting service:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el servicio",
+        variant: "destructive",
+      })
+    }
+  }
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Catálogo</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Cargando servicios...</span>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -191,10 +307,10 @@ export default function CatalogoClient() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="n-importe">
-                    Importe <span className="text-red-600">*</span>
+                    Precio <span className="text-red-600">*</span>
                   </Label>
                   <Input
                     id="n-importe"
@@ -224,11 +340,15 @@ export default function CatalogoClient() {
                     }}
                   />
                 </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="n-moneda">Moneda</Label>
+                  <Input id="n-moneda" placeholder="EUR" value={nMoneda} onChange={(e) => setNMoneda(e.target.value)} />
+                </div>
               </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="n-total">Valor total</Label>
-                <Input id="n-total" readOnly value={nTotal.toFixed(2)} />
+                <Input id="n-total" readOnly value={`${nTotal.toFixed(2)} ${nMoneda}`} />
               </div>
             </div>
 
@@ -249,9 +369,9 @@ export default function CatalogoClient() {
               <TableRow>
                 <TableHead>Servicio</TableHead>
                 <TableHead>Descripción</TableHead>
-                <TableHead className="text-right">Importe</TableHead>
+                <TableHead className="text-right">Precio</TableHead>
                 <TableHead className="text-right">Impuesto %</TableHead>
-                <TableHead className="text-right">Valor total</TableHead>
+                <TableHead className="text-right">Total</TableHead>
                 <TableHead>Creado</TableHead>
                 <TableHead className="w-[120px]">Acciones</TableHead>
               </TableRow>
@@ -266,12 +386,16 @@ export default function CatalogoClient() {
               ) : (
                 items.map((it) => (
                   <TableRow key={it.id}>
-                    <TableCell className="font-medium">{it.nombre}</TableCell>
-                    <TableCell className="max-w-[360px] truncate">{it.descripcion}</TableCell>
-                    <TableCell className="text-right">{it.importe.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">{it.impuesto.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">{it.total.toFixed(2)}</TableCell>
-                    <TableCell>{it.creadoEl}</TableCell>
+                    <TableCell className="font-medium">{it.name}</TableCell>
+                    <TableCell className="max-w-[360px] truncate">{it.description}</TableCell>
+                    <TableCell className="text-right">
+                      {Number(it.base_price || 0).toFixed(2)} {it.currency}
+                    </TableCell>
+                    <TableCell className="text-right">{Number(it.tax_rate || 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-right">
+                      {calcTotal(Number(it.base_price || 0), Number(it.tax_rate || 0)).toFixed(2)} {it.currency}
+                    </TableCell>
+                    <TableCell>{formatDateEs(it.created_at)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {/* Edit */}
@@ -290,7 +414,7 @@ export default function CatalogoClient() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Eliminar servicio</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Esta acción no se puede deshacer. ¿Deseas eliminar “{it.nombre}”?
+                                Esta acción no se puede deshacer. ¿Deseas eliminar "{it.name}"?
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -309,7 +433,6 @@ export default function CatalogoClient() {
         </div>
       </CardContent>
 
-      {/* Editar Servicio */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -335,10 +458,10 @@ export default function CatalogoClient() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="e-importe">
-                  Importe <span className="text-red-600">*</span>
+                  Precio <span className="text-red-600">*</span>
                 </Label>
                 <Input
                   id="e-importe"
@@ -368,11 +491,15 @@ export default function CatalogoClient() {
                   }}
                 />
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="e-moneda">Moneda</Label>
+                <Input id="e-moneda" placeholder="EUR" value={eMoneda} onChange={(e) => setEMoneda(e.target.value)} />
+              </div>
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="e-total">Valor total</Label>
-              <Input id="e-total" readOnly value={eTotal.toFixed(2)} />
+              <Input id="e-total" readOnly value={`${eTotal.toFixed(2)} ${eMoneda}`} />
             </div>
           </div>
 

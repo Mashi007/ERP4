@@ -1,96 +1,160 @@
 "use client"
-
-import type React from "react"
-
-import { useMemo, useState } from "react"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import {
-  Search,
-  Plus,
-  MoreHorizontal,
-  TableIcon,
-  Filter,
-  Star,
-  Download,
-  Mail,
-  ChevronDown,
-  Settings,
-  Pencil,
-  Trash2,
-} from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import type { Contact } from "@/lib/database"
-import { createContact, updateContact, deleteContact } from "./actions"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useToast } from "@/hooks/use-toast"
+import DynamicContactForm from "@/components/contacts/dynamic-contact-form"
+import { Plus, Search, MoreHorizontal, Edit, Trash2, Mail, Phone, Building, User, AlertCircle } from "lucide-react"
 
-interface ContactsClientProps {
-  initialContacts: Contact[]
+interface Contact {
+  id: number
+  name: string
+  email?: string
+  phone?: string
+  company?: string
+  job_title?: string
+  nif?: string
+  status?: string
+  created_at: string
+  updated_at: string
 }
 
-export default function ContactsClient({ initialContacts }: ContactsClientProps) {
+export default function ContactsClient() {
+  const [contacts, setContacts] = useState<Contact[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [contacts, setContacts] = useState<Contact[]>(initialContacts)
-  const [isCreating, setIsCreating] = useState(false)
-
-  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [showContactForm, setShowContactForm] = useState(false)
   const [editingContact, setEditingContact] = useState<Contact | null>(null)
-  const [isUpdating, setIsUpdating] = useState(false)
-
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-  const [deletingContact, setDeletingContact] = useState<Contact | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
-
+  const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "New":
-        return "bg-amber-100 text-amber-800 border-amber-200"
-      case "Qualified":
-        return "bg-green-100 text-green-800 border-green-200"
-      case "Won":
-        return "bg-emerald-100 text-emerald-800 border-emerald-200"
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
+  useEffect(() => {
+    loadContacts()
+  }, [])
+
+  const loadContacts = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const response = await fetch("/api/contacts")
+
+      if (response.ok) {
+        const data = await response.json()
+        setContacts(data.contacts || [])
+      } else if (response.status === 404) {
+        // Database not configured
+        setError("Base de datos no configurada")
+        setContacts([])
+      } else {
+        throw new Error("Error loading contacts")
+      }
+    } catch (error) {
+      console.error("Error loading contacts:", error)
+      setError("Error al cargar contactos")
+      setContacts([])
+    } finally {
+      setLoading(false)
     }
   }
 
-  const getTagColor = (tag: string) => {
-    const colors = {
-      "Industry Expert": "bg-blue-100 text-blue-800",
-      "Decision maker": "bg-purple-100 text-purple-800",
-      "High-Value Customer": "bg-purple-100 text-purple-800",
-      "Customer Advocate": "bg-gray-100 text-gray-800",
-      Influencer: "bg-orange-100 text-orange-800",
-      Champion: "bg-red-100 text-red-800",
+  const handleSaveContact = async (contactData: any) => {
+    try {
+      const url = editingContact ? `/api/contacts/${editingContact.id}` : "/api/contacts"
+      const method = editingContact ? "PUT" : "POST"
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(contactData),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Éxito",
+          description: `Contacto ${editingContact ? "actualizado" : "creado"} correctamente`,
+        })
+        loadContacts()
+        setEditingContact(null)
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Error saving contact")
+      }
+    } catch (error) {
+      console.error("Error saving contact:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo guardar el contacto",
+        variant: "destructive",
+      })
+      throw error // Re-throw to prevent form from closing
     }
-    return colors[tag as keyof typeof colors] || "bg-gray-100 text-gray-800"
+  }
+
+  const handleDeleteContact = async (contact: Contact) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar a ${contact.name}?`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/contacts/${contact.id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Éxito",
+          description: "Contacto eliminado correctamente",
+        })
+        loadContacts()
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Error deleting contact")
+      }
+    } catch (error) {
+      console.error("Error deleting contact:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo eliminar el contacto",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const filteredContacts = contacts.filter(
+    (contact) =>
+      contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.company?.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
+  const getStatusBadgeVariant = (status?: string) => {
+    switch (status?.toLowerCase()) {
+      case "nuevo":
+        return "default"
+      case "calificado":
+        return "secondary"
+      case "ganado":
+        return "default"
+      case "perdido":
+        return "destructive"
+      default:
+        return "outline"
+    }
   }
 
   const getInitials = (name: string) => {
@@ -99,582 +163,204 @@ export default function ContactsClient({ initialContacts }: ContactsClientProps)
       .map((n) => n[0])
       .join("")
       .toUpperCase()
+      .slice(0, 2)
   }
 
-  const getInitialColor = (name: string) => {
-    const colors = [
-      "bg-pink-200 text-pink-800",
-      "bg-orange-200 text-orange-800",
-      "bg-blue-200 text-blue-800",
-      "bg-purple-200 text-purple-800",
-      "bg-green-200 text-green-800",
-      "bg-gray-200 text-gray-800",
-      "bg-yellow-200 text-yellow-800",
-      "bg-indigo-200 text-indigo-800",
-    ]
-    const index = name.length % colors.length
-    return colors[index]
-  }
-
-  const filteredContacts = useMemo(() => {
-    const q = searchTerm.toLowerCase()
-    return contacts.filter(
-      (contact) =>
-        contact.name.toLowerCase().includes(q) ||
-        (contact.company && contact.company.toLowerCase().includes(q)) ||
-        (contact.email && contact.email.toLowerCase().includes(q)),
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-10 bg-gray-200 rounded w-full"></div>
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-16 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
     )
-  }, [contacts, searchTerm])
-
-  async function handleAddContact(formData: FormData) {
-    setIsCreating(true)
-    try {
-      const newContact = await createContact(formData)
-      setContacts((prev) => [newContact, ...prev])
-      setIsCreateOpen(false)
-      toast({
-        title: "Contacto creado",
-        description: `${newContact.name} ha sido agregado exitosamente.`,
-      })
-      const form = document.getElementById("contact-form") as HTMLFormElement | null
-      form?.reset()
-    } catch (error) {
-      console.error("❌ [Client] Error creando contacto:", error)
-      toast({
-        title: "Error",
-        description: "No se pudo crear el contacto. Inténtalo de nuevo.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsCreating(false)
-    }
-  }
-
-  function openEdit(contact: Contact) {
-    setEditingContact(contact)
-    setIsEditOpen(true)
-  }
-
-  async function handleEditSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    if (!editingContact) return
-    const formData = new FormData(e.currentTarget)
-    const payload: Partial<Contact> = {
-      name: (formData.get("name") as string) || undefined,
-      company: (formData.get("company") as string) || undefined,
-      job_title: (formData.get("job_title") as string) || undefined,
-      email: (formData.get("email") as string) || undefined,
-      phone: (formData.get("phone") as string) || undefined,
-      status: (formData.get("status") as string) || undefined,
-      nif: (formData.get("nif") as string) || undefined,
-    }
-
-    setIsUpdating(true)
-    try {
-      const updated = await updateContact(editingContact.id, payload)
-      setContacts((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
-      toast({ title: "Contacto actualizado", description: `${updated.name} se actualizó correctamente.` })
-      setIsEditOpen(false)
-      setEditingContact(null)
-    } catch (err) {
-      console.error("❌ [Client] Error actualizando contacto:", err)
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el contacto.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsUpdating(false)
-    }
-  }
-
-  function openDelete(contact: Contact) {
-    setDeletingContact(contact)
-    setIsDeleteOpen(true)
-  }
-
-  async function handleDeleteConfirmed() {
-    if (!deletingContact) return
-    setIsDeleting(true)
-    try {
-      await deleteContact(deletingContact.id)
-      setContacts((prev) => prev.filter((c) => c.id !== deletingContact.id))
-      toast({
-        title: "Contacto eliminado",
-        description: `${deletingContact.name} fue eliminado.`,
-      })
-      setIsDeleteOpen(false)
-      setDeletingContact(null)
-    } catch (err) {
-      console.error("❌ [Client] Error eliminando contacto:", err)
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar el contacto.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsDeleting(false)
-    }
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-semibold text-gray-900">Contactos</h1>
-            <div className="flex items-center space-x-2">
-              <Badge variant="secondary" className="bg-gray-100 text-gray-800">
-                {contacts.length} en total
-              </Badge>
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Contactos</h1>
+          <p className="text-muted-foreground">Gestiona tu base de datos de contactos</p>
+        </div>
+        <Button onClick={() => setShowContactForm(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Agregar Contacto
+        </Button>
+      </div>
+
+      {error && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-orange-800">
+              <AlertCircle className="h-5 w-5" />
+              <div>
+                <p className="font-medium">Configuración de base de datos requerida</p>
+                <p className="text-sm text-orange-700 mt-1">{error}</p>
+                <p className="text-sm text-orange-700 mt-2">
+                  Para habilitar la gestión de contactos, ejecuta los scripts de configuración de la base de datos.
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" aria-hidden="true" />
-              <Input
-                placeholder="Buscar en tu CRM"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-64"
-                aria-label="Buscar"
-              />
-            </div>
-            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" aria-label="Nuevo (rápido)">
-              <Plus className="h-4 w-4 mr-1" />
-            </Button>
-            <Button variant="outline" size="sm" aria-label="Enviar correo">
-              <Mail className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" aria-label="Ajustes">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Todos los contactos</span>
-              <Badge variant="secondary" className="bg-gray-100 text-gray-800">
-                {contacts.length}
-              </Badge>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4 mr-2" />
-              Personalizar tabla
-            </Button>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Importar contactos
-              <ChevronDown className="h-4 w-4 ml-1" />
-            </Button>
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Agregar contacto
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Agregar Nuevo Contacto</DialogTitle>
-                  <DialogDescription>
-                    Agrega un nuevo contacto a tu CRM. Los campos marcados con * son obligatorios.
-                  </DialogDescription>
-                </DialogHeader>
-                <form id="contact-form" action={handleAddContact}>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="name" className="text-right">
-                        Nombre *
-                      </Label>
-                      <Input id="name" name="name" required className="col-span-3" placeholder="Nombre completo" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="company" className="text-right">
-                        Empresa
-                      </Label>
-                      <Input id="company" name="company" className="col-span-3" placeholder="Nombre de la empresa" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="job_title" className="text-right">
-                        Cargo
-                      </Label>
-                      <Input id="job_title" name="job_title" className="col-span-3" placeholder="Título del puesto" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="nif" className="text-right">
-                        NIF
-                      </Label>
-                      <Input id="nif" name="nif" className="col-span-3" placeholder="Número de identificación fiscal" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="email" className="text-right">
-                        Email
-                      </Label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        className="col-span-3"
-                        placeholder="correo@empresa.com"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="phone" className="text-right">
-                        Teléfono
-                      </Label>
-                      <Input id="phone" name="phone" className="col-span-3" placeholder="+1 234 567 8900" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="status" className="text-right">
-                        Estado
-                      </Label>
-                      <Select name="status" defaultValue="New">
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="New">Nuevo</SelectItem>
-                          <SelectItem value="Qualified">Calificado</SelectItem>
-                          <SelectItem value="Won">Ganado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsCreateOpen(false)}
-                      disabled={isCreating}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={isCreating}>
-                      {isCreating ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Creando...
-                        </>
-                      ) : (
-                        "Agregar Contacto"
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-      </div>
-
-      {/* Table Controls */}
-      <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
-        <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm">
-            <TableIcon className="h-4 w-4 mr-2" />
-            Tabla
-            <ChevronDown className="h-4 w-4 ml-1" />
-          </Button>
-          <Button variant="outline" size="sm">
-            <Settings className="h-4 w-4 mr-2" />
-            Acciones masivas
-          </Button>
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-2" />
-            Filtrar por
-          </Button>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="px-6">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-b border-gray-200">
-              <TableHead className="text-left font-medium text-gray-600 py-3">
-                Nombre
-                <ChevronDown className="h-4 w-4 inline ml-1" />
-              </TableHead>
-              <TableHead className="text-left font-medium text-gray-600 py-3">
-                Cuenta
-                <ChevronDown className="h-4 w-4 inline ml-1" />
-              </TableHead>
-              <TableHead className="text-left font-medium text-gray-600 py-3">
-                Cargo
-                <ChevronDown className="h-4 w-4 inline ml-1" />
-              </TableHead>
-              <TableHead className="text-left font-medium text-gray-600 py-3">
-                Correo
-                <ChevronDown className="h-4 w-4 inline ml-1" />
-              </TableHead>
-              <TableHead className="text-left font-medium text-gray-600 py-3">
-                Móvil
-                <ChevronDown className="h-4 w-4 inline ml-1" />
-              </TableHead>
-              <TableHead className="text-left font-medium text-gray-600 py-3">
-                Estado
-                <ChevronDown className="h-4 w-4 inline ml-1" />
-              </TableHead>
-              <TableHead className="text-left font-medium text-gray-600 py-3">
-                Etiquetas
-                <ChevronDown className="h-4 w-4 inline ml-1" />
-              </TableHead>
-              <TableHead className="text-left font-medium text-gray-600 py-3">
-                Propietario de ventas
-                <ChevronDown className="h-4 w-4 inline ml-1" />
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredContacts.map((contact) => (
-              <TableRow key={contact.id} className="border-b border-gray-100 hover:bg-gray-50">
-                <TableCell className="py-4">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-8 w-8">
-                      {contact.avatar_url ? (
-                        <AvatarImage
-                          src={contact.avatar_url || "/placeholder.svg?height=32&width=32&query=avatar"}
-                          alt={`Avatar de ${contact.name}`}
-                        />
-                      ) : (
-                        <AvatarFallback className={`text-sm font-medium ${getInitialColor(contact.name)}`}>
-                          {getInitials(contact.name)}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <span className="font-medium text-emerald-700 hover:underline cursor-pointer">{contact.name}</span>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 p-0"
-                          aria-label={`Opciones para ${contact.name}`}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onClick={() => openEdit(contact)}>
-                          <Pencil className="h-4 w-4 mr-2" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-red-600 focus:text-red-600"
-                          onClick={() => openDelete(contact)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </TableCell>
-                <TableCell className="py-4">
-                  <span className="text-emerald-700 hover:underline cursor-pointer">{contact.company || "-"}</span>
-                </TableCell>
-                <TableCell className="py-4 text-gray-900">{contact.job_title || "-"}</TableCell>
-                <TableCell className="py-4">
-                  {contact.email ? (
-                    <span className="text-emerald-700 hover:underline cursor-pointer">{contact.email}</span>
-                  ) : (
-                    <span className="text-gray-400 cursor-pointer hover:text-emerald-700">
-                      + Hacer clic para agregar
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="py-4">
-                  {contact.phone && contact.phone !== "+ Click to add" ? (
-                    <span className="text-gray-900">{contact.phone}</span>
-                  ) : (
-                    <span className="text-gray-400 cursor-pointer hover:text-emerald-700">
-                      + Hacer clic para agregar
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="py-4">
-                  <Badge className={`${getStatusColor(contact.status)} border`}>{contact.status}</Badge>
-                </TableCell>
-                <TableCell className="py-4">
-                  {contact.tags && contact.tags.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {contact.tags.map((tag, index) => (
-                        <Badge key={index} className={`text-xs ${getTagColor(tag)}`}>
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="text-gray-400 cursor-pointer hover:text-emerald-700">+ Click to add</span>
-                  )}
-                </TableCell>
-                <TableCell className="py-4">
-                  <div className="flex items-center space-x-2">
-                    <Star className="h-4 w-4 text-gray-400" aria-hidden="true" />
-                    <span className="text-gray-900">{contact.sales_owner}</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Empty state */}
-      {filteredContacts.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-gray-500 mb-4">No se encontraron contactos</div>
-          <Button onClick={() => setIsCreateOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Agregar primer contacto
-          </Button>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Edit dialog */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[480px]">
-          <DialogHeader>
-            <DialogTitle>Editar contacto</DialogTitle>
-            <DialogDescription>Actualiza la información y guarda los cambios.</DialogDescription>
-          </DialogHeader>
-          {editingContact && (
-            <form onSubmit={handleEditSubmit}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-name" className="text-right">
-                    Nombre *
-                  </Label>
-                  <Input
-                    id="edit-name"
-                    name="name"
-                    required
-                    className="col-span-3"
-                    defaultValue={editingContact.name ?? ""}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-company" className="text-right">
-                    Empresa
-                  </Label>
-                  <Input
-                    id="edit-company"
-                    name="company"
-                    className="col-span-3"
-                    defaultValue={editingContact.company ?? ""}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-job_title" className="text-right">
-                    Cargo
-                  </Label>
-                  <Input
-                    id="edit-job_title"
-                    name="job_title"
-                    className="col-span-3"
-                    defaultValue={editingContact.job_title ?? ""}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-nif" className="text-right">
-                    NIF
-                  </Label>
-                  <Input
-                    id="edit-nif"
-                    name="nif"
-                    className="col-span-3"
-                    defaultValue={editingContact.nif ?? ""}
-                    placeholder="Número de identificación fiscal"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-email" className="text-right">
-                    Email
-                  </Label>
-                  <Input
-                    id="edit-email"
-                    name="email"
-                    type="email"
-                    className="col-span-3"
-                    defaultValue={editingContact.email ?? ""}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-phone" className="text-right">
-                    Teléfono
-                  </Label>
-                  <Input
-                    id="edit-phone"
-                    name="phone"
-                    className="col-span-3"
-                    defaultValue={editingContact.phone ?? ""}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">Estado</Label>
-                  <Select name="status" defaultValue={editingContact.status ?? "New"}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="New">Nuevo</SelectItem>
-                      <SelectItem value="Qualified">Calificado</SelectItem>
-                      <SelectItem value="Won">Ganado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Lista de Contactos</CardTitle>
+              <CardDescription>
+                {contacts.length} contacto{contacts.length !== 1 ? "s" : ""} en total
+              </CardDescription>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar contactos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 w-[300px]"
+                />
               </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)} disabled={isUpdating}>
-                  Cancelar
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {filteredContacts.length === 0 ? (
+            <div className="text-center py-8">
+              <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                {contacts.length === 0 ? "No hay contactos" : "No se encontraron contactos"}
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                {contacts.length === 0
+                  ? "Comienza agregando tu primer contacto"
+                  : "Intenta con un término de búsqueda diferente"}
+              </p>
+              {contacts.length === 0 && (
+                <Button onClick={() => setShowContactForm(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Agregar Primer Contacto
                 </Button>
-                <Button type="submit" disabled={isUpdating}>
-                  {isUpdating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Guardando...
-                    </>
-                  ) : (
-                    "Guardar cambios"
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
+              )}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Contacto</TableHead>
+                  <TableHead>Empresa</TableHead>
+                  <TableHead>Información de Contacto</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Fecha de Creación</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredContacts.map((contact) => (
+                  <TableRow key={contact.id}>
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={`/placeholder-user.jpg`} />
+                          <AvatarFallback className="text-xs">{getInitials(contact.name)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{contact.name}</div>
+                          {contact.job_title && (
+                            <div className="text-sm text-muted-foreground">{contact.job_title}</div>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        {contact.company && (
+                          <>
+                            <Building className="h-4 w-4 text-muted-foreground" />
+                            <span>{contact.company}</span>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {contact.email && (
+                          <div className="flex items-center space-x-2 text-sm">
+                            <Mail className="h-3 w-3 text-muted-foreground" />
+                            <span>{contact.email}</span>
+                          </div>
+                        )}
+                        {contact.phone && (
+                          <div className="flex items-center space-x-2 text-sm">
+                            <Phone className="h-3 w-3 text-muted-foreground" />
+                            <span>{contact.phone}</span>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {contact.status && (
+                        <Badge variant={getStatusBadgeVariant(contact.status)}>{contact.status}</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(contact.created_at).toLocaleDateString("es-ES")}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setEditingContact(contact)
+                              setShowContactForm(true)
+                            }}
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleDeleteContact(contact)} className="text-red-600">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
-        </DialogContent>
-      </Dialog>
+        </CardContent>
+      </Card>
 
-      {/* Delete confirm */}
-      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar contacto?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará el contacto{" "}
-              <span className="font-medium">{deletingContact?.name ?? ""}</span> y sus datos asociados.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
-              onClick={handleDeleteConfirmed}
-              disabled={isDeleting}
-            >
-              {isDeleting ? "Eliminando..." : "Eliminar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DynamicContactForm
+        isOpen={showContactForm}
+        onClose={() => {
+          setShowContactForm(false)
+          setEditingContact(null)
+        }}
+        onSave={handleSaveContact}
+        editingContact={editingContact}
+      />
     </div>
   )
 }

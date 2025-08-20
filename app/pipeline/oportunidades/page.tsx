@@ -19,7 +19,20 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
-import { Search, Plus, DollarSign, TrendingUp, User, Building, Mail, Phone, Edit, Save, X } from "lucide-react"
+import {
+  Search,
+  Plus,
+  DollarSign,
+  TrendingUp,
+  User,
+  Building,
+  Mail,
+  Phone,
+  Edit,
+  Save,
+  X,
+  Briefcase,
+} from "lucide-react"
 import { createOpportunityWithContact, updateOpportunity, deleteOpportunity, updateDealStage } from "../actions"
 import { toast } from "@/hooks/use-toast"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet"
@@ -60,6 +73,7 @@ interface Deal {
   pain_points?: string
   competitors?: string
   next_steps?: string
+  responsible_user_id?: string
 }
 
 function toPipelineDeal(d: Deal): PipelineDeal {
@@ -96,6 +110,11 @@ function initials(name?: string) {
 }
 
 export default function OportunidadesPage() {
+  const [formFields, setFormFields] = useState<any[]>([])
+  const [isLoadingFields, setIsLoadingFields] = useState(true)
+  const [users, setUsers] = useState<any[]>([])
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true)
+
   const [searchTerm, setSearchTerm] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -351,6 +370,7 @@ export default function OportunidadesPage() {
     pain_points: "",
     competitors: "",
     next_steps: "",
+    responsible_user_id: "",
   })
 
   const stages = ["Nuevo", "Calificación", "Propuesta", "Negociación", "Cierre", "Ganado", "Perdido"]
@@ -396,7 +416,56 @@ export default function OportunidadesPage() {
       (deal.contact_name && deal.contact_name.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
-  // Contact search (debounce)
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        console.log("[v0] Loading users for opportunities...")
+        const response = await fetch("/api/users")
+        const data = await response.json()
+        console.log("[v0] Users API response:", data)
+
+        // Handle direct array response from users API
+        if (Array.isArray(data)) {
+          setUsers(data)
+          console.log("[v0] Users loaded successfully:", data.length)
+        } else if (data.success && data.users) {
+          // Fallback for success/users format
+          setUsers(data.users)
+          console.log("[v0] Users loaded successfully:", data.users.length)
+        } else {
+          console.error("[v0] Failed to load users:", data.error || "Invalid response format")
+          // Set empty array as fallback
+          setUsers([])
+        }
+      } catch (error) {
+        console.error("Error loading users:", error)
+        setUsers([]) // Set empty array on error
+      } finally {
+        setIsLoadingUsers(false)
+      }
+    }
+
+    loadUsers()
+  }, [])
+
+  useEffect(() => {
+    const loadFormFields = async () => {
+      try {
+        const response = await fetch("/api/settings/opportunities/active-fields")
+        const data = await response.json()
+        if (data.success) {
+          setFormFields(data.fields)
+        }
+      } catch (error) {
+        console.error("Error loading form fields:", error)
+      } finally {
+        setIsLoadingFields(false)
+      }
+    }
+
+    loadFormFields()
+  }, [])
+
   useEffect(() => {
     const handler = setTimeout(async () => {
       const q = contactQuery.trim()
@@ -407,15 +476,32 @@ export default function OportunidadesPage() {
       try {
         if (contactAbort.current) contactAbort.current.abort()
         contactAbort.current = new AbortController()
-        const res = await fetch(`/api/contacts/search?q=${encodeURIComponent(q)}&by=any`, {
+
+        const res = await fetch(`/api/clients?search=${encodeURIComponent(q)}`, {
           signal: contactAbort.current.signal,
         })
-        const data = (await res.json()) as { results: Contact[] }
-        setContactResults(data.results || [])
+        const data = await res.json()
+
+        // Transform clients data to match Contact interface
+        const transformedResults = (data.clients || []).map((client: any) => ({
+          id: client.id,
+          name: client.name,
+          email: client.email,
+          phone: client.phone,
+          company: client.company || client.empresa,
+          job_title: client.position || client.cargo,
+          address: client.address || client.direccion,
+          city: client.city || client.ciudad,
+          country: client.country || client.pais,
+          notes: client.notes || client.notas,
+          avatar_url: null,
+        }))
+
+        setContactResults(transformedResults)
         setContactOpen(true)
       } catch (e) {
         if ((e as any).name !== "AbortError") {
-          console.error("Search contacts failed", e)
+          console.error("Search clients failed", e)
         }
       }
     }, 250)
@@ -438,7 +524,6 @@ export default function OportunidadesPage() {
 
   const handleSelectContact = (c: Contact) => {
     setSelectedContact(c)
-    // Auto-fill opportunity fields from selected contact
     setNewOpportunity((prev) => ({
       ...prev,
       contact_name: c.name || "",
@@ -446,9 +531,29 @@ export default function OportunidadesPage() {
       contact_phone: c.phone || "",
       company: c.company || "",
       job_title: c.job_title || "",
+      // Additional fields from clients database
+      contact_address: c.address || "",
+      contact_city: c.city || "",
+      contact_country: c.country || "",
+      notes: prev.notes ? `${prev.notes}\n\nContacto: ${c.notes || ""}` : c.notes || "",
     }))
     setContactQuery(c.name || "")
     setContactOpen(false)
+
+    toast({
+      title: "Cliente seleccionado",
+      description: `Datos de ${c.name} copiados al formulario`,
+    })
+  }
+
+  const isFieldVisible = (fieldName: string) => {
+    const field = formFields.find((f) => f.name === fieldName)
+    return field ? field.visible : true
+  }
+
+  const isFieldRequired = (fieldName: string) => {
+    const field = formFields.find((f) => f.name === fieldName)
+    return field ? field.required : false
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -479,6 +584,7 @@ export default function OportunidadesPage() {
           pain_points: result.deal.pain_points,
           competitors: result.deal.competitors,
           next_steps: result.deal.next_steps,
+          responsible_user_id: result.deal.responsible_user_id,
         }
 
         setDeals([newDeal, ...deals])
@@ -509,6 +615,7 @@ export default function OportunidadesPage() {
           pain_points: "",
           competitors: "",
           next_steps: "",
+          responsible_user_id: "",
         })
         setSelectedContact(null)
         setContactQuery("")
@@ -684,23 +791,87 @@ export default function OportunidadesPage() {
             {/* formulario de creación */}
             <form onSubmit={handleSubmit}>
               <div className="grid gap-6 py-4">
+                <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Briefcase className="h-5 w-5 text-orange-600" />
+                    <h3 className="text-lg font-semibold text-orange-800">Responsable Comercial</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="responsible_user" className="text-orange-700 font-medium">
+                        Asignar Responsable *
+                      </Label>
+                      {isLoadingUsers ? (
+                        <div className="flex items-center gap-2 p-3 bg-white rounded-md border border-orange-300">
+                          <span className="text-sm text-orange-600">Cargando usuarios...</span>
+                        </div>
+                      ) : (
+                        <Select
+                          value={newOpportunity.responsible_user_id || ""}
+                          onValueChange={(value) => {
+                            console.log("[v0] Selected commercial responsible:", value)
+                            setNewOpportunity({ ...newOpportunity, responsible_user_id: value })
+                          }}
+                        >
+                          <SelectTrigger className="w-full bg-white border-orange-300 focus:border-orange-500">
+                            <SelectValue placeholder="Seleccionar responsable comercial" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {users.length === 0 ? (
+                              <SelectItem value="no-users" disabled>
+                                No hay usuarios disponibles
+                              </SelectItem>
+                            ) : (
+                              users.map((user) => (
+                                <SelectItem key={user.id} value={user.id.toString()}>
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={`w-3 h-3 rounded-full ${
+                                        user.role === "Comercial"
+                                          ? "bg-blue-500"
+                                          : user.role === "Administrador"
+                                            ? "bg-green-500"
+                                            : "bg-gray-500"
+                                      }`}
+                                    ></div>
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{user.name}</span>
+                                      <span className="text-xs text-gray-500">
+                                        {user.role || "Usuario"} • {user.email}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <p className="text-xs text-orange-700">
+                        Esta persona será responsable de gestionar y dar seguimiento a la oportunidad comercial.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-3">
                     <DollarSign className="h-5 w-5 text-blue-600" />
                     <h3 className="text-lg font-semibold">Información de la Oportunidad</h3>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Título de la Oportunidad *</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="title">Nombre de la Oportunidad *</Label>
                       <Input
                         id="title"
                         value={newOpportunity.title}
                         onChange={(e) => setNewOpportunity({ ...newOpportunity, title: e.target.value })}
-                        placeholder="ej. Implementación CRM Enterprise"
+                        placeholder="Ej: Renovación de contrato"
                         required
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="value">{`Valor Estimado (${currencySymbol}) *`}</Label>
                       <Input
@@ -712,9 +883,6 @@ export default function OportunidadesPage() {
                         required
                       />
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="stage">Etapa</Label>
                       <Select
@@ -733,6 +901,9 @@ export default function OportunidadesPage() {
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="probability">Probabilidad (%)</Label>
                       <Input
@@ -833,19 +1004,16 @@ export default function OportunidadesPage() {
                               >
                                 <Avatar className="h-7 w-7">
                                   <AvatarImage src={c.avatar_url || ""} alt={c.name || "Contacto"} />
-                                  <AvatarFallback>
-                                    {(c.name || "?")
-                                      .split(" ")
-                                      .map((s) => s[0])
-                                      .slice(0, 2)
-                                      .join("")
-                                      .toUpperCase()}
+                                  <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                                    {(c.name || "C").charAt(0).toUpperCase()}
                                   </AvatarFallback>
                                 </Avatar>
-                                <div className="min-w-0">
-                                  <div className="text-sm font-medium text-gray-900 truncate">{c.name}</div>
-                                  <div className="text-xs text-gray-600 break-words">{c.company || "Sin empresa"}</div>
-                                  {c.email && <div className="text-xs text-gray-500 break-words">{c.email}</div>}
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium text-sm truncate">{c.name}</div>
+                                  <div className="text-xs text-gray-500 truncate">
+                                    {c.email}
+                                    {c.company && ` • ${c.company}`}
+                                  </div>
                                 </div>
                               </button>
                             ))}
@@ -911,7 +1079,9 @@ export default function OportunidadesPage() {
                       <Label htmlFor="lead_source">Fuente del Lead</Label>
                       <Select
                         value={newOpportunity.lead_source}
-                        onValueChange={(value) => setNewOpportunity({ ...newOpportunity, lead_source: value })}
+                        onChange={(e) =>
+                          setNewOpportunity({ ...newOpportunity, lead_source: (e.target as HTMLSelectElement).value })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar fuente" />
@@ -941,7 +1111,9 @@ export default function OportunidadesPage() {
                       <Label htmlFor="company_size">Tamaño de Empresa</Label>
                       <Select
                         value={newOpportunity.company_size}
-                        onValueChange={(value) => setNewOpportunity({ ...newOpportunity, company_size: value })}
+                        onChange={(e) =>
+                          setNewOpportunity({ ...newOpportunity, company_size: (e.target as HTMLSelectElement).value })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar tamaño" />
@@ -959,7 +1131,9 @@ export default function OportunidadesPage() {
                       <Label htmlFor="budget_range">Rango de Presupuesto</Label>
                       <Select
                         value={newOpportunity.budget_range}
-                        onValueChange={(value) => setNewOpportunity({ ...newOpportunity, budget_range: value })}
+                        onChange={(e) =>
+                          setNewOpportunity({ ...newOpportunity, budget_range: (e.target as HTMLSelectElement).value })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar rango" />
@@ -979,7 +1153,12 @@ export default function OportunidadesPage() {
                     <Label htmlFor="decision_timeline">Timeline de Decisión</Label>
                     <Select
                       value={newOpportunity.decision_timeline}
-                      onValueChange={(value) => setNewOpportunity({ ...newOpportunity, decision_timeline: value })}
+                      onChange={(e) =>
+                        setNewOpportunity({
+                          ...newOpportunity,
+                          decision_timeline: (e.target as HTMLSelectElement).value,
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="¿Cuándo planean decidir?" />
@@ -1129,6 +1308,16 @@ export default function OportunidadesPage() {
                   </div>
                 )}
                 {deal.notes && <p className="text-xs text-muted-foreground bg-gray-50 p-2 rounded">{deal.notes}</p>}
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Responsable comercial:</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {deal.responsible_user_id
+                        ? users.find((u) => u.id === deal.responsible_user_id)?.name || "Usuario no encontrado"
+                        : "No asignado"}
+                    </span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -1210,6 +1399,30 @@ export default function OportunidadesPage() {
 
               {/* Info grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-md border bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200 p-4">
+                  <div className="mb-3 text-sm font-medium text-orange-700 flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" />
+                    Responsable Comercial
+                  </div>
+                  {detailDeal.responsible_user_id ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                      <div className="min-w-0">
+                        <div className="font-medium text-orange-800">
+                          {users.find((u) => u.id.toString() === detailDeal.responsible_user_id?.toString())?.name ||
+                            "Usuario no encontrado"}
+                        </div>
+                        <div className="text-sm text-orange-600">
+                          {users.find((u) => u.id.toString() === detailDeal.responsible_user_id?.toString())?.role ||
+                            "Comercial"}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-orange-600">No asignado</div>
+                  )}
+                </div>
+
                 <div className="rounded-md border bg-white p-4">
                   <div className="mb-3 text-sm font-medium text-muted-foreground">Probabilidad</div>
                   <div className="flex items-center justify-between text-sm">
@@ -1341,6 +1554,71 @@ export default function OportunidadesPage() {
           {editingDeal && (
             <form onSubmit={handleUpdateDeal}>
               <div className="grid gap-6 py-4">
+                <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Briefcase className="h-5 w-5 text-orange-600" />
+                    <h3 className="text-lg font-semibold text-orange-800">Responsable Comercial</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit_responsible_user" className="text-orange-700 font-medium">
+                        Asignar Responsable *
+                      </Label>
+                      {isLoadingUsers ? (
+                        <div className="flex items-center gap-2 p-3 bg-white rounded-md border border-orange-300">
+                          <span className="text-sm text-orange-600">Cargando usuarios...</span>
+                        </div>
+                      ) : (
+                        <Select
+                          value={editingDeal?.responsible_user_id?.toString() || ""}
+                          onValueChange={(value) => {
+                            console.log("[v0] Updated commercial responsible:", value)
+                            if (editingDeal) {
+                              setEditingDeal({ ...editingDeal, responsible_user_id: value })
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-full bg-white border-orange-300 focus:border-orange-500">
+                            <SelectValue placeholder="Seleccionar responsable comercial" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {users.length === 0 ? (
+                              <SelectItem value="no-users" disabled>
+                                No hay usuarios disponibles
+                              </SelectItem>
+                            ) : (
+                              users.map((user) => (
+                                <SelectItem key={user.id} value={user.id.toString()}>
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={`w-3 h-3 rounded-full ${
+                                        user.role === "Comercial"
+                                          ? "bg-blue-500"
+                                          : user.role === "Administrador"
+                                            ? "bg-green-500"
+                                            : "bg-gray-500"
+                                      }`}
+                                    ></div>
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{user.name}</span>
+                                      <span className="text-xs text-gray-500">
+                                        {user.role || "Usuario"} • {user.email}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <p className="text-xs text-orange-700">
+                        Esta persona será responsable de gestionar y dar seguimiento a la oportunidad comercial.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-3">
                     <DollarSign className="h-5 w-5 text-blue-600" />
@@ -1436,7 +1714,9 @@ export default function OportunidadesPage() {
                       <Label htmlFor="edit_lead_source">Fuente del Lead</Label>
                       <Select
                         value={editingDeal.lead_source || ""}
-                        onValueChange={(value) => setEditingDeal({ ...editingDeal, lead_source: value })}
+                        onChange={(e) =>
+                          setEditingDeal({ ...editingDeal, lead_source: (e.target as HTMLSelectElement).value })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar fuente" />

@@ -13,6 +13,7 @@ export function ClientSubnav({ clientId }: Props) {
 
   const items = [
     { href: `/clientes/${clientId}`, label: "Resumen" },
+    { href: `/clientes/${clientId}/propuestas`, label: "Propuestas" },
     { href: `/clientes/${clientId}/conversaciones`, label: "Conversaciones" },
     { href: `/clientes/${clientId}/archivos`, label: "Archivos" },
     { href: `/clientes/${clientId}/oportunidades`, label: "Oportunidades" },
