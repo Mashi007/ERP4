@@ -113,13 +113,22 @@ export default function ProyectosPage() {
   const [showProjectManagerDialog, setShowProjectManagerDialog] = useState(false)
   const [searchProfessional, setSearchProfessional] = useState("")
 
-  const professionals = [
+  const [currentUserRole, setCurrentUserRole] = useState("Administrador") // In real app, get from auth context
+  const [showAddNewManager, setShowAddNewManager] = useState(false)
+  const [newManagerForm, setNewManagerForm] = useState({ name: "", email: "" })
+  const [professionals, setProfessionals] = useState([
     { id: 1, name: "Daniel Casañas", email: "d.casanas@kohde.us" },
     { id: 2, name: "INNOVACION CONOCIMIENTO Y DESARROLLO 2050 SL", email: "manmenrt@gmail.es" },
     { id: 3, name: "Mamen Rodriguez Toro", email: "manmenrt@hotmail.com" },
     { id: 4, name: "Noelia Sanchez", email: "noe@icdgroup.es" },
     { id: 5, name: "Vicente Exposito", email: "vexpbv@gmail.com" },
-  ]
+  ])
+
+  const isAdmin = () => {
+    return (
+      currentUserRole === "Administrador" || currentUserRole === "system_admin" || currentUserRole === "users_manage"
+    )
+  }
 
   const handleShowDetails = (project: any) => {
     setSelectedProject(project)
@@ -175,6 +184,26 @@ export default function ProyectosPage() {
     setEditingValue(project.details.projectManager)
     setShowProjectManagerDialog(true)
     console.log("[v0] Opening project manager dialog")
+  }
+
+  const handleAddNewManager = () => {
+    if (newManagerForm.name && newManagerForm.email) {
+      const newProfessional = {
+        id: Date.now().toString(),
+        name: newManagerForm.name,
+        email: newManagerForm.email,
+      }
+
+      setProfessionals((prev) => [...prev, newProfessional])
+      setNewManagerForm({ name: "", email: "" })
+      setShowAddNewManager(false)
+
+      // Auto-select the new manager
+      const fullName = `${newProfessional.name}, ${newProfessional.email}`
+      setEditingValue(fullName)
+
+      console.log("[v0] New project manager added:", newProfessional)
+    }
   }
 
   const handleSelectProfessional = (professional: any) => {
@@ -541,6 +570,8 @@ export default function ProyectosPage() {
                   onClick={() => {
                     setShowProjectManagerDialog(false)
                     setSearchProfessional("")
+                    setShowAddNewManager(false)
+                    setNewManagerForm({ name: "", email: "" })
                     console.log("[v0] Project manager dialog closed")
                   }}
                   className="p-1 hover:bg-gray-100"
@@ -562,7 +593,7 @@ export default function ProyectosPage() {
                   />
                 </div>
 
-                <div className="max-h-48 overflow-y-auto border rounded-lg">
+                <div className="max-h-48 overflow-y-auto border rounded-lg mb-3">
                   {filteredProfessionals.map((professional) => (
                     <div
                       key={professional.id}
@@ -577,6 +608,67 @@ export default function ProyectosPage() {
                     <div className="p-3 text-sm text-gray-500 text-center">No se encontraron profesionales</div>
                   )}
                 </div>
+
+                {isAdmin() && (
+                  <div className="border-t pt-3 mb-3">
+                    {!showAddNewManager ? (
+                      <Button
+                        onClick={() => setShowAddNewManager(true)}
+                        variant="outline"
+                        className="w-full text-[#8B5CF6] border-[#8B5CF6] hover:bg-[#8B5CF6]/10"
+                      >
+                        + Agregar Nuevo Jefe de Proyecto
+                      </Button>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium text-gray-700">Nuevo Jefe de Proyecto</p>
+                        <input
+                          type="text"
+                          value={newManagerForm.name}
+                          onChange={(e) => setNewManagerForm((prev) => ({ ...prev, name: e.target.value }))}
+                          className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+                          placeholder="Nombre completo *"
+                          required
+                        />
+                        <input
+                          type="email"
+                          value={newManagerForm.email}
+                          onChange={(e) => setNewManagerForm((prev) => ({ ...prev, email: e.target.value }))}
+                          className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+                          placeholder="Correo electrónico *"
+                          required
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={handleAddNewManager}
+                            className="flex-1 bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white"
+                            disabled={!newManagerForm.name || !newManagerForm.email}
+                          >
+                            Agregar
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              setShowAddNewManager(false)
+                              setNewManagerForm({ name: "", email: "" })
+                            }}
+                            variant="outline"
+                            className="flex-1"
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!isAdmin() && (
+                  <div className="border-t pt-3 mb-3">
+                    <p className="text-xs text-gray-500 text-center bg-gray-50 p-2 rounded-lg">
+                      Solo los administradores pueden agregar nuevos jefes de proyecto
+                    </p>
+                  </div>
+                )}
 
                 {editingValue && (
                   <div className="mt-3 p-2 bg-[#8B5CF6]/10 rounded-lg">
@@ -598,6 +690,8 @@ export default function ProyectosPage() {
                       setShowProjectManagerDialog(false)
                       setSearchProfessional("")
                       setEditingValue("")
+                      setShowAddNewManager(false)
+                      setNewManagerForm({ name: "", email: "" })
                     }}
                     variant="outline"
                     className="flex-1"
