@@ -19,7 +19,6 @@ import {
   Plus,
   Search,
   Filter,
-  BarChart3,
   Mail,
   Eye,
   MousePointer,
@@ -366,22 +365,20 @@ export default function MarketingPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-              <Megaphone className="mr-3 h-8 w-8 text-blue-600" />
+        <div className="flex justify-between items-center mb-8">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                <Megaphone className="h-6 w-6 text-white" />
+              </div>
               Centro de Marketing
             </h1>
-            <p className="text-gray-600">Gestiona tus campañas y estrategias de marketing con IA</p>
+            <p className="text-gray-600 text-lg">Gestiona tus campañas y estrategias de marketing con IA</p>
           </div>
-          <div className="flex items-center space-x-4">
-            <Button variant="outline" onClick={() => window.open("/analytics", "_blank")}>
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Analíticas
-            </Button>
+          <div className="flex items-center space-x-3">
             <Dialog>
               <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-3 text-white font-semibold">
                   <Plus className="h-4 w-4 mr-2" />
                   Nueva Campaña
                 </Button>
@@ -429,74 +426,84 @@ export default function MarketingPage() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid gap-4 md:grid-cols-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Campañas Activas</CardTitle>
-              <Send className="h-4 w-4 text-muted-foreground" />
+        <div className="grid gap-6 md:grid-cols-4 mb-8">
+          <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 bg-gradient-to-r from-blue-50 to-blue-100">
+              <CardTitle className="text-sm font-semibold text-gray-700">Campañas Activas</CardTitle>
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Send className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{campaigns.filter((c) => c.status === "active").length}</div>
-              <p className="text-xs text-muted-foreground">En ejecución</p>
+            <CardContent className="pt-4">
+              <div className="text-3xl font-bold text-blue-600">
+                {campaigns.filter((c) => c.status === "active").length}
+              </div>
+              <p className="text-sm text-gray-500 mt-1">En ejecución</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Contactos Totales</CardTitle>
-              <Users className="h-4 w-4 text-blue-600" />
+          <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 bg-gradient-to-r from-green-50 to-green-100">
+              <CardTitle className="text-sm font-semibold text-gray-700">Contactos Totales</CardTitle>
+              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                <Users className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
+            <CardContent className="pt-4">
+              <div className="text-3xl font-bold text-green-600">
                 {marketingLists.reduce((total, list) => total + (list.contact_count || 0), 0).toLocaleString()}
               </div>
-              <p className="text-xs text-muted-foreground">En todas las listas</p>
+              <p className="text-sm text-gray-500 mt-1">En todas las listas</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tasa de Apertura</CardTitle>
-              <Eye className="h-4 w-4 text-green-600" />
+          <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 bg-gradient-to-r from-purple-50 to-purple-100">
+              <CardTitle className="text-sm font-semibold text-gray-700">Tasa de Apertura</CardTitle>
+              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                <Eye className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">39.3%</div>
-              <p className="text-xs text-muted-foreground">Promedio mensual</p>
+            <CardContent className="pt-4">
+              <div className="text-3xl font-bold text-purple-600">39.3%</div>
+              <p className="text-sm text-gray-500 mt-1">Promedio mensual</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tasa de Clics</CardTitle>
-              <MousePointer className="h-4 w-4 text-purple-600" />
+          <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 bg-gradient-to-r from-orange-50 to-orange-100">
+              <CardTitle className="text-sm font-semibold text-gray-700">Tasa de Clics</CardTitle>
+              <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
+                <MousePointer className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600">11.5%</div>
-              <p className="text-xs text-muted-foreground">Promedio mensual</p>
+            <CardContent className="pt-4">
+              <div className="text-3xl font-bold text-orange-600">11.5%</div>
+              <p className="text-sm text-gray-500 mt-1">Promedio mensual</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="assistant" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-2xl bg-white border border-gray-200 rounded-xl p-1.5 shadow-sm mb-8">
+          <TabsList className="grid w-full grid-cols-3 max-w-2xl bg-white border-0 shadow-lg rounded-2xl p-2 mb-8">
             <TabsTrigger
               value="assistant"
-              className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
+              className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-xl px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
             >
               <Bot className="h-4 w-4 mr-2 flex-shrink-0" />
               <span className="truncate text-center">Asistente IA</span>
             </TabsTrigger>
             <TabsTrigger
               value="email-marketing"
-              className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
+              className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-xl px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
             >
               <Mail className="h-4 w-4 mr-2 flex-shrink-0" />
               <span className="truncate text-center">Email Marketing</span>
             </TabsTrigger>
             <TabsTrigger
               value="contacts"
-              className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
+              className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-200/50 transition-all duration-300 rounded-xl px-4 py-3 text-sm font-semibold hover:bg-gray-50 data-[state=active]:hover:from-blue-700 data-[state=active]:hover:to-blue-800 text-gray-600 data-[state=active]:text-white border-0"
             >
               <Users className="h-4 w-4 mr-2 flex-shrink-0" />
               <span className="truncate text-center">Contactos</span>
@@ -505,17 +512,21 @@ export default function MarketingPage() {
 
           {/* Campaign Assistant Tab */}
           <TabsContent value="assistant" className="mt-6">
-            <div className="grid gap-6 lg:grid-cols-3">
+            <div className="grid gap-8 lg:grid-cols-3">
               {/* Assistant Interface */}
               <div className="lg:col-span-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Bot className="mr-2 h-6 w-6 text-blue-600" />
+                <Card className="bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
+                    <CardTitle className="flex items-center text-xl">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center mr-3">
+                        <Bot className="h-5 w-5 text-white" />
+                      </div>
                       Asistente de Campañas con Grok IA
-                      <Badge className="ml-2 bg-blue-100 text-blue-800">Grok-4</Badge>
+                      <Badge className="ml-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 shadow-sm">
+                        Grok-4
+                      </Badge>
                     </CardTitle>
-                    <p className="text-sm text-gray-600">Utiliza Grok IA para crear campañas de marketing efectivas</p>
+                    <p className="text-gray-600 mt-2">Utiliza Grok IA para crear campañas de marketing efectivas</p>
                   </CardHeader>
                   <CardContent>
                     {!generatedCampaign ? (
@@ -641,22 +652,27 @@ export default function MarketingPage() {
               {/* Quick Stats */}
 
               {/* Etiquetas de Clasificación */}
-              <Card className="bg-white border border-gray-200 shadow-sm">
-                <CardHeader>
+              <Card className="bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-100">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm">Etiquetas de Clasificación</CardTitle>
-                    <Button variant="ghost" size="sm" onClick={() => toast.info("Agregar nueva etiqueta próximamente")}>
+                    <CardTitle className="text-lg font-semibold text-gray-800">Etiquetas de Clasificación</CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toast.info("Agregar nueva etiqueta próximamente")}
+                      className="hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200"
+                    >
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex flex-wrap gap-2">
+                <CardContent className="space-y-4 p-6">
+                  <div className="flex flex-wrap gap-3">
                     {classificationTags.map((tag) => (
                       <div key={tag.id} className="relative group">
                         <Badge
                           variant="outline"
-                          className={`cursor-pointer transition-colors pr-8 ${getTagColorClasses(tag.color)}`}
+                          className={`cursor-pointer transition-all duration-200 pr-8 hover:shadow-md ${getTagColorClasses(tag.color)} border-2`}
                           onClick={() => toast.info(`Filtrar por ${tag.name}`)}
                           title={tag.description}
                         >
@@ -665,7 +681,7 @@ export default function MarketingPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute right-0 top-0 h-full w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          className="absolute right-0 top-0 h-full w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-blue-100"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleEditTag(tag)
@@ -676,8 +692,8 @@ export default function MarketingPage() {
                       </div>
                     ))}
                   </div>
-                  <div className="pt-2 border-t">
-                    <p className="text-xs text-gray-500">
+                  <div className="pt-3 border-t border-gray-100">
+                    <p className="text-sm text-gray-500">
                       Haz clic en una etiqueta para filtrar campañas por categoría
                     </p>
                   </div>
