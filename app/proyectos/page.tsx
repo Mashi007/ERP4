@@ -9,10 +9,11 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ArrowLeft } from "lucide-react"
-import { X, Check, Users, Building, Mail, Phone, Search } from "lucide-react"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { X, Check, Users, Building, Mail, Phone, Search, Plus } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
+import { Label } from "@/components/ui/label"
 
 export default function ProyectosPage() {
   const [projects, setProjects] = useState([
@@ -147,6 +148,17 @@ export default function ProyectosPage() {
   ]
 
   const currentUserPermissions: string[] = []
+
+  const [isAuditorDialogOpen, setIsAuditorDialogOpen] = useState(false)
+  const [availableAuditors, setAvailableAuditors] = useState<any[]>([])
+  const [selectedAuditors, setSelectedAuditors] = useState<string[]>([])
+  const [newAuditorForm, setNewAuditorForm] = useState({
+    name: "",
+    email: "",
+    role: "Auditor",
+    specialization: "",
+    certification: "",
+  })
 
   const isAdmin = () => {
     return (
@@ -317,16 +329,89 @@ export default function ProyectosPage() {
     }
   }
 
+  const handleAddAuditingCompany = async (project: any) => {
+    console.log("[v0] Opening auditor selection dialog for project:", project.details.number)
+    setEditingProject(project)
+    setIsAuditorDialogOpen(true)
+
+    // Load available auditors from users/roles system
+    try {
+      const response = await fetch("/api/users?role=Auditor")
+      const auditors = await response.json()
+      setAvailableAuditors(Array.isArray(auditors) ? auditors : [])
+
+      // Set currently selected auditors
+      const currentAuditors = project.details.auditors ? project.details.auditors.split(", ") : []
+      setSelectedAuditors(currentAuditors)
+    } catch (error) {
+      console.error("[v0] Error loading auditors:", error)
+      setAvailableAuditors([])
+    }
+  }
+
+  const handleSaveAuditors = () => {
+    if (editingProject) {
+      const updatedProjects = projects.map((project) =>
+        project.id === editingProject.id
+          ? {
+              ...project,
+              details: {
+                ...project.details,
+                auditors: selectedAuditors.join(", "),
+              },
+            }
+          : project,
+      )
+      setProjects(updatedProjects)
+      setIsAuditorDialogOpen(false)
+      toast({
+        title: "Auditores actualizados",
+        description: "Los auditores han sido asignados al proyecto correctamente.",
+      })
+    }
+  }
+
+  const handleCreateAuditor = async () => {
+    try {
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...newAuditorForm,
+          role: "Auditor",
+        }),
+      })
+
+      if (response.ok) {
+        const newAuditor = await response.json()
+        setAvailableAuditors([...availableAuditors, newAuditor])
+        setSelectedAuditors([...selectedAuditors, newAuditor.name])
+        setNewAuditorForm({
+          name: "",
+          email: "",
+          role: "Auditor",
+          specialization: "",
+          certification: "",
+        })
+        toast({
+          title: "Auditor creado",
+          description: "El nuevo auditor ha sido creado y asignado al proyecto.",
+        })
+      }
+    } catch (error) {
+      console.error("[v0] Error creating auditor:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo crear el auditor.",
+        variant: "destructive",
+      })
+    }
+  }
+
   const handleAddCertifyingCompany = (project: any) => {
     setEditingProject(project)
     setEditingField("certifyingCompany")
     setEditingValue(project.details.certifyingCompany)
-  }
-
-  const handleAddAuditingCompany = (project: any) => {
-    setEditingProject(project)
-    setEditingField("auditors")
-    setEditingValue(project.details.auditors)
   }
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1603,6 +1688,134 @@ export default function ProyectosPage() {
             </div>
           </div>
         </div>
+
+        <Dialog open={isAuditorDialogOpen} onOpenChange={setIsAuditorDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                Seleccionar Auditores
+              </DialogTitle>
+              <p className="text-sm text-gray-600">
+                Selecciona auditores existentes o agrega uno nuevo para el proyecto
+              </p>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* Available Auditors Section */}
+              <div>
+                <h3 className="text-lg font-medium mb-3">Auditores Disponibles</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+                  {availableAuditors.map((auditor, index) => (
+                    <div
+                      key={index}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedAuditors.includes(auditor.name)
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                      onClick={() => {
+                        if (selectedAuditors.includes(auditor.name)) {
+                          setSelectedAuditors(selectedAuditors.filter((name) => name !== auditor.name))
+                        } else {
+                          setSelectedAuditors([...selectedAuditors, auditor.name])
+                        }
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium">{auditor.name}</div>
+                          <div className="text-sm text-gray-600">{auditor.email}</div>
+                          {auditor.specialization && (
+                            <div className="text-xs text-blue-600">{auditor.specialization}</div>
+                          )}
+                        </div>
+                        {selectedAuditors.includes(auditor.name) && <Check className="h-5 w-5 text-blue-600" />}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Add New Auditor Section */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-medium mb-3">Agregar Nuevo Auditor</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="auditor-name">Nombre Completo *</Label>
+                    <Input
+                      id="auditor-name"
+                      value={newAuditorForm.name}
+                      onChange={(e) => setNewAuditorForm({ ...newAuditorForm, name: e.target.value })}
+                      placeholder="Nombre del auditor"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="auditor-email">Email *</Label>
+                    <Input
+                      id="auditor-email"
+                      type="email"
+                      value={newAuditorForm.email}
+                      onChange={(e) => setNewAuditorForm({ ...newAuditorForm, email: e.target.value })}
+                      placeholder="email@empresa.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="auditor-specialization">Especialización</Label>
+                    <Input
+                      id="auditor-specialization"
+                      value={newAuditorForm.specialization}
+                      onChange={(e) => setNewAuditorForm({ ...newAuditorForm, specialization: e.target.value })}
+                      placeholder="ISO 9001, ISO 14001, etc."
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="auditor-certification">Certificación</Label>
+                    <Input
+                      id="auditor-certification"
+                      value={newAuditorForm.certification}
+                      onChange={(e) => setNewAuditorForm({ ...newAuditorForm, certification: e.target.value })}
+                      placeholder="Número de certificación"
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={handleCreateAuditor}
+                  className="mt-4"
+                  disabled={!newAuditorForm.name || !newAuditorForm.email}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Crear y Asignar Auditor
+                </Button>
+              </div>
+
+              {/* Selected Auditors Summary */}
+              {selectedAuditors.length > 0 && (
+                <div className="border-t pt-4">
+                  <h4 className="font-medium mb-2">Auditores Seleccionados ({selectedAuditors.length})</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedAuditors.map((auditorName, index) => (
+                      <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                        {auditorName}
+                        <X
+                          className="h-3 w-3 cursor-pointer"
+                          onClick={() => setSelectedAuditors(selectedAuditors.filter((name) => name !== auditorName))}
+                        />
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAuditorDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSaveAuditors}>Guardar Auditores</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={showClientSelectionDialog} onOpenChange={setShowClientSelectionDialog}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
