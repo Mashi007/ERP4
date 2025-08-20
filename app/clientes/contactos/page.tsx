@@ -378,6 +378,7 @@ export default function ContactosPage() {
               <TableHead className="font-semibold text-gray-900 py-4 px-4">Teléfono</TableHead>
               <TableHead className="font-semibold text-gray-900 py-4 px-4">Cargo</TableHead>
               <TableHead className="font-semibold text-gray-900 py-4 px-4">Responsable</TableHead>
+              <TableHead className="font-semibold text-gray-900 py-4 px-4 text-center">Etapa</TableHead>
               <TableHead className="font-semibold text-gray-900 py-4 px-4 text-center">Estado</TableHead>
               <TableHead className="font-semibold text-gray-900 py-4 px-4 text-center">Acciones</TableHead>
             </TableRow>
@@ -425,6 +426,28 @@ export default function ContactosPage() {
                 </TableCell>
                 <TableCell className="text-gray-700 py-4 px-4">
                   <span className="text-sm font-medium">{contact.sales_owner}</span>
+                </TableCell>
+                <TableCell className="py-4 px-4 text-center">
+                  <Badge
+                    variant="outline"
+                    className={`font-medium px-3 py-1 text-xs border ${
+                      contact.stage === "Ganado"
+                        ? "bg-green-50 text-green-700 border-green-200"
+                        : contact.stage === "Perdido"
+                          ? "bg-red-50 text-red-700 border-red-200"
+                          : contact.stage === "Negociación"
+                            ? "bg-orange-50 text-orange-700 border-orange-200"
+                            : contact.stage === "Propuesta"
+                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                              : contact.stage === "Calificación"
+                                ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                : contact.stage === "Cierre"
+                                  ? "bg-purple-50 text-purple-700 border-purple-200"
+                                  : "bg-gray-50 text-gray-700 border-gray-200"
+                    }`}
+                  >
+                    {contact.stage || "Nuevo"}
+                  </Badge>
                 </TableCell>
                 <TableCell className="py-4 px-4 text-center">
                   <Badge
