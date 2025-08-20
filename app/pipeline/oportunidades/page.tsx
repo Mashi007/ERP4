@@ -836,9 +836,7 @@ export default function OportunidadesPage() {
                                     ></div>
                                     <div className="flex flex-col">
                                       <span className="font-medium">{user.name}</span>
-                                      <span className="text-xs text-gray-500">
-                                        {user.role || "Usuario"} • {user.email}
-                                      </span>
+                                      <span className="text-xs text-gray-500">{user.email}</span>
                                     </div>
                                   </div>
                                 </SelectItem>
@@ -1601,9 +1599,7 @@ export default function OportunidadesPage() {
                                     ></div>
                                     <div className="flex flex-col">
                                       <span className="font-medium">{user.name}</span>
-                                      <span className="text-xs text-gray-500">
-                                        {user.role || "Usuario"} • {user.email}
-                                      </span>
+                                      <span className="text-xs text-gray-500">{user.email}</span>
                                     </div>
                                   </div>
                                 </SelectItem>
