@@ -42,6 +42,10 @@ export default function ContactosPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
 
+  const [contactSuggestions, setContactSuggestions] = useState<Contact[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
+
   // Form states
   const [newContact, setNewContact] = useState({
     name: "",
@@ -219,6 +223,47 @@ export default function ContactosPage() {
     }
   }
 
+  const searchContacts = async (query: string) => {
+    if (query.length < 2) {
+      setContactSuggestions([])
+      setShowSuggestions(false)
+      return
+    }
+
+    setIsSearching(true)
+    try {
+      const response = await fetch(`/api/contacts/search?q=${encodeURIComponent(query)}`)
+      if (response.ok) {
+        const suggestions = await response.json()
+        setContactSuggestions(suggestions.slice(0, 5)) // Limit to 5 suggestions
+        setShowSuggestions(true)
+      }
+    } catch (error) {
+      console.error("Error searching contacts:", error)
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  const handleContactSelect = (contact: Contact) => {
+    setNewContact({
+      name: contact.name,
+      email: contact.email,
+      phone: contact.phone,
+      company: contact.company,
+      job_title: contact.job_title,
+      sales_owner: contact.sales_owner,
+      stage: contact.stage || "Nuevo",
+    })
+    setShowSuggestions(false)
+    setContactSuggestions([])
+  }
+
+  const handleNameChange = (value: string) => {
+    setNewContact({ ...newContact, name: value })
+    searchContacts(value)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -252,18 +297,63 @@ export default function ContactosPage() {
             </DialogHeader>
 
             <div className="space-y-6 py-6">
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
                   <User className="h-4 w-4 text-blue-600" />
                   Nombre completo
                 </Label>
-                <Input
-                  id="name"
-                  placeholder="Ej: Juan Pérez"
-                  value={newContact.name}
-                  onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
-                  className="h-11"
-                />
+                <div className="relative">
+                  <Input
+                    id="name"
+                    placeholder="Buscar contacto existente o escribir nuevo nombre..."
+                    value={newContact.name}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    onFocus={() => {
+                      if (newContact.name.length >= 2) {
+                        searchContacts(newContact.name)
+                      }
+                    }}
+                    onBlur={() => {
+                      // Delay hiding suggestions to allow clicking
+                      setTimeout(() => setShowSuggestions(false), 200)
+                    }}
+                    className="h-11"
+                  />
+                  {isSearching && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    </div>
+                  )}
+                </div>
+
+                {showSuggestions && contactSuggestions.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                    <div className="p-2 text-xs text-gray-500 border-b">
+                      Contactos existentes - Selecciona para auto-completar
+                    </div>
+                    {contactSuggestions.map((contact) => (
+                      <div
+                        key={contact.id}
+                        className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        onClick={() => handleContactSelect(contact)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <User className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 truncate">{contact.name}</p>
+                            <p className="text-sm text-gray-500 truncate">{contact.company}</p>
+                            <p className="text-xs text-gray-400 truncate">{contact.email}</p>
+                          </div>
+                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                            {contact.stage || "Nuevo"}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
