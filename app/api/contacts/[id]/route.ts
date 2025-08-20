@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     const contacts = await sql`
       SELECT 
-        id, name, email, phone, company, job_title, nif, status,
+        id, name, email, phone, company, job_title, nif, status, sales_owner,
         created_at, updated_at
       FROM contacts
       WHERE id = ${id}
@@ -59,7 +59,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Extract standard fields
-    const { name, email, phone, company, job_title, nif, status, ...customFields } = body
+    const { name, email, phone, company, job_title, nif, status, sales_owner, ...customFields } = body
 
     if (!name?.trim()) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 })
@@ -76,6 +76,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
           job_title = ${job_title || null},
           nif = ${nif || null},
           status = ${status || "Nuevo"},
+          sales_owner = ${sales_owner || null},
           updated_at = CURRENT_TIMESTAMP
         WHERE id = ${id}
         RETURNING *
