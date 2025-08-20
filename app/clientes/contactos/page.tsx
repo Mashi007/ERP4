@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Label } from "@/components/ui/label"
-import { Plus, Search, ArrowRight, Edit, User, Mail, Phone, Building, Briefcase } from "lucide-react"
+import { Plus, Search, ArrowRight, Edit, User, Mail, Phone, Building, Briefcase, TrendingUp } from "lucide-react"
 import { toast } from "sonner"
 
 interface Contact {
@@ -27,6 +28,7 @@ interface Contact {
   job_title: string
   status: string
   sales_owner: string
+  stage?: string
   created_at: string
   updated_at: string
 }
@@ -48,6 +50,7 @@ export default function ContactosPage() {
     company: "",
     job_title: "",
     sales_owner: "María García",
+    stage: "Nuevo",
   })
 
   const [editContact, setEditContact] = useState({
@@ -57,7 +60,18 @@ export default function ContactosPage() {
     company: "",
     job_title: "",
     sales_owner: "",
+    stage: "",
   })
+
+  const stageOptions = [
+    { value: "Nuevo", label: "Nuevo" },
+    { value: "Calificación", label: "Calificación" },
+    { value: "Propuesta", label: "Propuesta" },
+    { value: "Negociación", label: "Negociación" },
+    { value: "Cierre", label: "Cierre" },
+    { value: "Ganado", label: "Ganado" },
+    { value: "Perdido", label: "Perdido" },
+  ]
 
   useEffect(() => {
     fetchContacts()
@@ -99,6 +113,7 @@ export default function ContactosPage() {
           company: "",
           job_title: "",
           sales_owner: "María García",
+          stage: "Nuevo",
         })
         fetchContacts()
       } else {
@@ -166,6 +181,7 @@ export default function ContactosPage() {
       company: contact.company,
       job_title: contact.job_title,
       sales_owner: contact.sales_owner,
+      stage: contact.stage || "Nuevo",
     })
     setIsEditDialogOpen(true)
   }
@@ -305,6 +321,28 @@ export default function ContactosPage() {
                   onChange={(e) => setNewContact({ ...newContact, job_title: e.target.value })}
                   className="h-11"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="stage" className="text-sm font-medium flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-blue-600" />
+                  Etapa
+                </Label>
+                <Select
+                  value={newContact.stage}
+                  onValueChange={(value) => setNewContact({ ...newContact, stage: value })}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Seleccionar etapa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stageOptions.map((stage) => (
+                      <SelectItem key={stage.value} value={stage.value}>
+                        {stage.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -518,6 +556,28 @@ export default function ContactosPage() {
                 onChange={(e) => setEditContact({ ...editContact, job_title: e.target.value })}
                 className="h-11"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-stage" className="text-sm font-medium flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-blue-600" />
+                Etapa
+              </Label>
+              <Select
+                value={editContact.stage}
+                onValueChange={(value) => setEditContact({ ...editContact, stage: value })}
+              >
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Seleccionar etapa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {stageOptions.map((stage) => (
+                    <SelectItem key={stage.value} value={stage.value}>
+                      {stage.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
