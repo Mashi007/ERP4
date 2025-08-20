@@ -12,6 +12,7 @@ import { ArrowLeft } from "lucide-react"
 import { X, Check, Users, Building, Mail, Phone, Search } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function ProyectosPage() {
   const [projects, setProjects] = useState([
@@ -151,6 +152,54 @@ export default function ProyectosPage() {
     return (
       currentUserRole === "Administrador" || currentUserRole === "system_admin" || currentUserRole === "users_manage"
     )
+  }
+
+  const handleEditProject = (project: any) => {
+    console.log("[v0] Opening edit dialog for project:", project.id)
+    setEditingProject(project)
+    setShowEditProjectDialog(true)
+  }
+
+  const [showEditProjectDialog, setShowEditProjectDialog] = useState(false)
+  const [editProjectForm, setEditProjectForm] = useState({
+    title: "",
+    description: "",
+    priority: "",
+    status: "",
+    startDate: "",
+    endDate: "",
+    teamMembers: "",
+    progress: 0,
+  })
+
+  const { toast } = useToast()
+
+  const handleSaveProject = () => {
+    if (editingProject) {
+      const updatedProjects = projects.map((p) =>
+        p.id === editingProject.id
+          ? {
+              ...p,
+              title: editProjectForm.title,
+              description: editProjectForm.description,
+              priority: editProjectForm.priority,
+              status: editProjectForm.status,
+              startDate: editProjectForm.startDate,
+              endDate: editProjectForm.endDate,
+              teamMembers: editProjectForm.teamMembers,
+              progress: editProjectForm.progress,
+            }
+          : p,
+      )
+      setProjects(updatedProjects)
+      setShowEditProjectDialog(false)
+      setEditingProject(null)
+      toast({
+        title: "Proyecto actualizado",
+        description: "Los cambios se han guardado correctamente.",
+      })
+      console.log("[v0] Project updated successfully:", editingProject.id)
+    }
   }
 
   const handleShowDetails = (project: any) => {
@@ -1694,7 +1743,10 @@ export default function ProyectosPage() {
                 >
                   Detalles
                 </Button>
-                <Button size="sm" className="flex-1 bg-[#1A4F7A] hover:bg-[#1A4F7A]/90">
+                <Button
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => handleEditProject(project)}
+                >
                   Editar
                 </Button>
               </div>
@@ -1702,6 +1754,144 @@ export default function ProyectosPage() {
           </Card>
         ))}
       </div>
+
+      {showEditProjectDialog && editingProject && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold text-gray-900">Editar Proyecto</h2>
+              <button
+                onClick={() => {
+                  setShowEditProjectDialog(false)
+                  setEditingProject(null)
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Título del Proyecto</label>
+                <input
+                  type="text"
+                  value={editProjectForm.title}
+                  onChange={(e) => setEditProjectForm({ ...editProjectForm, title: e.target.value })}
+                  className="w-full border rounded-lg px-3 py-2"
+                  placeholder="Nombre del proyecto"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                <textarea
+                  value={editProjectForm.description}
+                  onChange={(e) => setEditProjectForm({ ...editProjectForm, description: e.target.value })}
+                  className="w-full border rounded-lg px-3 py-2 h-20 resize-none"
+                  placeholder="Descripción del proyecto"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Prioridad</label>
+                  <select
+                    value={editProjectForm.priority}
+                    onChange={(e) => setEditProjectForm({ ...editProjectForm, priority: e.target.value })}
+                    className="w-full border rounded-lg px-3 py-2"
+                  >
+                    <option value="">Seleccionar prioridad</option>
+                    <option value="Alta">Alta</option>
+                    <option value="Media">Media</option>
+                    <option value="Baja">Baja</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                  <select
+                    value={editProjectForm.status}
+                    onChange={(e) => setEditProjectForm({ ...editProjectForm, status: e.target.value })}
+                    className="w-full border rounded-lg px-3 py-2"
+                  >
+                    <option value="">Seleccionar estado</option>
+                    <option value="Planificado">Planificado</option>
+                    <option value="En Progreso">En Progreso</option>
+                    <option value="Completado">Completado</option>
+                    <option value="Pausado">Pausado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de Inicio</label>
+                  <input
+                    type="date"
+                    value={editProjectForm.startDate}
+                    onChange={(e) => setEditProjectForm({ ...editProjectForm, startDate: e.target.value })}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de Fin</label>
+                  <input
+                    type="date"
+                    value={editProjectForm.endDate}
+                    onChange={(e) => setEditProjectForm({ ...editProjectForm, endDate: e.target.value })}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Progreso (%)</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={editProjectForm.progress}
+                  onChange={(e) =>
+                    setEditProjectForm({ ...editProjectForm, progress: Number.parseInt(e.target.value) })
+                  }
+                  className="w-full"
+                />
+                <div className="text-center text-sm text-gray-600 mt-1">{editProjectForm.progress}%</div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Miembros del Equipo</label>
+                <input
+                  type="number"
+                  value={editProjectForm.teamMembers}
+                  onChange={(e) => setEditProjectForm({ ...editProjectForm, teamMembers: e.target.value })}
+                  className="w-full border rounded-lg px-3 py-2"
+                  placeholder="Número de miembros"
+                  min="1"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 p-6 border-t">
+              <Button
+                onClick={() => {
+                  setShowEditProjectDialog(false)
+                  setEditingProject(null)
+                }}
+                variant="outline"
+                className="px-6 py-2"
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleSaveProject} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white">
+                Guardar Cambios
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
