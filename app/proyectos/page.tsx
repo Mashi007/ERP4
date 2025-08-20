@@ -234,16 +234,35 @@ export default function ProyectosPage() {
                     </div>
                   </>
                 ) : editingField === "projectStatus" ? (
-                  <select
-                    value={editingValue}
-                    onChange={(e) => setEditingValue(e.target.value)}
-                    className="w-full border rounded-lg px-3 py-2"
-                  >
-                    <option value="Pend. Iniciar">Pend. Iniciar</option>
-                    <option value="En Progreso">En Progreso</option>
-                    <option value="Completado">Completado</option>
-                    <option value="Pausado">Pausado</option>
-                  </select>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Estado del Proyecto <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={editingValue}
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        className="w-full border rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+                      >
+                        <option value="" disabled className="text-gray-400">
+                          Escoja un Estado
+                        </option>
+                        <option value="Cancelado">Cancelado</option>
+                        <option value="Finalizado">Finalizado</option>
+                        <option value="Iniciado">Iniciado</option>
+                        <option value="Iniciado (Pendiente 1er 50%)">Iniciado (Pendiente 1er 50%)</option>
+                        <option value="Pend. Iniciar">Pend. Iniciar</option>
+                      </select>
+                    </div>
+                    <div className="mt-3">
+                      <textarea
+                        placeholder="Observaciones adicionales sobre el estado del proyecto..."
+                        className="w-full border rounded-lg px-3 py-2 h-20 resize-none text-sm"
+                        value={observations}
+                        onChange={(e) => setObservations(e.target.value)}
+                      />
+                    </div>
+                  </div>
                 ) : (
                   <textarea
                     value={editingValue}
@@ -373,8 +392,22 @@ export default function ProyectosPage() {
                       <div className="text-blue-600 text-xs mt-1">🔗 {selectedProject.details.associatedStandards}</div>
                     </td>
                     <td className="px-4 py-4 text-sm">
-                      <Badge className="bg-blue-100 text-blue-800 mb-1">{selectedProject.details.projectStatus}</Badge>
-                      <div className="text-red-600 text-xs font-medium">{selectedProject.details.documents}</div>
+                      <div className="space-y-1">
+                        <Badge
+                          className={`${
+                            selectedProject.details.projectStatus === "Pend. Iniciar"
+                              ? "bg-blue-100 text-blue-800"
+                              : selectedProject.details.projectStatus === "Finalizado"
+                                ? "bg-green-100 text-green-800"
+                                : selectedProject.details.projectStatus === "Cancelado"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {selectedProject.details.projectStatus}
+                        </Badge>
+                        <div className="text-red-600 text-xs font-medium">{selectedProject.details.documents}</div>
+                      </div>
                     </td>
                     <td className="px-4 py-4 text-sm">
                       <div className="text-gray-900 mb-1 font-medium">{selectedProject.details.billingCenter}</div>
