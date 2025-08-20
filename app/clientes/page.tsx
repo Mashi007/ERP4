@@ -28,6 +28,16 @@ interface Communication {
   status: "sent" | "received" | "scheduled" | "completed"
 }
 
+interface CommunicationForm {
+  type: "email" | "phone" | "meeting" | "note"
+  subject?: string
+  content: string
+  date?: string
+  duration?: string
+  participants?: string
+  priority?: "low" | "medium" | "high"
+}
+
 export default function ClientesPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
@@ -38,6 +48,13 @@ export default function ClientesPage() {
   const [isCommPageOpen, setIsCommPageOpen] = useState(false)
   const [selectedCommClient, setSelectedCommClient] = useState<Client | null>(null)
   const [communications, setCommunications] = useState<Communication[]>([])
+  const [isCommFormOpen, setIsCommFormOpen] = useState(false)
+  const [commFormType, setCommFormType] = useState<"email" | "phone" | "meeting" | "note">("email")
+  const [commForm, setCommForm] = useState<CommunicationForm>({
+    type: "email",
+    content: "",
+    priority: "medium",
+  })
   const { toast } = useToast()
 
   useEffect(() => {
@@ -284,12 +301,73 @@ export default function ClientesPage() {
     setCommunications(mockComms)
   }
 
-  const handleNewCommunication = (type: string) => {
-    console.log("[v0] Creating new communication of type:", type)
-    toast({
-      title: "Nueva comunicación",
-      description: `Iniciando ${type} con ${selectedCommClient?.name}`,
-    })
+  const handleNewCommunication = (type: "email" | "phone" | "meeting" | "note") => {
+    console.log("[v0] Creating new communication of type:", type, "for client:", selectedCommClient?.name)
+
+    const initialForm: CommunicationForm = {
+      type,
+      content: "",
+      priority: "medium",
+      date: new Date().toISOString().split("T")[0],
+      ...(type === "email" && {
+        subject: `Comunicación con ${selectedCommClient?.name}`,
+      }),
+      ...(type === "meeting" && {
+        duration: "60",
+        participants: selectedCommClient?.name || "",
+      }),
+    }
+
+    setCommForm(initialForm)
+    setCommFormType(type)
+    setIsCommFormOpen(true)
+  }
+
+  const handleSaveCommunication = async () => {
+    try {
+      console.log("[v0] Saving communication:", commForm)
+
+      const newComm: Communication = {
+        id: Date.now().toString(),
+        type: commForm.type,
+        subject: commForm.subject,
+        content: commForm.content,
+        date: new Date().toISOString(),
+        status:
+          commForm.type === "email"
+            ? "sent"
+            : commForm.type === "phone"
+              ? "completed"
+              : commForm.type === "meeting"
+                ? "scheduled"
+                : "completed",
+      }
+
+      setCommunications((prev) => [newComm, ...prev])
+
+      toast({
+        title: "Comunicación registrada",
+        description: `${
+          commForm.type === "email"
+            ? "Email enviado"
+            : commForm.type === "phone"
+              ? "Llamada registrada"
+              : commForm.type === "meeting"
+                ? "Reunión programada"
+                : "Nota agregada"
+        } para ${selectedCommClient?.name}`,
+      })
+
+      setIsCommFormOpen(false)
+      setCommForm({ type: "email", content: "", priority: "medium" })
+    } catch (error) {
+      console.error("[v0] Error saving communication:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo guardar la comunicación",
+        variant: "destructive",
+      })
+    }
   }
 
   if (loading) {
@@ -333,21 +411,21 @@ export default function ClientesPage() {
               </Button>
               <Button
                 className="bg-green-600 hover:bg-green-700 text-white h-20 flex-col gap-2"
-                onClick={() => handleNewCommunication("llamada")}
+                onClick={() => handleNewCommunication("phone")}
               >
                 <Phone className="h-6 w-6" />
                 Realizar Llamada
               </Button>
               <Button
                 className="bg-purple-600 hover:bg-purple-700 text-white h-20 flex-col gap-2"
-                onClick={() => handleNewCommunication("reunión")}
+                onClick={() => handleNewCommunication("meeting")}
               >
                 <Calendar className="h-6 w-6" />
                 Programar Reunión
               </Button>
               <Button
                 className="bg-orange-600 hover:bg-orange-700 text-white h-20 flex-col gap-2"
-                onClick={() => handleNewCommunication("nota")}
+                onClick={() => handleNewCommunication("note")}
               >
                 <User className="h-6 w-6" />
                 Agregar Nota
@@ -355,6 +433,136 @@ export default function ClientesPage() {
             </div>
           </div>
         </div>
+
+        <Dialog open={isCommFormOpen} onOpenChange={setIsCommFormOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              {commFormType === "email" && <Mail className="h-6 w-6 text-blue-600" />}
+              {commFormType === "phone" && <Phone className="h-6 w-6 text-green-600" />}
+              {commFormType === "meeting" && <Calendar className="h-6 w-6 text-purple-600" />}
+              {commFormType === "note" && <User className="h-6 w-6 text-orange-600" />}
+              {commFormType === "email"
+                ? "Enviar Email"
+                : commFormType === "phone"
+                  ? "Registrar Llamada"
+                  : commFormType === "meeting"
+                    ? "Programar Reunión"
+                    : "Agregar Nota"}
+            </DialogTitle>
+
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-medium text-gray-900 mb-2">Cliente: {selectedCommClient.name}</h3>
+                <div className="text-sm text-gray-600 space-y-1">
+                  {selectedCommClient.email && <p>Email: {selectedCommClient.email}</p>}
+                  {selectedCommClient.phone && <p>Teléfono: {selectedCommClient.phone}</p>}
+                  {selectedCommClient.address && <p>Dirección: {selectedCommClient.address}</p>}
+                </div>
+              </div>
+
+              {commFormType === "email" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Asunto</label>
+                  <Input
+                    value={commForm.subject || ""}
+                    onChange={(e) => setCommForm((prev) => ({ ...prev, subject: e.target.value }))}
+                    placeholder="Asunto del email"
+                  />
+                </div>
+              )}
+
+              {commFormType === "meeting" && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                    <Input
+                      type="date"
+                      value={commForm.date || ""}
+                      onChange={(e) => setCommForm((prev) => ({ ...prev, date: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Duración (minutos)</label>
+                    <Input
+                      value={commForm.duration || ""}
+                      onChange={(e) => setCommForm((prev) => ({ ...prev, duration: e.target.value }))}
+                      placeholder="60"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {commFormType === "email"
+                    ? "Mensaje"
+                    : commFormType === "phone"
+                      ? "Resumen de la llamada"
+                      : commFormType === "meeting"
+                        ? "Agenda de la reunión"
+                        : "Contenido de la nota"}
+                </label>
+                <textarea
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  rows={6}
+                  value={commForm.content}
+                  onChange={(e) => setCommForm((prev) => ({ ...prev, content: e.target.value }))}
+                  placeholder={
+                    commFormType === "email"
+                      ? "Escribe tu mensaje aquí..."
+                      : commFormType === "phone"
+                        ? "Describe el contenido de la llamada..."
+                        : commFormType === "meeting"
+                          ? "Agenda y objetivos de la reunión..."
+                          : "Escribe tu nota aquí..."
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Prioridad</label>
+                <select
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  value={commForm.priority}
+                  onChange={(e) =>
+                    setCommForm((prev) => ({ ...prev, priority: e.target.value as "low" | "medium" | "high" }))
+                  }
+                >
+                  <option value="low">Baja</option>
+                  <option value="medium">Media</option>
+                  <option value="high">Alta</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button variant="outline" onClick={() => setIsCommFormOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                className={
+                  commFormType === "email"
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : commFormType === "phone"
+                      ? "bg-green-600 hover:bg-green-700"
+                      : commFormType === "meeting"
+                        ? "bg-purple-600 hover:bg-purple-700"
+                        : "bg-orange-600 hover:bg-orange-700"
+                }
+                onClick={handleSaveCommunication}
+                disabled={!commForm.content.trim()}
+              >
+                {commFormType === "email"
+                  ? "Enviar Email"
+                  : commFormType === "phone"
+                    ? "Registrar Llamada"
+                    : commFormType === "meeting"
+                      ? "Programar Reunión"
+                      : "Guardar Nota"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="p-6 border-b border-gray-200">
