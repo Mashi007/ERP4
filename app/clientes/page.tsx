@@ -117,6 +117,21 @@ export default function ClientesPage() {
 
   const handleEditClient = (client: Client) => {
     console.log("[v0] Opening edit dialog for client:", client.name)
+
+    const mappedClientData = {
+      nombre: client.name,
+      email: client.email,
+      telefono: client.phone,
+      direccion: client.address,
+      empresa: client.name, // Use name as company name fallback
+      tipo: client.type,
+      // Add any other fields that might be needed
+      cargo: "", // Default empty values for fields not in client object
+      ciudad: "",
+      pais: "",
+      notas: "",
+    }
+
     setSelectedClient(client)
     setIsClientDetailsOpen(false) // Close details dialog
     setIsEditClientDialogOpen(true) // Open edit dialog
@@ -446,7 +461,22 @@ export default function ClientesPage() {
           setSelectedClient(null)
         }}
         onSave={handleSaveEditedClient}
-        editingContact={selectedClient}
+        editingContact={
+          selectedClient
+            ? {
+                nombre: selectedClient.name,
+                email: selectedClient.email,
+                telefono: selectedClient.phone,
+                direccion: selectedClient.address,
+                empresa: selectedClient.name,
+                tipo: selectedClient.type,
+                cargo: "",
+                ciudad: "",
+                pais: "",
+                notas: "",
+              }
+            : null
+        }
       />
     </div>
   )
