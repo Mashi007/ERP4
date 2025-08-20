@@ -863,7 +863,7 @@ export default function ProyectosPage() {
                             className="flex items-center gap-3 py-3"
                           >
                             <span className="text-lg">🔗</span>
-                            <span className="text-sm text-gray-700">Estado Proyecto Documentos</span>
+                            <span className="text-sm text-gray-700">Compartir Documentos</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleUpdateStatus(selectedProject)}
