@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
@@ -14,8 +13,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Label } from "@/components/ui/label"
-import { Plus, Search, Mail, Phone, Building, User, ArrowRight } from "lucide-react"
+import { Plus, Search, ArrowRight, Edit } from "lucide-react"
 import { toast } from "sonner"
 
 interface Contact {
@@ -37,6 +37,7 @@ export default function ContactosPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isNewContactOpen, setIsNewContactOpen] = useState(false)
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
 
   // Form states
@@ -47,6 +48,15 @@ export default function ContactosPage() {
     company: "",
     job_title: "",
     sales_owner: "María García",
+  })
+
+  const [editContact, setEditContact] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+    job_title: "",
+    sales_owner: "",
   })
 
   useEffect(() => {
@@ -100,6 +110,30 @@ export default function ContactosPage() {
     }
   }
 
+  const handleEditContact = async () => {
+    if (!selectedContact) return
+
+    try {
+      const response = await fetch(`/api/contacts/${selectedContact.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editContact),
+      })
+
+      if (response.ok) {
+        toast.success("Contacto actualizado exitosamente")
+        setIsEditDialogOpen(false)
+        setSelectedContact(null)
+        fetchContacts()
+      } else {
+        toast.error("Error al actualizar contacto")
+      }
+    } catch (error) {
+      console.error("Error updating contact:", error)
+      toast.error("Error al actualizar contacto")
+    }
+  }
+
   const handleConvertToClient = async () => {
     if (!selectedContact) return
 
@@ -121,6 +155,19 @@ export default function ContactosPage() {
       console.error("Error converting contact:", error)
       toast.error("Error al convertir contacto")
     }
+  }
+
+  const handleRowDoubleClick = (contact: Contact) => {
+    setSelectedContact(contact)
+    setEditContact({
+      name: contact.name,
+      email: contact.email,
+      phone: contact.phone,
+      company: contact.company,
+      job_title: contact.job_title,
+      sales_owner: contact.sales_owner,
+    })
+    setIsEditDialogOpen(true)
   }
 
   const filteredContacts = contacts.filter(
@@ -245,59 +292,67 @@ export default function ContactosPage() {
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredContacts.map((contact) => (
-          <Card key={contact.id} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{contact.name}</CardTitle>
-                <Badge className={getStatusColor(contact.status)}>
-                  {contact.status === "lead"
-                    ? "Lead"
-                    : contact.status === "qualified"
-                      ? "Calificado"
-                      : contact.status === "client"
-                        ? "Cliente"
-                        : contact.status}
-                </Badge>
-              </div>
-              <CardDescription>{contact.job_title}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center space-x-2 text-sm">
-                <Building className="h-4 w-4 text-muted-foreground" />
-                <span>{contact.company}</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="truncate">{contact.email}</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <span>{contact.phone}</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span>{contact.sales_owner}</span>
-              </div>
-
-              {contact.status === "lead" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-3 bg-transparent"
-                  onClick={() => {
-                    setSelectedContact(contact)
-                    setIsConvertDialogOpen(true)
-                  }}
-                >
-                  <ArrowRight className="mr-2 h-4 w-4" />
-                  Convertir a Cliente
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Empresa</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Teléfono</TableHead>
+              <TableHead>Cargo</TableHead>
+              <TableHead>Responsable</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredContacts.map((contact) => (
+              <TableRow
+                key={contact.id}
+                className="cursor-pointer hover:bg-muted/50"
+                onDoubleClick={() => handleRowDoubleClick(contact)}
+              >
+                <TableCell className="font-medium">{contact.name}</TableCell>
+                <TableCell>{contact.company}</TableCell>
+                <TableCell>{contact.email}</TableCell>
+                <TableCell>{contact.phone}</TableCell>
+                <TableCell>{contact.job_title}</TableCell>
+                <TableCell>{contact.sales_owner}</TableCell>
+                <TableCell>
+                  <Badge className={getStatusColor(contact.status)}>
+                    {contact.status === "lead"
+                      ? "Lead"
+                      : contact.status === "qualified"
+                        ? "Calificado"
+                        : contact.status === "client"
+                          ? "Cliente"
+                          : contact.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    <Button variant="ghost" size="sm" onClick={() => handleRowDoubleClick(contact)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    {contact.status === "lead" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedContact(contact)
+                          setIsConvertDialogOpen(true)
+                        }}
+                      >
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
       {filteredContacts.length === 0 && (
@@ -305,6 +360,79 @@ export default function ContactosPage() {
           <p className="text-muted-foreground">No se encontraron contactos</p>
         </div>
       )}
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Contacto</DialogTitle>
+            <DialogDescription>Modifica la información del contacto.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-name" className="text-right">
+                Nombre
+              </Label>
+              <Input
+                id="edit-name"
+                value={editContact.name}
+                onChange={(e) => setEditContact({ ...editContact, name: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-email" className="text-right">
+                Email
+              </Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editContact.email}
+                onChange={(e) => setEditContact({ ...editContact, email: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-phone" className="text-right">
+                Teléfono
+              </Label>
+              <Input
+                id="edit-phone"
+                value={editContact.phone}
+                onChange={(e) => setEditContact({ ...editContact, phone: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-company" className="text-right">
+                Empresa
+              </Label>
+              <Input
+                id="edit-company"
+                value={editContact.company}
+                onChange={(e) => setEditContact({ ...editContact, company: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-job-title" className="text-right">
+                Cargo
+              </Label>
+              <Input
+                id="edit-job-title"
+                value={editContact.job_title}
+                onChange={(e) => setEditContact({ ...editContact, job_title: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEditContact}>Guardar Cambios</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Convert to Client Dialog */}
       <Dialog open={isConvertDialogOpen} onOpenChange={setIsConvertDialogOpen}>
