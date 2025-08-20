@@ -125,6 +125,7 @@ export default function ClientesPage() {
   const handleSaveEditedClient = async (clientData: any) => {
     try {
       console.log("[v0] Saving edited client:", clientData)
+      console.log("[v0] Selected client before update:", selectedClient)
 
       if (!selectedClient) return
 
@@ -137,6 +138,8 @@ export default function ClientesPage() {
         type: clientData.type || selectedClient.type,
       }
 
+      console.log("[v0] Updated client data:", updatedClient)
+
       setClients((prev) => prev.map((client) => (client.id === selectedClient.id ? updatedClient : client)))
 
       toast({
@@ -145,6 +148,9 @@ export default function ClientesPage() {
       })
 
       console.log("[v0] Client updated successfully:", updatedClient)
+
+      setIsEditClientDialogOpen(false)
+      setSelectedClient(null)
     } catch (error) {
       console.error("Error updating client:", error)
       throw error
