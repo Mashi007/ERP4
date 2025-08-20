@@ -124,8 +124,9 @@ export default function ProyectosPage() {
   const handleUpdateTraining = (project: any) => {
     setEditingProject(project)
     setEditingField("hasTraining")
-    setEditingValue(project.details.hasTraining)
-    setObservations("")
+    setEditingValue(project.details.hasTraining || "NO") // Default to NO if undefined
+    setObservations("") // Clear previous observations
+    console.log("[v0] Training form activated for project:", project.id)
   }
 
   const handleShareDocuments = (project: any) => {
@@ -399,8 +400,12 @@ export default function ProyectosPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">Tiene Formación</label>
                       <select
                         value={editingValue}
-                        onChange={(e) => setEditingValue(e.target.value)}
-                        className="w-full border rounded-lg px-3 py-2"
+                        onChange={(e) => {
+                          setEditingValue(e.target.value)
+                          console.log("[v0] Training status changed to:", e.target.value)
+                        }}
+                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+                        required
                       >
                         <option value="SI">SI</option>
                         <option value="NO">NO</option>
@@ -410,8 +415,11 @@ export default function ProyectosPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">Observaciones</label>
                       <textarea
                         value={observations}
-                        onChange={(e) => setObservations(e.target.value)}
-                        className="w-full border rounded-lg px-3 py-2 h-24 resize-none"
+                        onChange={(e) => {
+                          setObservations(e.target.value)
+                          console.log("[v0] Observations updated:", e.target.value)
+                        }}
+                        className="w-full border rounded-lg px-3 py-2 h-24 resize-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
                         placeholder="Ingrese observaciones sobre la formación..."
                       />
                     </div>
@@ -456,7 +464,11 @@ export default function ProyectosPage() {
                 )}
               </div>
               <div className="flex gap-3 mt-6">
-                <Button onClick={handleSaveField} className="flex-1 bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white">
+                <Button
+                  onClick={handleSaveField}
+                  className="flex-1 bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white"
+                  disabled={editingField === "hasTraining" && !editingValue}
+                >
                   Guardar
                 </Button>
                 <Button onClick={handleCancelEdit} variant="outline" className="flex-1 bg-transparent">
@@ -641,57 +653,60 @@ export default function ProyectosPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-64">
                           <DropdownMenuItem
-                            onClick={() => handleUpdateTraining(selectedProject)}
-                            className="flex items-center gap-3 py-3"
+                            onClick={() => {
+                              console.log("[v0] Training menu item clicked")
+                              handleUpdateTraining(selectedProject)
+                            }}
+                            className="flex items-center gap-3 py-3 hover:bg-gray-50 cursor-pointer"
                           >
                             <span className="text-lg">📚</span>
                             <span className="text-sm text-gray-700">Centro de Facturación Tiene Formación</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleShareDocuments(selectedProject)}
-                            className="flex items-center gap-3 py-3"
+                            className="flex items-center gap-3 py-3 hover:bg-gray-50 cursor-pointer"
                           >
                             <span className="text-lg">🔗</span>
                             <span className="text-sm text-gray-700">Compartir Documentos</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleUpdateStatus(selectedProject)}
-                            className="flex items-center gap-3 py-3"
+                            className="flex items-center gap-3 py-3 hover:bg-gray-50 cursor-pointer"
                           >
                             <span className="text-lg">📊</span>
                             <span className="text-sm text-gray-700">Estado Proyecto Documentos</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleEditStandards(selectedProject)}
-                            className="flex items-center gap-3 py-3"
+                            className="flex items-center gap-3 py-3 hover:bg-gray-50 cursor-pointer"
                           >
                             <span className="text-lg">🔄</span>
                             <span className="text-sm text-gray-700">Norma(s) Servicios Vinculados del Contrato</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleValidateProject(selectedProject)}
-                            className="flex items-center gap-3 py-3"
+                            className="flex items-center gap-3 py-3 hover:bg-gray-50 cursor-pointer"
                           >
                             <span className="text-lg">✓</span>
                             <span className="text-sm text-gray-700">Fecha Compartido Fecha Validación</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleAddCertifyingCompany(selectedProject)}
-                            className="flex items-center gap-3 py-3"
+                            className="flex items-center gap-3 py-3 hover:bg-gray-50 cursor-pointer"
                           >
                             <span className="text-lg">🏢</span>
                             <span className="text-sm text-gray-700">Empresa Certificadora Auditores</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleAddAuditingCompany(selectedProject)}
-                            className="flex items-center gap-3 py-3"
+                            className="flex items-center gap-3 py-3 hover:bg-gray-50 cursor-pointer"
                           >
                             <span className="text-lg">🏛️</span>
                             <span className="text-sm text-gray-700">Empresa Certificadora Auditores</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleAddProjectManager(selectedProject)}
-                            className="flex items-center gap-3 py-3"
+                            className="flex items-center gap-3 py-3 hover:bg-gray-50 cursor-pointer"
                           >
                             <span className="text-lg">👤</span>
                             <span className="text-sm text-gray-700">Jefe de Proyecto</span>
