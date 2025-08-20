@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
+import { useSearchParams } from "next/navigation"
 import {
   Megaphone,
   Bot,
@@ -48,17 +49,20 @@ export default function MarketingPage() {
   const [editListName, setEditListName] = useState("")
   const [editListDescription, setEditListDescription] = useState("")
   const [editListTags, setEditListTags] = useState("")
+  const [filteredContacts, setFilteredContacts] = useState<any[]>([])
 
   const [industries, setIndustries] = useState<string[]>([])
   const [sources, setSources] = useState<string[]>([])
   const [responsibleUsers, setResponsibleUsers] = useState<Array<{ id: string; name: string }>>([])
-  const [filteredContacts, setFilteredContacts] = useState<any[]>([])
+
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     fetchCampaigns()
     fetchMarketingLists()
     fetchFilterData()
-  }, [])
+    fetchContacts()
+  }, [searchParams])
 
   const fetchFilterData = async () => {
     try {
@@ -103,6 +107,61 @@ export default function MarketingPage() {
       console.error("Error fetching lists:", error)
       toast.error("Error al cargar listas")
     }
+  }
+
+  const fetchContacts = async () => {
+    try {
+      const response = await fetch("/api/contacts")
+      const data = await response.json()
+      const contacts = Array.isArray(data) ? data : data.contacts || []
+
+      // Apply filters to the fetched contacts
+      const filtered = applyFilters(contacts)
+      setFilteredContacts(filtered)
+    } catch (error) {
+      console.error("Error fetching contacts:", error)
+      setFilteredContacts([])
+    }
+  }
+
+  const applyFilters = (contacts: any[]) => {
+    const from = searchParams.get("from")
+    const to = searchParams.get("to")
+    const industry = searchParams.get("industry")
+    const source = searchParams.get("source")
+    const responsibleUser = searchParams.get("responsibleUser")
+
+    return contacts.filter((contact) => {
+      // Date range filter
+      if (from && contact.created_at) {
+        const contactDate = new Date(contact.created_at)
+        const fromDate = new Date(from)
+        if (contactDate < fromDate) return false
+      }
+
+      if (to && contact.created_at) {
+        const contactDate = new Date(contact.created_at)
+        const toDate = new Date(to)
+        if (contactDate > toDate) return false
+      }
+
+      // Industry filter
+      if (industry && industry !== "all" && contact.industry !== industry) {
+        return false
+      }
+
+      // Source filter
+      if (source && source !== "all" && contact.source !== source) {
+        return false
+      }
+
+      // Responsible user filter
+      if (responsibleUser && responsibleUser !== "all" && contact.sales_owner !== responsibleUser) {
+        return false
+      }
+
+      return true
+    })
   }
 
   const generateCampaignWithAI = async (prompt: string) => {
@@ -800,9 +859,9 @@ export default function MarketingPage() {
 
               <CardContent>
                 <div className="space-y-4">
-                  {marketingLists.map((list) => (
+                  {filteredContacts.map((contact) => (
                     <div
-                      key={list.id}
+                      key={contact.id}
                       className="flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-shadow"
                     >
                       <div className="flex items-center space-x-4">
@@ -810,26 +869,24 @@ export default function MarketingPage() {
                           <Users className="h-6 w-6 text-blue-600" />
                         </div>
                         <div>
-                          <h3 className="font-medium text-gray-900">{list.name}</h3>
-                          <p className="text-sm text-gray-600">
-                            {(list.contact_count || 0).toLocaleString()} contactos
-                          </p>
-                          <p className="text-xs text-gray-500">Actualizado {list.updated_at || "recientemente"}</p>
+                          <h3 className="font-medium text-gray-900">{contact.name}</h3>
+                          <p className="text-sm text-gray-600">{contact.email}</p>
+                          <p className="text-xs text-gray-500">Actualizado {contact.updated_at || "recientemente"}</p>
                         </div>
                       </div>
 
                       <div className="flex items-center space-x-3">
                         <div className="flex flex-wrap gap-1">
-                          {(list.tags || []).map((tag: string, index: number) => (
+                          {(contact.tags || []).map((tag: string, index: number) => (
                             <Badge key={index} variant="secondary" className="text-xs">
                               {tag}
                             </Badge>
                           ))}
                         </div>
-                        <Badge className={`${getStatusColor(list.status)} border text-xs`}>
-                          {getStatusLabel(list.status)}
+                        <Badge className={`${getStatusColor(contact.status)} border text-xs`}>
+                          {getStatusLabel(contact.status)}
                         </Badge>
-                        <Button variant="ghost" size="sm" onClick={() => handleEditList(list)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleEditList(contact)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                       </div>
