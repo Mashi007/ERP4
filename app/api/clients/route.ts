@@ -12,7 +12,7 @@ export async function GET() {
         email,
         phone,
         company as address,
-        stage,
+        COALESCE(stage, 'Nuevo') as stage,
         'Cliente' as type,
         created_at::text
       FROM contacts 
