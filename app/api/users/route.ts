@@ -29,7 +29,7 @@ export async function GET() {
       const defaultUsers = [
         {
           id: "admin-1",
-          name: "Administrador",
+          name: "María García",
           email: "admin@empresa.com",
           role: "Administrador",
           status: "active",
@@ -39,7 +39,7 @@ export async function GET() {
         },
         {
           id: "comercial-1",
-          name: "Comercial Principal",
+          name: "Carlos Rodríguez",
           email: "comercial@empresa.com",
           role: "Comercial",
           status: "active",
@@ -57,7 +57,7 @@ export async function GET() {
     const defaultUsers = [
       {
         id: "admin-1",
-        name: "Administrador",
+        name: "María García",
         email: "admin@empresa.com",
         role: "Administrador",
         status: "active",

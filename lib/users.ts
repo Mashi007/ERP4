@@ -3,8 +3,8 @@ import { neon } from "@neondatabase/serverless"
 export async function getUsers() {
   // Default users to return if anything fails
   const defaultUsers = [
-    { id: "admin-1", name: "Administrador", email: "admin@empresa.com", role: "Administrador" },
-    { id: "comercial-1", name: "Comercial Principal", email: "comercial@empresa.com", role: "Comercial" },
+    { id: "admin-1", name: "María García", email: "admin@empresa.com", role: "Administrador" },
+    { id: "comercial-1", name: "Carlos Rodríguez", email: "comercial@empresa.com", role: "Comercial" },
   ]
 
   try {
