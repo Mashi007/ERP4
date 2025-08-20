@@ -23,6 +23,7 @@ export default function ClientesPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [isNewClientDialogOpen, setIsNewClientDialogOpen] = useState(false)
+  const [isEditClientDialogOpen, setIsEditClientDialogOpen] = useState(false)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [isClientDetailsOpen, setIsClientDetailsOpen] = useState(false)
   const { toast } = useToast()
@@ -112,6 +113,42 @@ export default function ClientesPage() {
   const handleCloseDetails = () => {
     setIsClientDetailsOpen(false)
     setSelectedClient(null)
+  }
+
+  const handleEditClient = (client: Client) => {
+    console.log("[v0] Opening edit dialog for client:", client.name)
+    setSelectedClient(client)
+    setIsClientDetailsOpen(false) // Close details dialog
+    setIsEditClientDialogOpen(true) // Open edit dialog
+  }
+
+  const handleSaveEditedClient = async (clientData: any) => {
+    try {
+      console.log("[v0] Saving edited client:", clientData)
+
+      if (!selectedClient) return
+
+      const updatedClient: Client = {
+        ...selectedClient,
+        name: clientData.name || clientData.company || selectedClient.name,
+        email: clientData.email || selectedClient.email,
+        phone: clientData.phone || selectedClient.phone,
+        address: clientData.address || selectedClient.address,
+        type: clientData.type || selectedClient.type,
+      }
+
+      setClients((prev) => prev.map((client) => (client.id === selectedClient.id ? updatedClient : client)))
+
+      toast({
+        title: "Cliente actualizado",
+        description: `El cliente "${updatedClient.name}" se actualizó correctamente`,
+      })
+
+      console.log("[v0] Client updated successfully:", updatedClient)
+    } catch (error) {
+      console.error("Error updating client:", error)
+      throw error
+    }
   }
 
   if (loading) {
@@ -270,11 +307,20 @@ export default function ClientesPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="text-purple-600 border-purple-200 bg-transparent">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-purple-600 border-purple-200 bg-transparent hover:bg-purple-50"
+                    onClick={() => handleEditClient(selectedClient)}
+                  >
                     <Edit className="h-4 w-4 mr-1" />
                     Editar
                   </Button>
-                  <Button variant="outline" size="sm" className="text-red-600 border-red-200 bg-transparent">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 border-red-200 bg-transparent hover:bg-red-50"
+                  >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Eliminar
                   </Button>
@@ -359,7 +405,10 @@ export default function ClientesPage() {
                 <Button variant="outline" onClick={handleCloseDetails}>
                   Cerrar
                 </Button>
-                <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+                <Button
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                  onClick={() => handleEditClient(selectedClient)}
+                >
                   <Edit className="h-4 w-4 mr-2" />
                   Editar Cliente
                 </Button>
@@ -368,6 +417,28 @@ export default function ClientesPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <DynamicContactForm
+        isOpen={isEditClientDialogOpen}
+        onClose={() => {
+          setIsEditClientDialogOpen(false)
+          setSelectedClient(null)
+        }}
+        onSave={handleSaveEditedClient}
+        initialData={
+          selectedClient
+            ? {
+                name: selectedClient.name,
+                company: selectedClient.name,
+                email: selectedClient.email,
+                phone: selectedClient.phone,
+                address: selectedClient.address,
+                type: selectedClient.type,
+              }
+            : undefined
+        }
+        title="Editar Cliente"
+      />
     </div>
   )
 }
