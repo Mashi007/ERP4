@@ -88,10 +88,32 @@ export default function MarketingPage() {
   const fetchCampaigns = async () => {
     try {
       const response = await fetch("/api/marketing/campaigns")
-      const data = await response.json()
-      setCampaigns(data)
+
+      if (!response.ok) {
+        console.error("API response not ok:", response.status)
+        setCampaigns([])
+        return
+      }
+
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("Response is not JSON:", contentType)
+        setCampaigns([])
+        return
+      }
+
+      try {
+        const data = await response.json()
+        // Ensure data is an array
+        setCampaigns(Array.isArray(data) ? data : [])
+      } catch (jsonError) {
+        console.error("Error parsing JSON:", jsonError)
+        setCampaigns([])
+      }
     } catch (error) {
       console.error("Error fetching campaigns:", error)
+      setCampaigns([])
       toast.error("Error al cargar campañas")
     } finally {
       setIsLoading(false)
