@@ -755,15 +755,7 @@ export default function ProyectosPage() {
                           {selectedProject.details.projectStatus}
                         </Badge>
                         {selectedProject.details.documents === "Ver Detalle Documentos Compartidos" ? (
-                          <div
-                            className="text-xs font-medium text-blue-600 cursor-pointer hover:text-blue-800 hover:underline flex items-center gap-1"
-                            onClick={() => {
-                              const documentsSection = document.getElementById("documentos-compartidos-section")
-                              if (documentsSection) {
-                                documentsSection.scrollIntoView({ behavior: "smooth" })
-                              }
-                            }}
-                          >
+                          <div className="text-xs font-medium text-blue-600 flex items-center gap-1">
                             <span className="text-blue-500">📎</span>
                             {selectedProject.details.documents}
                           </div>
@@ -870,93 +862,6 @@ export default function ProyectosPage() {
                   </tr>
                 </tbody>
               </table>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border shadow-sm" id="documentos-compartidos-section">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`text-xl ${selectedProject.details.documents === "Ver Detalle Documentos Compartidos" ? "text-blue-500" : "text-red-500"}`}
-                  >
-                    {selectedProject.details.documents === "Ver Detalle Documentos Compartidos" ? "📎" : "❌"}
-                  </span>
-                  <h2
-                    className={`text-xl font-bold ${selectedProject.details.documents === "Ver Detalle Documentos Compartidos" ? "text-blue-600" : "text-red-600"}`}
-                  >
-                    {selectedProject.details.documents === "Ver Detalle Documentos Compartidos"
-                      ? "Documentos Compartidos"
-                      : "Documentos Sin Compartir"}
-                  </h2>
-                </div>
-                {selectedProject.details.documents === "Ver Detalle Documentos Compartidos" && (
-                  <Badge className="bg-green-100 text-green-800 px-3 py-1">✓ Activo</Badge>
-                )}
-              </div>
-
-              {selectedProject.details.documents === "Ver Detalle Documentos Compartidos" ? (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-700 flex items-center gap-2">
-                    <span className="text-blue-500">ℹ️</span>
-                    Los documentos han sido compartidos y están disponibles para visualización.
-                  </p>
-                </div>
-              ) : (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-700 flex items-center gap-2">
-                    <span className="text-red-500">⚠️</span>
-                    Los documentos aún no han sido compartidos. Actualice el estado del proyecto para habilitar el
-                    compartir documentos.
-                  </p>
-                </div>
-              )}
-
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        URL Documento
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        URL Ayuda
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Permiso
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Fecha Enviado
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Estado
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Acciones
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white">
-                    <tr>
-                      <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
-                        No se ha encontrado ningún registro
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex items-center justify-between mt-6 text-sm text-gray-600">
-                <span>No hay registros disponibles</span>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" disabled>
-                    ← Anterior
-                  </Button>
-                  <Button variant="outline" size="sm" disabled>
-                    Siguiente →
-                  </Button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
