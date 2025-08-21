@@ -149,10 +149,10 @@ La propuesta debe ser completa, profesional y lista para enviar al cliente.
     await sql`
       INSERT INTO activities (
         contact_id, type, title, notes, status, 
-        sales_owner, created_at, updated_at
+        sales_owner, activity_date, created_at, updated_at
       ) VALUES (
         ${proposalResult[0].id}, 'proposal', ${proposalTitle}, 
-        ${noteContent}, 'completed', 'Sistema IA', NOW(), NOW()
+        ${noteContent}, 'completed', 'Sistema IA', NOW(), NOW(), NOW()
       )
     `
 
