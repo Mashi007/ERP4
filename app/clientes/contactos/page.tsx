@@ -279,9 +279,9 @@ export default function ContactosPage() {
   const selectExistingContact = (contact: Contact) => {
     setFormData({
       id: contact.id.toString(),
-      name: contact.name,
-      email: contact.email,
-      phone: contact.phone,
+      name: contact.name || "",
+      email: contact.email || "",
+      phone: contact.phone || "",
       company: contact.company || "",
       position: contact.position || "",
     })
@@ -292,9 +292,9 @@ export default function ContactosPage() {
   const handleEditContact = (contact: Contact) => {
     setFormData({
       id: contact.id.toString(),
-      name: contact.name,
-      email: contact.email,
-      phone: contact.phone,
+      name: contact.name || "",
+      email: contact.email || "",
+      phone: contact.phone || "",
       company: contact.company || "",
       position: contact.position || "",
     })
