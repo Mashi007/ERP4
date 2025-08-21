@@ -87,7 +87,7 @@ export default function ContactosPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [isEditMode, setIsEditMode] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(isEditMode)
   const [editingContactId, setEditingContactId] = useState<string | null>(null)
 
   const [searchSuggestions, setSearchSuggestions] = useState<Contact[]>([])
@@ -775,6 +775,15 @@ export default function ContactosPage() {
     return categories
   }, [templates])
 
+  const getCurrentStep = () => {
+    if (flowProgress.send) return 5
+    if (flowProgress.sign) return 4
+    if (flowProgress.generate) return 3
+    if (flowProgress.template) return 2
+    if (flowProgress.service) return 1
+    return 1
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -928,7 +937,7 @@ export default function ContactosPage() {
               <div className="border-t pt-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-medium">Progreso del Flujo</h3>
-                  <span className="text-sm text-muted-foreground">Paso 1 de 5</span>
+                  <span className="text-sm text-muted-foreground">Paso {getCurrentStep()} de 5</span>
                 </div>
 
                 {/* Flow progress indicators */}
@@ -939,21 +948,26 @@ export default function ContactosPage() {
                     { key: "generate", label: "Generar" },
                     { key: "sign", label: "Firmar" },
                     { key: "send", label: "Enviar" },
-                  ].map((step, index) => (
-                    <div
-                      key={step.key}
-                      className={cn(
-                        "px-3 py-1 rounded-full text-xs font-medium",
-                        flowProgress[step.key as keyof typeof flowProgress]
-                          ? "bg-green-100 text-green-800"
-                          : index === 0
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-gray-100 text-gray-600",
-                      )}
-                    >
-                      {step.label}
-                    </div>
-                  ))}
+                  ].map((step, index) => {
+                    const isCompleted = flowProgress[step.key as keyof typeof flowProgress]
+                    const isCurrent = getCurrentStep() === index + 1 && !isCompleted
+
+                    return (
+                      <div
+                        key={step.key}
+                        className={cn(
+                          "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+                          isCompleted
+                            ? "bg-green-100 text-green-800"
+                            : isCurrent
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-gray-100 text-gray-600",
+                        )}
+                      >
+                        {step.label}
+                      </div>
+                    )
+                  })}
                 </div>
 
                 {/* Workflow Action Buttons */}
