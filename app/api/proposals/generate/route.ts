@@ -128,19 +128,32 @@ La propuesta debe ser completa, profesional y lista para enviar al cliente.
 
     const proposalResult = await sql`
       INSERT INTO contacts (
-        name, email, phone, company, job_title, status, stage, 
-        sales_owner, source, industry, notes, created_at, updated_at
+        name, email, phone, company, job_title, status, 
+        sales_owner, nif, tags, created_at, updated_at
       ) VALUES (
         ${contact.name}, ${contact.email}, ${contact.phone || null}, 
         ${contact.company || null}, ${contact.job_title || null}, 
-        'qualified', 'proposal', 'Sistema IA', 'ai_generated', 
-        ${service.category}, ${`Propuesta generada: ${proposalTitle}\n\nContenido:\n${proposalContent}`}, 
+        'qualified', 'Sistema IA', ${contact.nif || null}, 
+        ARRAY['ai_generated', ${service.category}], 
         NOW(), NOW()
       )
       ON CONFLICT (email) DO UPDATE SET
-        notes = CONCAT(COALESCE(contacts.notes, ''), '\n\n--- Nueva Propuesta ---\n', ${`${proposalTitle}\n\nContenido:\n${proposalContent}`}),
+        tags = ARRAY['ai_generated', ${service.category}],
         updated_at = NOW()
-      RETURNING id, name, email, notes, created_at
+      RETURNING id, name, email, created_at
+    `
+
+    const noteContent = `Propuesta generada: ${proposalTitle}\n\nContenido:\n${proposalContent}`
+
+    // Store as activity record for tracking
+    await sql`
+      INSERT INTO activities (
+        contact_id, type, title, notes, status, 
+        sales_owner, created_at, updated_at
+      ) VALUES (
+        ${proposalResult[0].id}, 'proposal', ${proposalTitle}, 
+        ${noteContent}, 'completed', 'Sistema IA', NOW(), NOW()
+      )
     `
 
     return NextResponse.json({
