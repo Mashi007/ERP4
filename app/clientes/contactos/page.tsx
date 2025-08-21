@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +15,20 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Plus, Edit, User, Mail, Phone, Building, Briefcase, TrendingUp, Package, Sparkles } from "lucide-react"
+import {
+  Plus,
+  Edit,
+  User,
+  Mail,
+  Phone,
+  Building,
+  Briefcase,
+  TrendingUp,
+  Package,
+  Sparkles,
+  Search,
+  Users,
+} from "lucide-react"
 import { toast } from "sonner"
 
 interface Contact {
@@ -30,6 +43,7 @@ interface Contact {
   stage?: string
   created_at: string
   updated_at: string
+  nif?: string
 }
 
 interface Service {
@@ -305,6 +319,8 @@ export default function ContactosPage() {
     }
   }
 
+  const searchTimeout = useRef<any>(null)
+
   const searchContacts = async (query: string) => {
     if (query.length < 2) {
       setContactSuggestions([])
@@ -314,12 +330,16 @@ export default function ContactosPage() {
 
     setIsSearching(true)
     try {
-      const response = await fetch(`/api/contacts/search?q=${encodeURIComponent(query)}`)
-      if (response.ok) {
-        const suggestions = await response.json()
-        setContactSuggestions(suggestions.slice(0, 5)) // Limit to 5 suggestions
-        setShowSuggestions(true)
-      }
+      // Use the main contacts endpoint with search filtering
+      const filteredContacts = contacts.filter(
+        (contact) =>
+          contact.name.toLowerCase().includes(query.toLowerCase()) ||
+          contact.email.toLowerCase().includes(query.toLowerCase()) ||
+          contact.company.toLowerCase().includes(query.toLowerCase()),
+      )
+
+      setContactSuggestions(filteredContacts.slice(0, 8)) // Show more suggestions
+      setShowSuggestions(true)
     } catch (error) {
       console.error("Error searching contacts:", error)
     } finally {
@@ -330,16 +350,18 @@ export default function ContactosPage() {
   const handleContactSelect = (contact: Contact) => {
     setNewContact({
       name: contact.name,
-      email: contact.email,
-      phone: contact.phone,
-      company: contact.company,
-      job_title: contact.job_title,
-      sales_owner: contact.sales_owner,
-      stage: contact.stage || "Nuevo",
-      status: contact.status,
+      email: contact.email || "",
+      phone: contact.phone || "",
+      company: contact.company || "",
+      job_title: contact.job_title || "",
+      nif: contact.nif || "",
+      status: contact.status || "lead",
+      stage: "Nuevo",
+      sales_owner: contact.sales_owner || "María García",
     })
     setShowSuggestions(false)
-    setContactSuggestions([])
+    setSearchTerm(contact.name)
+    toast.success(`Contacto ${contact.name} seleccionado y datos cargados`)
   }
 
   const handleNameChange = (value: string) => {
@@ -712,71 +734,124 @@ export default function ContactosPage() {
             </DialogHeader>
 
             <div className="space-y-8 py-8">
-              <div className="space-y-3 relative">
-                <Label htmlFor="name" className="text-sm font-semibold flex items-center gap-3">
+              <div className="space-y-4 relative">
+                <Label htmlFor="search" className="text-sm font-semibold flex items-center gap-3">
                   <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
                     <User className="h-4 w-4 text-white" />
                   </div>
                   Nombre completo
                 </Label>
+
                 <div className="relative">
                   <Input
-                    id="name"
+                    id="search"
                     placeholder="Buscar contacto existente o escribir nuevo nombre..."
-                    value={newContact.name}
-                    onChange={(e) => handleNameChange(e.target.value)}
-                    onFocus={() => {
-                      if (newContact.name.length >= 2) {
-                        searchContacts(newContact.name)
-                      }
+                    value={searchTerm}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setSearchTerm(value)
+                      setNewContact({ ...newContact, name: value })
+
+                      // Debounce search
+                      clearTimeout(searchTimeout.current)
+                      searchTimeout.current = setTimeout(() => {
+                        searchContacts(value)
+                      }, 300)
                     }}
-                    onBlur={() => {
-                      setTimeout(() => setShowSuggestions(false), 200)
-                    }}
-                    className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                    className="h-14 text-base border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 pl-4 pr-12 rounded-xl shadow-sm"
                   />
+
                   {isSearching && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
+                    </div>
+                  )}
+
+                  {!isSearching && (
+                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                      <Search className="h-5 w-5 text-gray-400" />
                     </div>
                   )}
                 </div>
 
                 {showSuggestions && contactSuggestions.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-auto">
-                    <div className="p-3 text-xs font-medium text-gray-600 border-b bg-gray-50">
-                      Contactos existentes - Selecciona para auto-completar
-                    </div>
-                    {contactSuggestions.map((contact) => (
-                      <div
-                        key={contact.id}
-                        className="p-4 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors duration-150"
-                        onClick={() => handleContactSelect(contact)}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
-                            <User className="h-5 w-5 text-white" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 truncate text-base">{contact.name}</p>
-                            <p className="text-sm text-gray-600 truncate">{contact.company}</p>
-                            <p className="text-xs text-gray-500 truncate">{contact.email}</p>
-                          </div>
-                          <Badge
-                            variant="outline"
-                            className="text-xs bg-blue-50 text-blue-700 border-blue-200 font-medium"
-                          >
-                            {contact.stage || "Nuevo"}
-                          </Badge>
-                        </div>
+                  <div className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-2xl max-h-80 overflow-auto">
+                    <div className="p-4 text-sm font-semibold text-gray-700 border-b bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-blue-600" />
+                        Contactos encontrados ({contactSuggestions.length}) - Selecciona para auto-completar
                       </div>
-                    ))}
+                    </div>
+
+                    <div className="max-h-64 overflow-y-auto">
+                      {contactSuggestions.map((contact, index) => (
+                        <div
+                          key={contact.id}
+                          className={`p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200 ${
+                            index === 0 ? "bg-blue-25" : ""
+                          }`}
+                          onClick={() => handleContactSelect(contact)}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
+                              <User className="h-6 w-6 text-white" />
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-gray-900 truncate text-lg">{contact.name}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Building className="h-3 w-3 text-gray-400" />
+                                <p className="text-sm text-gray-600 truncate">{contact.company || "Sin empresa"}</p>
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Mail className="h-3 w-3 text-gray-400" />
+                                <p className="text-xs text-gray-500 truncate">{contact.email || "Sin email"}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-2">
+                              <Badge
+                                variant="outline"
+                                className={`text-xs font-medium ${getStatusColor(contact.status || "lead")}`}
+                              >
+                                {getStatusText(contact.status || "lead")}
+                              </Badge>
+                              <div className="text-xs text-gray-400">
+                                {new Date(contact.created_at).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="p-3 bg-gray-50 border-t text-center rounded-b-xl">
+                      <p className="text-xs text-gray-600">
+                        {contactSuggestions.length === 8
+                          ? "Mostrando primeros 8 resultados"
+                          : `${contactSuggestions.length} contacto(s) encontrado(s)`}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {showSuggestions && contactSuggestions.length === 0 && searchTerm.length >= 2 && !isSearching && (
+                  <div className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-xl p-6 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <Search className="h-6 w-6 text-gray-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">No se encontraron contactos</p>
+                        <p className="text-sm text-gray-500 mt-1">Continúa escribiendo para crear un nuevo contacto</p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
 
               <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-3">
                     <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-sm">
                       <Mail className="h-4 w-4 text-white" />
@@ -789,11 +864,11 @@ export default function ContactosPage() {
                     placeholder="juan.perez@empresa.com"
                     value={newContact.email}
                     onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
-                    className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                    className="h-12 text-base border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all duration-200 rounded-xl"
                   />
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <Label htmlFor="phone" className="text-sm font-semibold flex items-center gap-3">
                     <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
                       <Phone className="h-4 w-4 text-white" />
@@ -805,13 +880,13 @@ export default function ContactosPage() {
                     placeholder="+34 600 123 456"
                     value={newContact.phone}
                     onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
-                    className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                    className="h-12 text-base border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 rounded-xl"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <Label htmlFor="company" className="text-sm font-semibold flex items-center gap-3">
                     <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-sm">
                       <Building className="h-4 w-4 text-white" />
@@ -823,11 +898,11 @@ export default function ContactosPage() {
                     placeholder="Nombre de la empresa"
                     value={newContact.company}
                     onChange={(e) => setNewContact({ ...newContact, company: e.target.value })}
-                    className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                    className="h-12 text-base border-2 border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all duration-200 rounded-xl"
                   />
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <Label htmlFor="job_title" className="text-sm font-semibold flex items-center gap-3">
                     <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
                       <Briefcase className="h-4 w-4 text-white" />
@@ -839,7 +914,7 @@ export default function ContactosPage() {
                     placeholder="Director de Marketing"
                     value={newContact.job_title}
                     onChange={(e) => setNewContact({ ...newContact, job_title: e.target.value })}
-                    className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                    className="h-12 text-base border-2 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 rounded-xl"
                   />
                 </div>
               </div>
