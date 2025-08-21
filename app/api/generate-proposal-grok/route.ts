@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
           { role: "system", content: "Eres experto en propuestas comerciales." },
           { role: "user", content: grokPrompt },
         ],
-        model: "grok-beta",
+        model: "grok-4",
         temperature: 0.7,
       }),
     })
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       created_at: new Date().toISOString(),
       metadata: {
         service: serviceData.name,
-        aiModel: "grok-beta",
+        aiModel: "grok-4",
       },
     }
 
