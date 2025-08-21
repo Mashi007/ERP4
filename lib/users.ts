@@ -16,22 +16,22 @@ export async function getUsers() {
 
     const sql = neon(process.env.DATABASE_URL)
 
-    // Try to get users from the database
     const users = await sql`
-      SELECT id, name, email, created_at, updated_at 
-      FROM neon_auth.users_sync 
-      WHERE deleted_at IS NULL
-      ORDER BY name ASC
+      SELECT u.id, u.name, u.email, u.created_at, u.updated_at, r.name as role
+      FROM users u
+      LEFT JOIN roles r ON u.role_id = r.id
+      WHERE u.status = 'active'
+      ORDER BY u.name ASC
     `
 
     console.log("[v0] Database users query result:", users.length, "users found")
 
     if (users.length > 0) {
       const mappedUsers = users.map((user) => ({
-        id: user.id,
+        id: user.id.toString(),
         name: user.name || user.email?.split("@")[0] || "Usuario",
         email: user.email,
-        role: "Usuario",
+        role: user.role || "Usuario",
       }))
       console.log("[v0] Returning database users:", mappedUsers.length)
       return mappedUsers

@@ -5,24 +5,25 @@ const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET() {
   try {
-    console.log("[v0] Fetching users from neon_auth.users_sync...")
+    console.log("[v0] Fetching users from users table...")
 
     const users = await sql`
       SELECT 
         u.id,
         u.name,
         u.email,
-        'Usuario' as role,
-        'active' as status,
-        u.updated_at as last_login,
+        r.name as role,
+        u.status,
+        u.last_login,
         u.created_at,
         '[]'::json as permissions
-      FROM neon_auth.users_sync u
-      WHERE u.deleted_at IS NULL
+      FROM users u
+      LEFT JOIN roles r ON u.role_id = r.id
+      WHERE u.status = 'active'
       ORDER BY u.created_at DESC
     `
 
-    console.log("[v0] Found users:", users.length)
+    console.log("[v0] Database users query result:", users.length, "users found")
 
     if (users.length === 0) {
       console.log("[v0] No users found in database, returning default users")
@@ -54,12 +55,23 @@ export async function GET() {
     return NextResponse.json(users)
   } catch (error) {
     console.error("[v0] Error fetching users:", error)
+    console.log("[v0] Returning default users")
     const defaultUsers = [
       {
         id: "admin-1",
         name: "María García",
         email: "admin@empresa.com",
         role: "Administrador",
+        status: "active",
+        last_login: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        permissions: [],
+      },
+      {
+        id: "comercial-1",
+        name: "Carlos Rodríguez",
+        email: "comercial@empresa.com",
+        role: "Comercial",
         status: "active",
         last_login: new Date().toISOString(),
         created_at: new Date().toISOString(),
