@@ -29,6 +29,7 @@ interface Contact {
   email: string
   phone: string
   company: string
+  position?: string
   status: string
   created_at: string
   flowProgress?: {
@@ -38,6 +39,8 @@ interface Contact {
     sign: boolean
     send: boolean
   }
+  selectedService?: any
+  selectedTemplate?: any
 }
 
 interface WorkflowState {
@@ -57,6 +60,14 @@ interface ContactFormData {
   phone: string
   company: string
   position: string
+}
+
+interface Service {
+  id: string
+  name: string
+  category: string
+  description: string
+  price: number
 }
 
 export default function ContactosPage() {
@@ -102,8 +113,15 @@ export default function ContactosPage() {
     sentDocument: null,
   })
 
+  const [isServiceCatalogOpen, setIsServiceCatalogOpen] = useState(false)
+  const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = useState(false)
+  const [services, setServices] = useState<Service[]>([])
+  const [selectedService, setSelectedService] = useState<Service | null>(null)
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null)
+
   useEffect(() => {
     loadContacts()
+    loadServices()
   }, [])
 
   const loadContacts = async () => {
@@ -122,6 +140,18 @@ export default function ContactosPage() {
       console.error("[v0] Error loading contacts:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadServices = async () => {
+    try {
+      const response = await fetch("/api/services")
+      if (response.ok) {
+        const servicesData = await response.json()
+        setServices(servicesData)
+      }
+    } catch (error) {
+      console.error("[v0] Error loading services:", error)
     }
   }
 
@@ -165,11 +195,12 @@ export default function ContactosPage() {
 
   const selectExistingContact = (contact: Contact) => {
     setFormData({
+      id: contact.id.toString(),
       name: contact.name,
       email: contact.email,
       phone: contact.phone,
-      company: contact.company,
-      position: "", // This field might not exist in Contact interface
+      company: contact.company || "",
+      position: contact.position || "",
     })
     setShowSuggestions(false)
     setSearchSuggestions([])
@@ -219,6 +250,8 @@ export default function ContactosPage() {
       flowProgress: flowProgress,
       status: hasFlowProgress ? "active" : "lead",
       created_at: isEditMode ? undefined : new Date().toISOString(),
+      selectedService: selectedService,
+      selectedTemplate: selectedTemplate,
     }
 
     try {
@@ -356,6 +389,8 @@ export default function ContactosPage() {
     })
     setIsEditMode(false)
     setEditingContactId(null)
+    setSelectedService(null)
+    setSelectedTemplate(null)
   }
 
   const handleFlowProgressChange = (step: string, value: boolean) => {
@@ -363,6 +398,94 @@ export default function ContactosPage() {
       ...prev,
       [step]: value,
     }))
+  }
+
+  const canEnableStep = (stepKey: string) => {
+    const steps = ["service", "template", "generate", "sign", "send"]
+    const currentIndex = steps.indexOf(stepKey)
+
+    if (currentIndex === 0) return true // Service is always available
+
+    // Check if previous step is completed
+    const previousStep = steps[currentIndex - 1]
+    return flowProgress[previousStep as keyof typeof flowProgress]
+  }
+
+  const handleServiceSelection = (service: Service) => {
+    setSelectedService(service)
+    setFlowProgress((prev) => ({ ...prev, service: true }))
+    setIsServiceCatalogOpen(false)
+    console.log("[v0] Service selected:", service)
+  }
+
+  const handleTemplateSelection = (template: any) => {
+    setSelectedTemplate(template)
+    setFlowProgress((prev) => ({ ...prev, template: true }))
+    setIsTemplateSelectorOpen(false)
+    console.log("[v0] Template selected:", template)
+  }
+
+  const handleGenerateProposal = async () => {
+    if (!canEnableStep("generate")) return
+
+    try {
+      console.log("[v0] Generating proposal...")
+      // Simulate proposal generation
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      setFlowProgress((prev) => ({ ...prev, generate: true }))
+      alert("Propuesta generada exitosamente")
+    } catch (error) {
+      console.error("[v0] Error generating proposal:", error)
+      alert("Error al generar la propuesta")
+    }
+  }
+
+  const handleDigitalSign = async () => {
+    if (!canEnableStep("sign")) return
+
+    try {
+      console.log("[v0] Processing digital signature...")
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      setFlowProgress((prev) => ({ ...prev, sign: true }))
+      alert("Documento firmado digitalmente")
+    } catch (error) {
+      console.error("[v0] Error with digital signature:", error)
+      alert("Error en la firma digital")
+    }
+  }
+
+  const handleSendDocument = async () => {
+    if (!canEnableStep("send")) return
+
+    try {
+      console.log("[v0] Sending document...")
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      setFlowProgress((prev) => ({ ...prev, send: true }))
+      alert("Documento enviado exitosamente")
+    } catch (error) {
+      console.error("[v0] Error sending document:", error)
+      alert("Error al enviar el documento")
+    }
+  }
+
+  const handleDeleteContact = async (contactId: number) => {
+    if (!confirm("¿Estás seguro de que quieres eliminar este contacto?")) return
+
+    try {
+      const response = await fetch(`/api/contacts/${contactId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        setContacts((prev) => prev.filter((c) => c.id !== contactId))
+        alert("Contacto eliminado exitosamente")
+      } else {
+        throw new Error("Failed to delete contact")
+      }
+    } catch (error) {
+      console.error("[v0] Error deleting contact:", error)
+      alert("Error al eliminar el contacto")
+    }
   }
 
   const filteredContacts = contacts.filter(
@@ -555,26 +678,29 @@ export default function ContactosPage() {
                 {/* Workflow Action Buttons */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
                   <Button
-                    onClick={() => handleFlowProgressChange("service", true)}
+                    onClick={() => setIsServiceCatalogOpen(true)}
                     className="bg-blue-600 hover:bg-blue-700 justify-start"
+                    disabled={!canEnableStep("service")}
                   >
                     <Plus className="mr-2 h-4 w-4" />
-                    Seleccionar Servicio
+                    {selectedService ? `Servicio: ${selectedService.name}` : "Seleccionar Servicio"}
                   </Button>
 
                   <Button
                     variant="outline"
-                    onClick={() => handleFlowProgressChange("template", true)}
+                    onClick={() => setIsTemplateSelectorOpen(true)}
                     className="justify-start"
+                    disabled={!canEnableStep("template")}
                   >
                     <FileText className="mr-2 h-4 w-4" />
-                    Seleccionar Plantilla
+                    {selectedTemplate ? `Plantilla: ${selectedTemplate.name}` : "Seleccionar Plantilla"}
                   </Button>
 
                   <Button
                     variant="outline"
-                    onClick={() => handleFlowProgressChange("generate", true)}
-                    className="justify-start"
+                    onClick={handleGenerateProposal}
+                    className="justify-start bg-transparent"
+                    disabled={!canEnableStep("generate")}
                   >
                     <PenTool className="mr-2 h-4 w-4" />
                     Generar Propuesta
@@ -582,8 +708,9 @@ export default function ContactosPage() {
 
                   <Button
                     variant="outline"
-                    onClick={() => handleFlowProgressChange("sign", true)}
-                    className="justify-start"
+                    onClick={handleDigitalSign}
+                    className="justify-start bg-transparent"
+                    disabled={!canEnableStep("sign")}
                   >
                     <PenTool className="mr-2 h-4 w-4" />
                     Firma Digital
@@ -592,8 +719,9 @@ export default function ContactosPage() {
 
                 <Button
                   variant="outline"
-                  onClick={() => handleFlowProgressChange("send", true)}
-                  className="w-full justify-center"
+                  onClick={handleSendDocument}
+                  className="w-full justify-center bg-transparent"
+                  disabled={!canEnableStep("send")}
                 >
                   <Send className="mr-2 h-4 w-4" />
                   Enviar Documento
@@ -728,7 +856,10 @@ export default function ContactosPage() {
                         <Edit className="h-4 w-4 mr-1" />
                         Editar
                       </button>
-                      <button className="text-red-600 hover:text-red-900 inline-flex items-center">
+                      <button
+                        onClick={() => handleDeleteContact(contact.id)}
+                        className="text-red-600 hover:text-red-900 inline-flex items-center"
+                      >
                         <Trash2 className="h-4 w-4 mr-1" />
                         Eliminar
                       </button>
@@ -756,6 +887,54 @@ export default function ContactosPage() {
           </div>
         )}
       </div>
+
+      <Dialog open={isServiceCatalogOpen} onOpenChange={setIsServiceCatalogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Catálogo de Servicios</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Selecciona un servicio para continuar con el flujo de trabajo
+            </p>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            {services.map((service) => (
+              <div
+                key={service.id}
+                onClick={() => handleServiceSelection(service)}
+                className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+              >
+                <h3 className="font-medium text-sm">{service.name}</h3>
+                <p className="text-xs text-gray-500 mt-1">{service.category}</p>
+                <p className="text-xs text-gray-600 mt-2">{service.description}</p>
+                <p className="text-sm font-medium text-blue-600 mt-2">€{service.price}</p>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isTemplateSelectorOpen} onOpenChange={setIsTemplateSelectorOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Seleccionar Plantilla</DialogTitle>
+            <p className="text-sm text-muted-foreground">Elige una plantilla para generar la propuesta</p>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            {["Plantilla Básica", "Plantilla Premium", "Plantilla Personalizada"].map((template, index) => (
+              <div
+                key={index}
+                onClick={() => handleTemplateSelection({ name: template, id: index + 1 })}
+                className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+              >
+                <h3 className="font-medium text-sm">{template}</h3>
+                <p className="text-xs text-gray-500 mt-1">Descripción de la plantilla</p>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
