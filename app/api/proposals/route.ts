@@ -115,3 +115,71 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Failed to update proposal" }, { status: 500 })
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    console.log("Creating proposal with data:", body)
+
+    const {
+      id,
+      contact_id,
+      service_id,
+      template_id,
+      title,
+      content,
+      total_amount,
+      currency,
+      status = "draft",
+      expires_at,
+    } = body
+
+    // Validate required fields
+    if (!contact_id || !content) {
+      return NextResponse.json(
+        {
+          error: "contact_id and content are required",
+        },
+        { status: 400 },
+      )
+    }
+
+    // If ID is provided (from Grok AI), use it as external reference
+    const query = `
+      INSERT INTO proposals (
+        contact_id, service_id, template_id, title, content, 
+        total_amount, currency, status, expires_at, 
+        external_id, created_at, updated_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()
+      ) RETURNING id, contact_id, service_id, title, status, external_id, created_at
+    `
+
+    const params = [
+      Number.parseInt(contact_id),
+      service_id ? Number.parseInt(service_id) : null,
+      template_id ? Number.parseInt(template_id) : null,
+      title || "Propuesta Generada con IA",
+      content,
+      total_amount ? Number.parseFloat(total_amount) : null,
+      currency || "EUR",
+      status,
+      expires_at || null,
+      id || null, // Store Grok AI ID as external reference
+    ]
+
+    const result = await sql(query, ...params)
+    console.log("Proposal created successfully:", result[0])
+
+    return NextResponse.json(result[0])
+  } catch (error) {
+    console.error("Error creating proposal:", error)
+    return NextResponse.json(
+      {
+        error: "Failed to create proposal",
+        details: error.message,
+      },
+      { status: 500 },
+    )
+  }
+}

@@ -601,8 +601,20 @@ export default function ContactosPage() {
           }),
         })
 
+        console.log("[v0] Save response status:", saveResponse.status)
+        console.log("[v0] Save response headers:", saveResponse.headers.get("content-type"))
+
+        // Check if response is JSON
+        const contentType = saveResponse.headers.get("content-type")
+        if (!contentType || !contentType.includes("application/json")) {
+          const htmlText = await saveResponse.text()
+          console.error("[v0] HTML Response received:", htmlText.substring(0, 200))
+          throw new Error("El servidor devolvió HTML en lugar de JSON. Verifica que la API route existe.")
+        }
+
         if (!saveResponse.ok) {
-          throw new Error("Failed to save proposal to database")
+          const errorData = await saveResponse.json()
+          throw new Error(errorData.error || "Failed to save proposal to database")
         }
 
         const savedProposal = await saveResponse.json()
@@ -620,6 +632,13 @@ export default function ContactosPage() {
           signedAt: new Date().toISOString(),
         }),
       })
+
+      const signatureContentType = signatureResponse.headers.get("content-type")
+      if (!signatureContentType || !signatureContentType.includes("application/json")) {
+        const htmlText = await signatureResponse.text()
+        console.error("[v0] Signature API returned HTML:", htmlText.substring(0, 200))
+        throw new Error("La API de firma devolvió HTML en lugar de JSON.")
+      }
 
       if (!signatureResponse.ok) {
         const errorData = await signatureResponse.json()
@@ -643,7 +662,7 @@ export default function ContactosPage() {
       alert("Documento firmado digitalmente con éxito")
     } catch (error) {
       console.error("[v0] Error processing signature:", error)
-      alert("Error al procesar la firma digital")
+      alert(`Error al procesar la firma digital: ${error.message}`)
     } finally {
       setSignatureLoading(false)
     }
