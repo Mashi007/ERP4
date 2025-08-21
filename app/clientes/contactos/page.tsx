@@ -30,8 +30,7 @@ import {
   ChevronRight,
   Edit,
   ArrowRight,
-  Settings,
-  Package,
+  Eye,
 } from "lucide-react"
 import { toast } from "sonner"
 import ServiceSelector from "@/components/servicios/service-selector"
@@ -115,6 +114,8 @@ export default function ContactosPage() {
   const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false)
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false)
 
+  const [formMode, setFormMode] = useState<"create" | "edit">("create")
+
   const [newContact, setNewContact] = useState({
     name: "",
     email: "",
@@ -124,6 +125,7 @@ export default function ContactosPage() {
     sales_owner: "María García",
     stage: "Nuevo",
     status: "lead",
+    nif: "",
   })
 
   const [editContact, setEditContact] = useState({
@@ -214,12 +216,9 @@ export default function ContactosPage() {
   }
 
   const handleSaveContact = async () => {
-    console.log("[v0] Guardar Contacto button clicked")
+    console.log("[v0] Save button clicked, mode:", formMode)
     console.log("[v0] Button enabled check - name:", newContact.name || searchTerm, "email:", newContact.email)
     console.log("[v0] Starting contact save process")
-    console.log("[v0] Current newContact state:", newContact)
-    console.log("[v0] Current searchTerm:", searchTerm)
-    console.log("[v0] Workflow state:", workflowState)
 
     try {
       const contactToSave = {
@@ -239,81 +238,109 @@ export default function ContactosPage() {
       const workflowComplete = isWorkflowComplete()
       console.log("[v0] Workflow complete:", workflowComplete)
 
-      // Always save to contacts first
-      const response = await fetch("/api/contacts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(contactToSave),
-      })
-
-      console.log("[v0] API response status:", response.status)
-
-      if (response.ok) {
-        const savedContact = await response.json()
-        console.log("[v0] Contact saved successfully:", savedContact)
-
-        if (workflowComplete) {
-          try {
-            const savedClient = await saveToClients(contactToSave)
-            console.log("[v0] Client status updated successfully:", savedClient)
-            toast.success("Cliente creado exitosamente con propuesta completa")
-          } catch (clientError) {
-            console.error("[v0] Error updating client status:", clientError)
-            toast.success("Contacto creado exitosamente, pero hubo un error al actualizar el estado de cliente")
-          }
-        } else {
-          toast.success("Contacto creado exitosamente")
-        }
-
-        setIsCreateContactOpen(false)
-        setNewContact({
-          name: "",
-          email: "",
-          phone: "",
-          company: "",
-          job_title: "",
-          sales_owner: "María García",
-          stage: "Nuevo",
-          status: "lead",
-        })
-        setSearchTerm("")
-
-        setWorkflowState({
-          step: "service",
-          selectedService: null,
-          selectedTemplate: null,
-          generatedProposal: null,
-          signedDocument: null,
-          sentDocument: null,
-          currentStep: 1,
+      if (formMode === "edit" && selectedContactForDetails) {
+        // Update existing contact
+        const response = await fetch(`/api/contacts/${selectedContactForDetails.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(contactToSave),
         })
 
-        console.log("[v0] Refreshing contacts list after save...")
-        await fetchContacts()
-        console.log("[v0] Contacts list refreshed successfully")
-      } else if (response.status === 409) {
-        const errorData = await response.json()
-        console.log("[v0] Duplicate email detected:", errorData)
+        console.log("[v0] API response status:", response.status)
 
-        if (errorData.existingContact) {
-          toast.error(
-            `El email ya existe para: ${errorData.existingContact.name}. ¿Deseas actualizar el contacto existente?`,
-          )
-          setNewContact({
-            ...newContact,
-            ...errorData.existingContact,
-          })
+        if (response.ok) {
+          const updatedContact = await response.json()
+          console.log("[v0] Contact updated successfully:", updatedContact)
+          toast.success("Contacto actualizado exitosamente")
         } else {
-          toast.error("El email ya existe en el sistema")
+          const errorData = await response.json()
+          console.error("[v0] Error updating contact:", errorData)
+          toast.error(errorData.error || "Error al actualizar contacto")
+          return
         }
       } else {
-        const errorData = await response.json()
-        console.error("[v0] Error saving contact:", errorData)
-        toast.error(errorData.error || "Error al crear contacto")
+        // Create new contact
+        const response = await fetch("/api/contacts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(contactToSave),
+        })
+
+        console.log("[v0] API response status:", response.status)
+
+        if (response.ok) {
+          const savedContact = await response.json()
+          console.log("[v0] Contact saved successfully:", savedContact)
+
+          if (workflowComplete) {
+            try {
+              const savedClient = await saveToClients(contactToSave)
+              console.log("[v0] Client status updated successfully:", savedClient)
+              toast.success("Cliente creado exitosamente con propuesta completa")
+            } catch (clientError) {
+              console.error("[v0] Error updating client status:", clientError)
+              toast.success("Contacto creado exitosamente, pero hubo un error al actualizar el estado de cliente")
+            }
+          } else {
+            toast.success("Contacto creado exitosamente")
+          }
+        } else if (response.status === 409) {
+          const errorData = await response.json()
+          console.log("[v0] Duplicate email detected:", errorData)
+
+          if (errorData.existingContact) {
+            toast.error(
+              `El email ya existe para: ${errorData.existingContact.name}. ¿Deseas actualizar el contacto existente?`,
+            )
+            setNewContact({
+              ...newContact,
+              ...errorData.existingContact,
+            })
+          } else {
+            toast.error("El email ya existe en el sistema")
+          }
+          return
+        } else {
+          const errorData = await response.json()
+          console.error("[v0] Error saving contact:", errorData)
+          toast.error(errorData.error || "Error al crear contacto")
+          return
+        }
       }
+
+      // Close dialog and reset form
+      setIsCreateContactOpen(false)
+      setFormMode("create")
+      setSelectedContactForDetails(null)
+      setNewContact({
+        name: "",
+        email: "",
+        phone: "",
+        company: "",
+        job_title: "",
+        nif: "",
+        sales_owner: "María García",
+        stage: "Nuevo",
+        status: "lead",
+      })
+      setSearchTerm("")
+
+      setWorkflowState({
+        step: "service",
+        selectedService: null,
+        selectedTemplate: null,
+        generatedProposal: null,
+        signedDocument: null,
+        sentDocument: null,
+        currentStep: 1,
+      })
+
+      console.log("[v0] Refreshing contacts list after save...")
+      await fetchContacts()
+      console.log("[v0] Contacts list refreshed successfully")
     } catch (error) {
       console.error("[v0] Error in handleSaveContact:", error)
-      toast.error("Error al crear contacto")
+      toast.error("Error al procesar la solicitud")
     }
   }
 
@@ -791,6 +818,7 @@ export default function ContactosPage() {
           sales_owner: "María García",
           stage: "Nuevo",
           status: "lead",
+          nif: "",
         })
       } else {
         setIsEditDialogOpen(false)
@@ -850,10 +878,63 @@ export default function ContactosPage() {
     return await response.json()
   }
 
+  const handleContactDetails = (contact: any) => {
+    console.log("[v0] Opening contact details for:", contact.name)
+    setFormMode("edit")
+    setSelectedContactForDetails(contact)
+    
+    // Pre-populate the form fields with contact data
+    setNewContact({
+      name: contact.name || "",
+      email: contact.email || "",
+      phone: contact.phone || "",
+      company: contact.company || "",
+      job_title: contact.job_title || "",
+      nif: contact.nif || "",
+      sales_owner: contact.sales_owner || "María García",
+      stage: contact.stage || "Nuevo",
+      status: contact.status || "lead",
+    })
+    
+    setSearchTerm(contact.name || "")
+    setIsCreateContactOpen(true) // Use the same dialog
+  }
+
+  const handleNewContact = () => {
+    setFormMode("create")
+    setSelectedContactForDetails(null)
+    
+    // Reset form fields
+    setNewContact({
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      job_title: "",
+      nif: "",
+      sales_owner: "María García",
+      stage: "Nuevo",
+      status: "lead",
+    })
+    
+    setSearchTerm("")
+    setWorkflowState({
+      step: "service",
+      selectedService: null,
+      selectedTemplate: null,
+      generatedProposal: null,
+      signedDocument: null,
+      sentDocument: null,
+      currentStep: 1,
+    })
+    
+    setIsCreateContactOpen(true)
+  }
+
   const handleOpenContactDetails = (contact: any) => {
     console.log("[v0] Opening contact details for:", contact.name)
-    setSelectedContactForDetails(contact)
-    setIsContactDetailsOpen(true)
+    // setSelectedContactForDetails(contact)
+    // setIsContactDetailsOpen(true)
   }
 
   return (
@@ -865,7 +946,7 @@ export default function ContactosPage() {
         </div>
         <Dialog open={isCreateContactOpen} onOpenChange={setIsCreateContactOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleNewContact}>
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Contacto
             </Button>
@@ -873,7 +954,12 @@ export default function ContactosPage() {
           <DialogContent className="sm:max-w-[1000px] max-h-[95vh] overflow-hidden flex flex-col">
             <DialogHeader className="space-y-3 flex-shrink-0">
               <div className="flex items-center justify-between">
-                <DialogTitle className="text-2xl font-bold tracking-tight">Crear Nuevo Contacto</DialogTitle>
+                <DialogTitle className="text-2xl font-bold tracking-tight">
+                  {formMode === "edit" 
+                    ? `Detalles del Contacto: ${selectedContactForDetails?.name || newContact.name || searchTerm}`
+                    : "Crear Nuevo Contacto"
+                  }
+                </DialogTitle>
                 {workflowState.selectedService && (
                   <Badge className="bg-green-100 text-green-800 border-green-300 px-3 py-1 text-sm font-medium">
                     Servicio: {workflowState.selectedService.name}
@@ -881,162 +967,174 @@ export default function ContactosPage() {
                 )}
               </div>
               <DialogDescription className="text-base text-muted-foreground leading-relaxed">
-                Agrega un nuevo contacto a tu base de datos de leads y gestiona su información de manera eficiente.
+                {formMode === "edit" 
+                  ? "Edita la información del contacto y gestiona su información de manera eficiente."
+                  : "Agrega un nuevo contacto a tu base de datos de leads y gestiona su información de manera eficiente."
+                }
               </DialogDescription>
             </DialogHeader>
 
             <div className="flex-1 overflow-y-auto px-1">
               <div className="space-y-6 py-6">
-                <div className="space-y-4 relative">
-                  <Label htmlFor="search" className="text-sm font-semibold flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-                      <User className="h-4 w-4 text-white" />
-                    </div>
-                    Nombre completo
-                  </Label>
+                {formMode === "create" && (
+                  <div className="space-y-4 relative">
+                    <Label htmlFor="search" className="text-sm font-semibold flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+                        <User className="h-4 w-4 text-white" />
+                      </div>
+                      Nombre completo
+                    </Label>
 
-                  <div className="relative" ref={dropdownRef}>
-                    <div className="relative">
-                      <Input
-                        placeholder="Buscar contacto existente o escribir nuevo nombre..."
-                        value={searchTerm}
-                        onChange={(e) => {
-                          const value = e.target.value
-                          console.log("[v0] Search input changed:", value) // Added debugging
-                          setSearchTerm(value)
-                          handleNameChange(value)
+                    <div className="relative" ref={dropdownRef}>
+                      <div className="relative">
+                        <Input
+                          placeholder="Buscar contacto existente o escribir nuevo nombre..."
+                          value={searchTerm}
+                          onChange={(e) => {
+                            const value = e.target.value
+                            console.log("[v0] Search input changed:", value)
+                            setSearchTerm(value)
+                            handleNameChange(value)
 
-                          clearTimeout(searchTimeout.current)
-                          searchTimeout.current = setTimeout(() => {
-                            searchContacts(value)
-                          }, 300)
-                        }}
-                        onFocus={() => {
-                          if (searchTerm.length >= 2) {
-                            setShowSuggestions(true)
-                          }
-                        }}
-                        className="h-12 text-base border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 pl-4 pr-12 rounded-xl shadow-sm"
-                      />
+                            clearTimeout(searchTimeout.current)
+                            searchTimeout.current = setTimeout(() => {
+                              searchContacts(value)
+                            }, 300)
+                          }}
+                          onFocus={() => {
+                            if (searchTerm.length >= 2) {
+                              setShowSuggestions(true)
+                            }
+                          }}
+                          className="h-12 text-base border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 pl-4 pr-12 rounded-xl shadow-sm"
+                        />
 
-                      {isSearching && (
-                        <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
-                        </div>
-                      )}
+                        {isSearching && (
+                          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
+                          </div>
+                        )}
 
-                      {!isSearching && (
-                        <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                          <Search className="h-5 w-5 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
+                        {!isSearching && (
+                          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                            <Search className="h-5 w-5 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
 
-                    {showSuggestions && (
-                      <div className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-2xl max-h-80 overflow-auto">
-                        {contactSuggestions.length > 0 ? (
-                          <>
-                            <div className="p-4 text-sm font-semibold text-gray-700 border-b bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
-                              <div className="flex items-center gap-2">
-                                <Users className="h-4 w-4 text-blue-600" />
-                                Contactos encontrados ({contactSuggestions.length}) - Selecciona para auto-completar
+                      {/* Search suggestions dropdown - same as before */}
+                      {showSuggestions && (
+                        <div className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-2xl max-h-80 overflow-auto">
+                          {contactSuggestions.length > 0 ? (
+                            <>
+                              <div className="p-4 text-sm font-semibold text-gray-700 border-b bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
+                                <div className="flex items-center gap-2">
+                                  <Users className="h-4 w-4 text-blue-600" />
+                                  Contactos encontrados ({contactSuggestions.length}) - Selecciona para auto-completar
+                                </div>
                               </div>
-                            </div>
 
-                            <div className="max-h-64 overflow-y-auto">
-                              {contactSuggestions.map((contact, index) => (
-                                <div
-                                  key={contact.id}
-                                  className={`p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200 ${
-                                    index === 0 ? "bg-blue-25" : ""
-                                  }`}
-                                  onClick={() => handleContactSelect(contact)}
-                                >
-                                  <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
-                                      <User className="h-6 w-6 text-white" />
-                                    </div>
-
-                                    <div className="flex-1 min-w-0">
-                                      <p className="font-semibold text-gray-900 truncate text-base">{contact.name}</p>
-                                      <div className="flex items-center gap-2 mt-1">
-                                        <Building className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                                        <p className="text-sm text-gray-600 truncate">
-                                          {contact.company || "Sin empresa"}
-                                        </p>
+                              <div className="max-h-64 overflow-y-auto">
+                                {contactSuggestions.map((contact, index) => (
+                                  <div
+                                    key={contact.id}
+                                    className={`p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200 ${
+                                      index === 0 ? "bg-blue-25" : ""
+                                    }`}
+                                    onClick={() => handleContactSelect(contact)}
+                                  >
+                                    <div className="flex items-center gap-4">
+                                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+                                        <User className="h-6 w-6 text-white" />
                                       </div>
-                                      <div className="flex items-center gap-2 mt-1">
-                                        <Mail className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                                        <p className="text-xs text-gray-500 truncate">{contact.email || "Sin email"}</p>
-                                      </div>
-                                    </div>
 
-                                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                                      <Badge
-                                        variant="outline"
-                                        className={`text-xs font-medium whitespace-nowrap ${getStatusColor(contact.status || "lead")}`}
-                                      >
-                                        {getStatusText(contact.status || "lead")}
-                                      </Badge>
-                                      <div className="text-xs text-gray-400 whitespace-nowrap">
-                                        {new Date(contact.created_at).toLocaleDateString()}
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-gray-900 truncate text-base">{contact.name}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <Building className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                                          <p className="text-sm text-gray-600 truncate">
+                                            {contact.company || "Sin empresa"}
+                                          </p>
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <Mail className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                                          <p className="text-xs text-gray-500 truncate">{contact.email || "Sin email"}</p>
+                                        </div>
+                                      </div>
+
+                                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                        <Badge
+                                          variant="outline"
+                                          className={`text-xs font-medium whitespace-nowrap ${getStatusColor(contact.status || "lead")}`}
+                                        >
+                                          {getStatusText(contact.status || "lead")}
+                                        </Badge>
+                                        <div className="text-xs text-gray-400 whitespace-nowrap">
+                                          {new Date(contact.created_at).toLocaleDateString()}
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
-                                </div>
-                              ))}
-                            </div>
-
-                            <div className="p-3 bg-gray-50 border-t text-center rounded-b-xl">
-                              <p className="text-xs text-gray-600">
-                                {contactSuggestions.length === 8
-                                  ? "Mostrando primeros 8 resultados"
-                                  : `${contactSuggestions.length} contacto(s) encontrado(s)`}
-                              </p>
-                            </div>
-                          </>
-                        ) : searchTerm.length >= 2 && !isSearching ? (
-                          <div className="p-6 text-center">
-                            <div className="flex flex-col items-center gap-4">
-                              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                                <Search className="h-6 w-6 text-gray-400" />
+                                ))}
                               </div>
-                              <div>
-                                <p className="font-medium text-gray-900">No se encontraron contactos</p>
-                                <p className="text-sm text-gray-500 mt-1">
-                                  ¿Deseas crear un nuevo contacto con el nombre "{searchTerm}"?
+
+                              <div className="p-3 bg-gray-50 border-t text-center rounded-b-xl">
+                                <p className="text-xs text-gray-600">
+                                  {contactSuggestions.length === 8
+                                    ? "Mostrando primeros 8 resultados"
+                                    : `${contactSuggestions.length} contacto(s) encontrado(s)`}
                                 </p>
                               </div>
-                              <button
-                                onClick={handleCreateNewContact}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
-                              >
-                                Crear nuevo contacto
-                              </button>
+                            </>
+                          ) : searchTerm.length >= 2 && !isSearching ? (
+                            <div className="p-6 text-center">
+                              <div className="flex flex-col items-center gap-4">
+                                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                                  <Search className="h-6 w-6 text-gray-400" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-900">No se encontraron contactos</p>
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    ¿Deseas crear un nuevo contacto con el nombre "{searchTerm}"?
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={handleCreateNewContact}
+                                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                                >
+                                  Crear nuevo contacto
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ) : null}
-                      </div>
-                    )}
-                  </div>
-
-                  {showSuggestions && contactSuggestions.length === 0 && searchTerm.length >= 2 && !isSearching && (
-                    <div className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-xl p-6 text-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                          <Search className="h-6 w-6 text-gray-400" />
+                          ) : null}
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900">No se encontraron contactos</p>
-                          <p className="text-sm text-gray-500 mt-1">
-                            Continúa escribiendo para crear un nuevo contacto
-                          </p>
-                        </div>
-                      </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
+                {formMode === "edit" && (
+                  <div className="space-y-4">
+                    <Label htmlFor="name" className="text-sm font-semibold flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+                        <User className="h-4 w-4 text-white" />
+                      </div>
+                      Nombre completo
+                    </Label>
+                    <Input
+                      id="name"
+                      placeholder="Nombre completo del contacto"
+                      value={newContact.name}
+                      onChange={(e) => {
+                        setNewContact({ ...newContact, name: e.target.value })
+                        setSearchTerm(e.target.value)
+                      }}
+                      className="h-12 text-base border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 rounded-xl shadow-sm"
+                    />
+                  </div>
+                )}
+
+                {/* Rest of the form fields remain the same */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-3">
@@ -1106,6 +1204,23 @@ export default function ContactosPage() {
                   </div>
                 </div>
 
+                <div className="space-y-4">
+                  <Label htmlFor="nif" className="text-sm font-semibold flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center shadow-sm">
+                      <FileText className="h-4 w-4 text-white" />
+                    </div>
+                    NIF/CIF
+                  </Label>
+                  <Input
+                    id="nif"
+                    placeholder="12345678A"
+                    value={newContact.nif}
+                    onChange={(e) => setNewContact({ ...newContact, nif: e.target.value })}
+                    className="h-12 text-base border-2 border-gray-200 focus:border-gray-500 focus:ring-4 focus:ring-gray-100 transition-all duration-200 rounded-xl"
+                  />
+                </div>
+
+                {/* Status and Stage fields remain the same */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 shadow-sm">
                   <div className="space-y-3">
                     <Label htmlFor="status" className="text-sm font-bold flex items-center gap-3 text-blue-900">
@@ -1303,440 +1418,170 @@ export default function ContactosPage() {
                 <div className="flex justify-between items-center pt-4 border-t border-gray-200">
                   <Button
                     variant="outline"
-                    onClick={() => setIsCreateContactOpen(false)}
+                    onClick={() => {
+                      setIsCreateContactOpen(false)
+                      setFormMode("create")
+                      setSelectedContactForDetails(null)
+                    }}
                     className="px-6 py-2 rounded-xl"
                   >
                     Cancelar
                   </Button>
                   <Button
                     onClick={() => {
-                      console.log("[v0] Guardar Contacto button clicked") // Added click debugging
-                      console.log("[v0] Button enabled check - name:", newContact.name, "email:", newContact.email)
+                      console.log("[v0] Save button clicked, mode:", formMode)
+                      console.log("[v0] Button enabled check - name:", newContact.name || searchTerm, "email:", newContact.email)
                       handleSaveContact()
                     }}
-                    disabled={(!newContact.name && !searchTerm) || !newContact.email} // Fixed validation to check both name and searchTerm
+                    disabled={(!newContact.name && !searchTerm) || !newContact.email}
                     className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Save className="h-4 w-4 mr-2" />
-                    Guardar Contacto
+                    {formMode === "edit" ? "Guardar Cambios" : "Guardar Contacto"}
                   </Button>
                 </div>
               </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
 
-      <div className="bg-white rounded-lg border shadow-sm">
-        <div className="p-6 border-b">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Lista de Contactos</h2>
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Buscar contactos..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
-                />
+
+        {/* Update the contacts table to use handleContactDetails */}
+        <div className="bg-white rounded-lg border shadow-sm">
+          <div className="p-6 border-b">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Lista de Contactos</h2>
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Buscar contactos..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 w-64"
+                  />
+                </div>
+                <Badge variant="outline" className="text-sm">
+                  {filteredContacts.length} contactos
+                </Badge>
               </div>
-              <Badge variant="outline" className="text-sm">
-                {filteredContacts.length} contactos
-              </Badge>
             </div>
           </div>
-        </div>
 
-        <div className="overflow-x-auto">
-          {filteredContacts.length > 0 ? (
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contacto
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Empresa
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Propietario
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fecha
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredContacts.map((contact) => (
-                  <tr key={contact.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                          <User className="h-5 w-5 text-white" />
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{contact.name}</div>
-                          <div className="text-sm text-gray-500">{contact.email}</div>
-                          {contact.phone && <div className="text-xs text-gray-400">{contact.phone}</div>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{contact.company || "—"}</div>
-                      {contact.job_title && <div className="text-xs text-gray-500">{contact.job_title}</div>}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge
-                        variant="outline"
-                        className={`text-xs font-medium ${getStatusColor(contact.status || "lead")}`}
-                      >
-                        {getStatusText(contact.status || "lead")}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{contact.sales_owner || "—"}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(contact.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenContactDetails(contact)}
-                          className="text-purple-600 hover:text-purple-700 border-purple-200 hover:border-purple-300"
-                        >
-                          <FileText className="h-4 w-4 mr-1" />
-                          Detalles
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditContact(contact)}
-                          className="text-blue-600 hover:text-blue-700"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleConvertToClient(contact)}
-                          className="text-green-600 hover:text-green-700"
-                        >
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
+          <div className="overflow-x-auto">
+            {filteredContacts.length > 0 ? (
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Contacto
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Empresa
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Propietario
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Fecha
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Acciones
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="p-12 text-center">
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Users className="h-8 w-8 text-gray-400" />
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredContacts.map((contact) => (
+                    <tr key={contact.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                            <User className="h-5 w-5 text-white" />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{contact.name}</div>
+                            <div className="text-sm text-gray-500">{contact.email}</div>
+                            {contact.phone && <div className="text-xs text-gray-400">{contact.phone}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{contact.company || "—"}</div>
+                        {contact.job_title && <div className="text-xs text-gray-500">{contact.job_title}</div>}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge
+                          variant="outline"
+                          className={`text-xs font-medium ${getStatusColor(contact.status || "lead")}`}
+                        >
+                          {getStatusText(contact.status || "lead")}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{contact.sales_owner || "—"}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(contact.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleContactDetails(contact)}
+                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Detalles
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditContact(contact)}
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleConvertToClient(contact)}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            <ArrowRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="p-12 text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Users className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900">No hay contactos</h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {searchTerm
+                        ? "No se encontraron contactos que coincidan con tu búsqueda."
+                        : "Comienza agregando tu primer contacto."}
+                    </p>
+                  </div>
+                  {!searchTerm && (
+                    <Button onClick={() => setIsCreateContactOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Crear Primer Contacto
+                    </Button>
+                  )}
                 </div>
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900">No hay contactos</h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {searchTerm
-                      ? "No se encontraron contactos que coincidan con tu búsqueda."
-                      : "Comienza agregando tu primer contacto."}
-                  </p>
-                </div>
-                {!searchTerm && (
-                  <Button onClick={() => setIsCreateContactOpen(true)} className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Crear Primer Contacto
-                  </Button>
-                )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
-
-      {isContactDetailsOpen && selectedContactForDetails && (
-        <Dialog open={isContactDetailsOpen} onOpenChange={setIsContactDetailsOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Detalles del Contacto: {selectedContactForDetails.name}
-              </DialogTitle>
-              <DialogDescription>
-                Gestiona la información del contacto y configura servicios y plantillas
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-6">
-              {/* Contact Information Section */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Información del Contacto
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
-                    <Input
-                      value={selectedContactForDetails.name || ""}
-                      onChange={(e) =>
-                        setSelectedContactForDetails({
-                          ...selectedContactForDetails,
-                          name: e.target.value,
-                        })
-                      }
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
-                    <Input
-                      type="email"
-                      value={selectedContactForDetails.email || ""}
-                      onChange={(e) =>
-                        setSelectedContactForDetails({
-                          ...selectedContactForDetails,
-                          email: e.target.value,
-                        })
-                      }
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-                    <Input
-                      value={selectedContactForDetails.phone || ""}
-                      onChange={(e) =>
-                        setSelectedContactForDetails({
-                          ...selectedContactForDetails,
-                          phone: e.target.value,
-                        })
-                      }
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
-                    <Input
-                      value={selectedContactForDetails.company || ""}
-                      onChange={(e) =>
-                        setSelectedContactForDetails({
-                          ...selectedContactForDetails,
-                          company: e.target.value,
-                        })
-                      }
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
-                    <Input
-                      value={selectedContactForDetails.job_title || ""}
-                      onChange={(e) =>
-                        setSelectedContactForDetails({
-                          ...selectedContactForDetails,
-                          job_title: e.target.value,
-                        })
-                      }
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">NIF</label>
-                    <Input
-                      value={selectedContactForDetails.nif || ""}
-                      onChange={(e) =>
-                        setSelectedContactForDetails({
-                          ...selectedContactForDetails,
-                          nif: e.target.value,
-                        })
-                      }
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Service and Template Selection Section */}
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Configuración de Servicios y Plantillas
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  {/* Service Selection */}
-                  <div className="space-y-3">
-                    <label className="block text-sm font-medium text-gray-700">Servicio Seleccionado</label>
-                    {workflowState.selectedService ? (
-                      <div className="p-3 bg-white rounded-lg border border-green-200">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-green-800">{workflowState.selectedService.name}</p>
-                            <p className="text-sm text-green-600">
-                              €{Number(workflowState.selectedService.base_price || 0).toFixed(2)}
-                            </p>
-                          </div>
-                          <Badge variant="outline" className="text-green-700 border-green-300">
-                            Seleccionado
-                          </Badge>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-3 bg-gray-100 rounded-lg border border-gray-200">
-                        <p className="text-sm text-gray-500">No hay servicio seleccionado</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Template Selection */}
-                  <div className="space-y-3">
-                    <label className="block text-sm font-medium text-gray-700">Plantilla Seleccionada</label>
-                    {workflowState.selectedTemplate ? (
-                      <div className="p-3 bg-white rounded-lg border border-blue-200">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-blue-800">{workflowState.selectedTemplate.name}</p>
-                            <p className="text-sm text-blue-600">{workflowState.selectedTemplate.category}</p>
-                          </div>
-                          <Badge variant="outline" className="text-blue-700 border-blue-300">
-                            Seleccionada
-                          </Badge>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-3 bg-gray-100 rounded-lg border border-gray-200">
-                        <p className="text-sm text-gray-500">No hay plantilla seleccionada</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex flex-wrap gap-3">
-                  <Button
-                    onClick={() => {
-                      setIsContactDetailsOpen(false)
-                      handleServiceSelection()
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    <Package className="h-4 w-4 mr-2" />
-                    Seleccionar Servicio
-                  </Button>
-
-                  <Button
-                    onClick={() => {
-                      setIsContactDetailsOpen(false)
-                      handleTemplateSelection()
-                    }}
-                    variant="outline"
-                    className="border-purple-200 text-purple-700 hover:bg-purple-50"
-                    disabled={!workflowState.selectedService}
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Seleccionar Plantilla
-                  </Button>
-
-                  <Button
-                    onClick={() => {
-                      setIsContactDetailsOpen(false)
-                      handleGenerateProposal()
-                    }}
-                    variant="outline"
-                    className="border-green-200 text-green-700 hover:bg-green-50"
-                    disabled={!workflowState.selectedService || !workflowState.selectedTemplate}
-                  >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Generar Propuesta IA
-                  </Button>
-                </div>
-              </div>
-
-              {/* Workflow Progress */}
-              {(workflowState.selectedService || workflowState.selectedTemplate) && (
-                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-800 mb-3">Progreso del Flujo de Trabajo</h4>
-                  <div className="flex items-center gap-2 text-sm">
-                    <div
-                      className={`flex items-center gap-1 px-2 py-1 rounded ${
-                        workflowState.selectedService ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      <Package className="h-3 w-3" />
-                      Servicio
-                    </div>
-                    <ArrowRight className="h-3 w-3 text-gray-400" />
-                    <div
-                      className={`flex items-center gap-1 px-2 py-1 rounded ${
-                        workflowState.selectedTemplate ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      <FileText className="h-3 w-3" />
-                      Plantilla
-                    </div>
-                    <ArrowRight className="h-3 w-3 text-gray-400" />
-                    <div
-                      className={`flex items-center gap-1 px-2 py-1 rounded ${
-                        workflowState.generatedProposal ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      <Sparkles className="h-3 w-3" />
-                      Propuesta
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={() => setIsContactDetailsOpen(false)}>
-                Cerrar
-              </Button>
-              <Button
-                onClick={async () => {
-                  try {
-                    console.log("[v0] Updating contact:", selectedContactForDetails.id)
-                    const response = await fetch(`/api/contacts/${selectedContactForDetails.id}`, {
-                      method: "PUT",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(selectedContactForDetails),
-                    })
-
-                    if (response.ok) {
-                      const result = await response.json()
-                      console.log("[v0] Contact updated successfully:", result)
-                      toast.success("Contacto actualizado correctamente")
-                      await fetchContacts()
-                      setIsContactDetailsOpen(false)
-                    } else {
-                      const error = await response.json()
-                      console.error("[v0] Error updating contact:", error)
-                      toast.error(error.error || "Error al actualizar el contacto")
-                    }
-                  } catch (error) {
-                    console.error("[v0] Error updating contact:", error)
-                    toast.error("Error al actualizar el contacto")
-                  }
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Guardar Cambios
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
 
       <Dialog open={isTemplateSelectorOpen} onOpenChange={setIsTemplateSelectorOpen}>
         <DialogContent className="sm:max-w-[900px] max-h-[80vh] overflow-hidden flex flex-col">
@@ -1836,5 +1681,5 @@ export default function ContactosPage() {
         />
       )}
     </div>
-  )
+  )\
 }
