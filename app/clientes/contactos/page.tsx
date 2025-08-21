@@ -5,7 +5,22 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Plus, Search, Users, User, Mail, Phone, Building, Briefcase, FileText, PenTool, Send, X } from "lucide-react"
+import {
+  Plus,
+  Search,
+  Users,
+  User,
+  Mail,
+  Phone,
+  Building,
+  Briefcase,
+  FileText,
+  PenTool,
+  Send,
+  X,
+  Edit,
+  Trash2,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Contact {
@@ -16,6 +31,13 @@ interface Contact {
   company: string
   status: string
   created_at: string
+  flowProgress?: {
+    service: boolean
+    template: boolean
+    generate: boolean
+    sign: boolean
+    send: boolean
+  }
 }
 
 interface WorkflowState {
@@ -42,6 +64,8 @@ export default function ContactosPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editingContactId, setEditingContactId] = useState<string | null>(null)
 
   const [searchSuggestions, setSearchSuggestions] = useState<Contact[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -85,10 +109,14 @@ export default function ContactosPage() {
   const loadContacts = async () => {
     try {
       setLoading(true)
+      console.log("[v0] Loading contacts from database...")
       const response = await fetch("/api/contacts")
       if (response.ok) {
         const contactsData = await response.json()
+        console.log("[v0] Contacts loaded successfully:", contactsData.length, "contacts")
         setContacts(contactsData)
+      } else {
+        console.log("[v0] Failed to load contacts, status:", response.status)
       }
     } catch (error) {
       console.error("[v0] Error loading contacts:", error)
@@ -147,6 +175,33 @@ export default function ContactosPage() {
     setSearchSuggestions([])
   }
 
+  const handleEditContact = (contact: Contact) => {
+    setFormData({
+      id: contact.id.toString(),
+      name: contact.name,
+      email: contact.email,
+      phone: contact.phone,
+      company: contact.company || "",
+      position: contact.position || "",
+    })
+
+    if (contact.flowProgress) {
+      setFlowProgress(contact.flowProgress)
+    } else {
+      setFlowProgress({
+        service: false,
+        template: false,
+        generate: false,
+        sign: false,
+        send: false,
+      })
+    }
+
+    setIsEditMode(true)
+    setEditingContactId(contact.id.toString())
+    setIsCreateOpen(true)
+  }
+
   const handleInputChange = (field: keyof ContactFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
@@ -160,26 +215,32 @@ export default function ContactosPage() {
 
     const contactToSave = {
       ...formData,
-      id: formData.id || Date.now().toString(),
+      id: isEditMode ? editingContactId : Date.now().toString(),
       flowProgress: flowProgress,
+      status: hasFlowProgress ? "active" : "lead",
+      created_at: isEditMode ? undefined : new Date().toISOString(),
     }
 
     try {
-      if (hasFlowProgress) {
-        // Save to both contacts and clients (has flow progress)
-        console.log("[v0] Guardando en Contactos y Clientes:", contactToSave)
+      console.log("[v0] Saving contact:", contactToSave)
 
-        await saveToContacts(contactToSave)
-        await saveToClients(contactToSave)
-
-        alert("Contacto guardado en Contactos y Clientes")
+      if (isEditMode) {
+        await updateContact(contactToSave)
+        if (hasFlowProgress) {
+          await saveToClients(contactToSave)
+        }
+        alert("Contacto actualizado exitosamente")
       } else {
-        // Save only to contacts (no flow progress)
-        console.log("[v0] Guardando solo en Contactos:", contactToSave)
-
-        await saveToContacts(contactToSave)
-
-        alert("Contacto guardado en Contactos")
+        if (hasFlowProgress) {
+          console.log("[v0] Guardando en Contactos y Clientes:", contactToSave)
+          await saveToContacts(contactToSave)
+          await saveToClients(contactToSave)
+          alert("Contacto guardado en Contactos y Clientes")
+        } else {
+          console.log("[v0] Guardando solo en Contactos:", contactToSave)
+          await saveToContacts(contactToSave)
+          alert("Contacto guardado en Contactos")
+        }
       }
 
       // Reset form and close dialog
@@ -188,34 +249,67 @@ export default function ContactosPage() {
       await loadContacts()
     } catch (error) {
       console.error("[v0] Error al guardar contacto:", error)
-      alert("Error al guardar el contacto")
+      alert("Error al guardar el contacto: " + error.message)
     }
   }
 
+  const updateContact = async (contact: any) => {
+    console.log("[v0] Updating contact with ID:", contact.id)
+    const response = await fetch(`/api/contacts/${contact.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(contact),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error("[v0] Failed to update contact:", errorText)
+      throw new Error("Failed to update contact")
+    }
+
+    const updatedContact = await response.json()
+    console.log("[v0] Contact updated successfully:", updatedContact)
+
+    setContacts((prev) => prev.map((c) => (c.id.toString() === contact.id ? { ...c, ...updatedContact } : c)))
+  }
+
   const saveToContacts = async (contact: any) => {
+    console.log("[v0] Calling saveToContacts with:", contact)
     const existingContact = contacts.find((c) => c.email.toLowerCase() === contact.email.toLowerCase())
 
     if (existingContact) {
+      console.log("[v0] Updating existing contact:", existingContact.id)
       const response = await fetch(`/api/contacts/${existingContact.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(contact),
       })
-      if (!response.ok) throw new Error("Failed to update contact")
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error("[v0] Failed to update contact:", errorText)
+        throw new Error("Failed to update contact")
+      }
 
       // Update local state with updated contact
       const updatedContact = await response.json()
+      console.log("[v0] Contact updated in database:", updatedContact)
       setContacts((prev) => prev.map((c) => (c.id === existingContact.id ? { ...c, ...updatedContact } : c)))
     } else {
+      console.log("[v0] Creating new contact")
       const response = await fetch("/api/contacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(contact),
       })
-      if (!response.ok) throw new Error("Failed to create contact")
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error("[v0] Failed to create contact:", errorText)
+        throw new Error("Failed to create contact")
+      }
 
       // Add new contact to local state
       const newContact = await response.json()
+      console.log("[v0] New contact created in database:", newContact)
       setContacts((prev) => [...prev, newContact])
     }
   }
@@ -260,6 +354,8 @@ export default function ContactosPage() {
       signedDocument: null,
       sentDocument: null,
     })
+    setIsEditMode(false)
+    setEditingContactId(null)
   }
 
   const handleFlowProgressChange = (step: string, value: boolean) => {
@@ -301,13 +397,17 @@ export default function ContactosPage() {
           <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-2xl md:max-w-3xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader className="mb-4">
               <div className="flex flex-row items-center justify-between">
-                <DialogTitle className="text-xl font-semibold">Crear Nuevo Contacto</DialogTitle>
+                <DialogTitle className="text-xl font-semibold">
+                  {isEditMode ? "Editar Contacto" : "Crear Nuevo Contacto"}
+                </DialogTitle>
                 <Button variant="ghost" size="sm" onClick={() => setIsCreateOpen(false)} className="h-6 w-6 p-0 z-10">
                   <X className="h-4 w-4" />
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                Agrega un nuevo contacto a tu base de datos de leads y gestiona su información de manera eficiente.
+                {isEditMode
+                  ? "Actualiza la información del contacto y gestiona su progreso de flujo."
+                  : "Agrega un nuevo contacto a tu base de datos de leads y gestiona su información de manera eficiente."}
               </p>
             </DialogHeader>
 
@@ -520,7 +620,13 @@ export default function ContactosPage() {
                     className="bg-blue-600 hover:bg-blue-700"
                     disabled={!formData.name || !formData.email}
                   >
-                    {hasFlowProgress ? "Guardar Cliente" : "Guardar Contacto"}
+                    {isEditMode
+                      ? hasFlowProgress
+                        ? "Actualizar Cliente"
+                        : "Actualizar Contacto"
+                      : hasFlowProgress
+                        ? "Guardar Cliente"
+                        : "Guardar Contacto"}
                   </Button>
                 </div>
               </div>
@@ -574,6 +680,9 @@ export default function ContactosPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Fecha
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -610,6 +719,19 @@ export default function ContactosPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(contact.created_at).toLocaleDateString("es-ES")}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => handleEditContact(contact)}
+                        className="text-blue-600 hover:text-blue-900 mr-4 inline-flex items-center"
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Editar
+                      </button>
+                      <button className="text-red-600 hover:text-red-900 inline-flex items-center">
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Eliminar
+                      </button>
                     </td>
                   </tr>
                 ))}
