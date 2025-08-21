@@ -694,20 +694,20 @@ export default function ContactosPage() {
       )}
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="space-y-4 pb-6 border-b border-gray-100">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="space-y-3">
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-2xl font-bold text-gray-900 tracking-tight">Editar Contacto</DialogTitle>
+              <DialogTitle className="text-2xl font-bold tracking-tight">Editar Contacto</DialogTitle>
             </div>
-            <DialogDescription className="text-base text-gray-600 leading-relaxed">
+            <DialogDescription className="text-base text-muted-foreground leading-relaxed">
               Modifica la información del contacto y gestiona sus datos de manera eficiente.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-8 py-8">
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-8">
               <div className="space-y-3">
-                <Label htmlFor="edit-name" className="text-sm font-semibold flex items-center gap-3 text-gray-800">
+                <Label htmlFor="edit-name" className="text-sm font-semibold flex items-center gap-3">
                   <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
                     <User className="h-4 w-4 text-white" />
                   </div>
@@ -718,12 +718,12 @@ export default function ContactosPage() {
                   placeholder="Ej: Juan Pérez"
                   value={editContact.name}
                   onChange={(e) => setEditContact({ ...editContact, name: e.target.value })}
-                  className="h-12 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 text-base"
+                  className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                 />
               </div>
 
               <div className="space-y-3">
-                <Label htmlFor="edit-email" className="text-sm font-semibold flex items-center gap-3 text-gray-800">
+                <Label htmlFor="edit-email" className="text-sm font-semibold flex items-center gap-3">
                   <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-sm">
                     <Mail className="h-4 w-4 text-white" />
                   </div>
@@ -735,14 +735,14 @@ export default function ContactosPage() {
                   placeholder="juan.perez@empresa.com"
                   value={editContact.email}
                   onChange={(e) => setEditContact({ ...editContact, email: e.target.value })}
-                  className="h-12 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 text-base"
+                  className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-8">
               <div className="space-y-3">
-                <Label htmlFor="edit-phone" className="text-sm font-semibold flex items-center gap-3 text-gray-800">
+                <Label htmlFor="edit-phone" className="text-sm font-semibold flex items-center gap-3">
                   <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
                     <Phone className="h-4 w-4 text-white" />
                   </div>
@@ -753,12 +753,12 @@ export default function ContactosPage() {
                   placeholder="+34 600 123 456"
                   value={editContact.phone}
                   onChange={(e) => setEditContact({ ...editContact, phone: e.target.value })}
-                  className="h-12 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 text-base"
+                  className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                 />
               </div>
 
               <div className="space-y-3">
-                <Label htmlFor="edit-company" className="text-sm font-semibold flex items-center gap-3 text-gray-800">
+                <Label htmlFor="edit-company" className="text-sm font-semibold flex items-center gap-3">
                   <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-sm">
                     <Building className="h-4 w-4 text-white" />
                   </div>
@@ -769,13 +769,13 @@ export default function ContactosPage() {
                   placeholder="Nombre de la empresa"
                   value={editContact.company}
                   onChange={(e) => setEditContact({ ...editContact, company: e.target.value })}
-                  className="h-12 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 text-base"
+                  className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                 />
               </div>
             </div>
 
             <div className="space-y-3">
-              <Label htmlFor="edit-job-title" className="text-sm font-semibold flex items-center gap-3 text-gray-800">
+              <Label htmlFor="edit-job-title" className="text-sm font-semibold flex items-center gap-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
                   <Briefcase className="h-4 w-4 text-white" />
                 </div>
@@ -786,11 +786,11 @@ export default function ContactosPage() {
                 placeholder="Director de Marketing"
                 value={editContact.job_title}
                 onChange={(e) => setEditContact({ ...editContact, job_title: e.target.value })}
-                className="h-12 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 text-base"
+                className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 shadow-sm">
+            <div className="grid grid-cols-2 gap-8 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 shadow-sm">
               <div className="space-y-3">
                 <Label htmlFor="edit-status" className="text-sm font-bold flex items-center gap-3 text-blue-900">
                   <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm"></div>
