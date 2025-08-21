@@ -68,6 +68,7 @@ interface Service {
   category: string
   description: string
   price: number
+  base_price: number
 }
 
 interface Template {
@@ -134,6 +135,13 @@ export default function ContactosPage() {
   const [templatesLoading, setTemplatesLoading] = useState(false)
   const [templateSearchTerm, setTemplateSearchTerm] = useState("")
   const [selectedTemplateCategory, setSelectedTemplateCategory] = useState<string>("all")
+
+  const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false)
+  const [signatureLoading, setSignatureLoading] = useState(false)
+  const [proposalDocument, setProposalDocument] = useState<any>(null)
+  const [signatureData, setSignatureData] = useState<string | null>(null)
+
+  const [editingContact, setEditingContact] = useState<Contact | null>(null)
 
   useEffect(() => {
     loadContacts()
@@ -272,6 +280,7 @@ export default function ContactosPage() {
     setIsEditMode(true)
     setEditingContactId(contact.id.toString())
     setIsCreateOpen(true)
+    setEditingContact(contact)
   }
 
   const handleInputChange = (field: keyof ContactFormData, value: string) => {
@@ -471,27 +480,140 @@ export default function ContactosPage() {
 
     try {
       console.log("[v0] Generating proposal...")
-      // Simulate proposal generation
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      setLoading(true)
+
+      const proposalData = {
+        contact_id: editingContact?.id || null,
+        service_id: selectedService?.id,
+        template_id: selectedTemplate?.id,
+        contact_name: formData.name,
+        contact_email: formData.email,
+        contact_phone: formData.phone,
+        contact_company: formData.company,
+        service_name: selectedService?.name,
+        service_description: selectedService?.description,
+        service_price: selectedService?.base_price,
+        template_content: selectedTemplate?.content,
+      }
+
+      // Generate proposal using AI
+      const generateResponse = await fetch("/api/proposals/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(proposalData),
+      })
+
+      if (!generateResponse.ok) {
+        throw new Error("Failed to generate proposal")
+      }
+
+      const generatedProposal = await generateResponse.json()
+
+      // Generate PDF document
+      const pdfResponse = await fetch(`/api/proposals/${generatedProposal.id}/pdf`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+
+      if (!pdfResponse.ok) {
+        throw new Error("Failed to generate PDF")
+      }
+
+      const pdfData = await pdfResponse.json()
+
+      // Update workflow state with generated proposal and document
+      setWorkflowState((prev) => ({
+        ...prev,
+        generatedProposal: {
+          ...generatedProposal,
+          pdfUrl: pdfData.pdfUrl,
+          documentId: generatedProposal.id,
+        },
+      }))
+
       setFlowProgress((prev) => ({ ...prev, generate: true }))
+      console.log("[v0] Proposal generated successfully:", generatedProposal)
       alert("Propuesta generada exitosamente")
     } catch (error) {
       console.error("[v0] Error generating proposal:", error)
       alert("Error al generar la propuesta")
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleDigitalSign = async () => {
     if (!canEnableStep("sign")) return
 
+    // Validate that proposal exists
+    if (!workflowState.generatedProposal) {
+      alert("Debe generar una propuesta antes de firmar")
+      return
+    }
+
     try {
-      console.log("[v0] Processing digital signature...")
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      setFlowProgress((prev) => ({ ...prev, sign: true }))
-      alert("Documento firmado digitalmente")
+      setSignatureLoading(true)
+      console.log("[v0] Loading proposal document for signature...")
+
+      // Retrieve the generated proposal document
+      const proposalId = workflowState.generatedProposal.documentId
+      const documentResponse = await fetch(`/api/proposals/${proposalId}/pdf`)
+
+      if (!documentResponse.ok) {
+        throw new Error("Document not found or corrupted")
+      }
+
+      const documentData = await documentResponse.json()
+      setProposalDocument(documentData)
+      setIsSignatureModalOpen(true)
     } catch (error) {
-      console.error("[v0] Error with digital signature:", error)
-      alert("Error en la firma digital")
+      console.error("[v0] Error loading document for signature:", error)
+      alert("Error al cargar el documento. ¿Desea regenerar la propuesta?")
+    } finally {
+      setSignatureLoading(false)
+    }
+  }
+
+  const handleSignatureComplete = async (signature: string) => {
+    try {
+      setSignatureLoading(true)
+      console.log("[v0] Processing digital signature...")
+
+      const proposalId = workflowState.generatedProposal.documentId
+      const signatureResponse = await fetch(`/api/proposals/${proposalId}/signature`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          signature_data: signature,
+          signer_name: formData.name,
+          signer_email: formData.email,
+          contact_id: editingContact?.id || null,
+        }),
+      })
+
+      if (!signatureResponse.ok) {
+        throw new Error("Failed to process signature")
+      }
+
+      const signedDocument = await signatureResponse.json()
+
+      // Update workflow state with signed document
+      setWorkflowState((prev) => ({
+        ...prev,
+        signedDocument: signedDocument,
+      }))
+
+      setFlowProgress((prev) => ({ ...prev, sign: true }))
+      setSignatureData(signature)
+      setIsSignatureModalOpen(false)
+
+      console.log("[v0] Document signed successfully")
+      alert("Documento firmado digitalmente con éxito")
+    } catch (error) {
+      console.error("[v0] Error processing signature:", error)
+      alert("Error al procesar la firma digital")
+    } finally {
+      setSignatureLoading(false)
     }
   }
 
@@ -780,10 +902,14 @@ export default function ContactosPage() {
                     variant="outline"
                     onClick={handleDigitalSign}
                     className="justify-start bg-transparent"
-                    disabled={!canEnableStep("sign")}
+                    disabled={!canEnableStep("sign") || signatureLoading}
                   >
                     <PenTool className="mr-2 h-4 w-4" />
-                    Firma Digital
+                    {signatureLoading
+                      ? "Cargando..."
+                      : workflowState.signedDocument
+                        ? "Documento Firmado"
+                        : "Firma Digital"}
                   </Button>
                 </div>
 
@@ -1137,6 +1263,122 @@ export default function ContactosPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {isSignatureModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Firma Digital del Documento</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsSignatureModalOpen(false)}
+                  disabled={signatureLoading}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-sm text-gray-600 mt-2">
+                Revise el documento y agregue su firma digital para continuar
+              </p>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+              {proposalDocument ? (
+                <div className="space-y-6">
+                  {/* Document Preview */}
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <h4 className="font-medium mb-2">Vista Previa del Documento</h4>
+                    <div className="bg-white p-4 rounded border min-h-[300px]">
+                      {proposalDocument.pdfUrl ? (
+                        <iframe
+                          src={proposalDocument.pdfUrl}
+                          className="w-full h-[400px] border-0"
+                          title="Proposal Document"
+                        />
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">Cargando vista previa del documento...</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Signature Pad */}
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-medium mb-4">Agregar Firma Digital</h4>
+                    <div className="space-y-4">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <canvas
+                          id="signature-pad"
+                          width="600"
+                          height="200"
+                          className="border rounded mx-auto cursor-crosshair"
+                          style={{ touchAction: "none" }}
+                        />
+                        <p className="text-sm text-gray-600 mt-2">Dibuje su firma en el área de arriba</p>
+                      </div>
+
+                      <div className="flex gap-2 justify-center">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            const canvas = document.getElementById("signature-pad") as HTMLCanvasElement
+                            const ctx = canvas?.getContext("2d")
+                            if (ctx) {
+                              ctx.clearRect(0, 0, canvas.width, canvas.height)
+                            }
+                          }}
+                        >
+                          Limpiar
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            const canvas = document.getElementById("signature-pad") as HTMLCanvasElement
+                            if (canvas) {
+                              const signatureDataUrl = canvas.toDataURL()
+                              handleSignatureComplete(signatureDataUrl)
+                            }
+                          }}
+                          disabled={signatureLoading}
+                        >
+                          {signatureLoading ? "Procesando..." : "Firmar Documento"}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Document Information */}
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">Información del Documento</h4>
+                    <div className="text-sm text-blue-800 space-y-1">
+                      <p>
+                        <strong>Contacto:</strong> {formData.name}
+                      </p>
+                      <p>
+                        <strong>Email:</strong> {formData.email}
+                      </p>
+                      <p>
+                        <strong>Servicio:</strong> {selectedService?.name}
+                      </p>
+                      <p>
+                        <strong>Plantilla:</strong> {selectedTemplate?.name}
+                      </p>
+                      <p>
+                        <strong>Fecha:</strong> {new Date().toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="mt-2 text-gray-600">Cargando documento...</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
