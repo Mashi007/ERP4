@@ -6,7 +6,7 @@ const sql = neon(process.env.DATABASE_URL!)
 export async function GET() {
   try {
     const services = await sql`
-      SELECT id, name, description, price as base_price, currency, created_at,
+      SELECT id, name, description, base_price, currency, created_at,
              'General' as category, 0 as duration_hours, 
              '[]' as features, '[]' as requirements, '[]' as deliverables,
              true as is_active
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
     const result = await sql`
       INSERT INTO products (
-        name, description, price, currency, is_service, created_at, updated_at
+        name, description, base_price, currency, is_service, created_at, updated_at
       )
       VALUES (
         ${name}, 
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
         NOW(), 
         NOW()
       )
-      RETURNING id, name, description, price as base_price, currency, created_at,
+      RETURNING id, name, description, base_price, currency, created_at,
                 'General' as category, 0 as duration_hours,
                 '[]' as features, '[]' as requirements, '[]' as deliverables,
                 true as is_active
