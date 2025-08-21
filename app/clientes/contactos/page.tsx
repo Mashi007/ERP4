@@ -28,6 +28,11 @@ import {
   Sparkles,
   Search,
   Users,
+  FileText,
+  CheckCircle,
+  PenTool,
+  Send,
+  Save,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -103,6 +108,7 @@ export default function ContactosPage() {
   })
   const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false)
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
   // Form states
   const [newContact, setNewContact] = useState({
@@ -968,58 +974,154 @@ export default function ContactosPage() {
               </div>
             </div>
 
-            <DialogFooter className="flex flex-col gap-4 pt-8 border-t border-gray-100">
+            <DialogFooter className="flex flex-col gap-6 pt-8 border-t border-gray-100">
               <div className="w-full">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between mb-6 px-2">
+                  <div className="flex flex-col items-center gap-2">
                     <div
-                      className={`w-3 h-3 rounded-full ${workflowState.step === "service" || workflowState.selectedService ? "bg-green-500" : "bg-gray-300"}`}
+                      className={`w-4 h-4 rounded-full transition-all duration-300 ${
+                        workflowState.step === "service" || workflowState.selectedService
+                          ? "bg-green-500 shadow-lg shadow-green-200"
+                          : "bg-gray-300"
+                      }`}
                     ></div>
-                    <span className="text-sm font-medium">Servicio</span>
+                    <span
+                      className={`text-xs font-medium ${
+                        workflowState.step === "service" || workflowState.selectedService
+                          ? "text-green-700"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Servicio
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex-1 h-0.5 bg-gray-200 mx-2">
                     <div
-                      className={`w-3 h-3 rounded-full ${workflowState.step === "template" || workflowState.selectedTemplate ? "bg-green-500" : "bg-gray-300"}`}
+                      className={`h-full transition-all duration-500 ${
+                        workflowState.selectedService ? "bg-green-500 w-full" : "bg-gray-200 w-0"
+                      }`}
                     ></div>
-                    <span className="text-sm font-medium">Plantilla</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-center gap-2">
                     <div
-                      className={`w-3 h-3 rounded-full ${workflowState.step === "generate" || workflowState.generatedProposal ? "bg-green-500" : "bg-gray-300"}`}
+                      className={`w-4 h-4 rounded-full transition-all duration-300 ${
+                        workflowState.step === "template" || workflowState.selectedTemplate
+                          ? "bg-purple-500 shadow-lg shadow-purple-200"
+                          : "bg-gray-300"
+                      }`}
                     ></div>
-                    <span className="text-sm font-medium">Generar</span>
+                    <span
+                      className={`text-xs font-medium ${
+                        workflowState.step === "template" || workflowState.selectedTemplate
+                          ? "text-purple-700"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Plantilla
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex-1 h-0.5 bg-gray-200 mx-2">
                     <div
-                      className={`w-3 h-3 rounded-full ${workflowState.step === "signature" || workflowState.signedDocument ? "bg-green-500" : "bg-gray-300"}`}
+                      className={`h-full transition-all duration-500 ${
+                        workflowState.selectedTemplate ? "bg-purple-500 w-full" : "bg-gray-200 w-0"
+                      }`}
                     ></div>
-                    <span className="text-sm font-medium">Firma</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-center gap-2">
                     <div
-                      className={`w-3 h-3 rounded-full ${workflowState.step === "send" || workflowState.step === "complete" ? "bg-green-500" : "bg-gray-300"}`}
+                      className={`w-4 h-4 rounded-full transition-all duration-300 ${
+                        workflowState.step === "generate" || workflowState.generatedProposal
+                          ? "bg-blue-500 shadow-lg shadow-blue-200"
+                          : "bg-gray-300"
+                      }`}
                     ></div>
-                    <span className="text-sm font-medium">Enviar</span>
+                    <span
+                      className={`text-xs font-medium ${
+                        workflowState.step === "generate" || workflowState.generatedProposal
+                          ? "text-blue-700"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Generar
+                    </span>
+                  </div>
+                  <div className="flex-1 h-0.5 bg-gray-200 mx-2">
+                    <div
+                      className={`h-full transition-all duration-500 ${
+                        workflowState.generatedProposal ? "bg-blue-500 w-full" : "bg-gray-200 w-0"
+                      }`}
+                    ></div>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <div
+                      className={`w-4 h-4 rounded-full transition-all duration-300 ${
+                        workflowState.step === "signature" || workflowState.signedDocument
+                          ? "bg-orange-500 shadow-lg shadow-orange-200"
+                          : "bg-gray-300"
+                      }`}
+                    ></div>
+                    <span
+                      className={`text-xs font-medium ${
+                        workflowState.step === "signature" || workflowState.signedDocument
+                          ? "text-orange-700"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Firma
+                    </span>
+                  </div>
+                  <div className="flex-1 h-0.5 bg-gray-200 mx-2">
+                    <div
+                      className={`h-full transition-all duration-500 ${
+                        workflowState.signedDocument ? "bg-orange-500 w-full" : "bg-gray-200 w-0"
+                      }`}
+                    ></div>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <div
+                      className={`w-4 h-4 rounded-full transition-all duration-300 ${
+                        workflowState.step === "send" || workflowState.step === "complete"
+                          ? "bg-indigo-500 shadow-lg shadow-indigo-200"
+                          : "bg-gray-300"
+                      }`}
+                    ></div>
+                    <span
+                      className={`text-xs font-medium ${
+                        workflowState.step === "send" || workflowState.step === "complete"
+                          ? "text-indigo-700"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Enviar
+                    </span>
                   </div>
                 </div>
 
                 {workflowState.selectedService && (
-                  <div className="w-full p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200 mb-4">
+                  <div className="w-full p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 mb-4 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-semibold text-green-800">{workflowState.selectedService.name}</h4>
-                        <p className="text-sm text-green-600">{workflowState.selectedService.description}</p>
-                        <p className="text-xs text-green-500 mt-1">
-                          {workflowState.selectedService.currency} {workflowState.selectedService.base_price} •{" "}
-                          {workflowState.selectedService.duration}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                          <Package className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-green-800">{workflowState.selectedService.name}</h4>
+                          <p className="text-sm text-green-600 line-clamp-1">
+                            {workflowState.selectedService.description}
+                          </p>
+                          <p className="text-xs text-green-500 mt-1 font-medium">
+                            {workflowState.selectedService.currency} {workflowState.selectedService.base_price} •
+                            {workflowState.selectedService.duration}
+                          </p>
+                        </div>
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={resetWorkflow}
-                        className="text-green-700 border-green-300 hover:bg-green-100 bg-transparent"
+                        className="text-green-700 border-green-300 hover:bg-green-100 bg-white shadow-sm"
                       >
+                        <Edit className="w-4 h-4 mr-1" />
                         Cambiar
                       </Button>
                     </div>
@@ -1027,18 +1129,24 @@ export default function ContactosPage() {
                 )}
 
                 {workflowState.selectedTemplate && (
-                  <div className="w-full p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 mb-4">
+                  <div className="w-full p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200 mb-4 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-semibold text-blue-800">{workflowState.selectedTemplate.name}</h4>
-                        <p className="text-sm text-blue-600">Plantilla seleccionada</p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-purple-800">{workflowState.selectedTemplate.name}</h4>
+                          <p className="text-sm text-purple-600">Plantilla seleccionada</p>
+                        </div>
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setIsTemplateSelectorOpen(true)}
-                        className="text-blue-700 border-blue-300 hover:bg-blue-100"
+                        className="text-purple-700 border-purple-300 hover:bg-purple-100 bg-white shadow-sm"
                       >
+                        <Edit className="w-4 h-4 mr-1" />
                         Cambiar
                       </Button>
                     </div>
@@ -1046,76 +1154,130 @@ export default function ContactosPage() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4 w-full">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsServiceSelectorOpen(true)}
-                  disabled={workflowState.step !== "service"}
-                  className="h-12 border-2 border-green-300 text-green-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-green-100 hover:border-green-400 transition-all duration-200 font-semibold shadow-sm"
-                >
-                  <Package className="mr-3 h-5 w-5" />
-                  Seleccionar Servicio
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsTemplateSelectorOpen(true)}
-                  disabled={!workflowState.selectedService || workflowState.step !== "template"}
-                  className="h-12 border-2 border-purple-300 text-purple-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-purple-100 hover:border-purple-400 transition-all duration-200 font-semibold shadow-sm"
-                >
-                  <Edit className="mr-3 h-5 w-5" />
-                  Seleccionar Plantilla
-                </Button>
-              </div>
+              <div className="space-y-4 w-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsServiceSelectorOpen(true)}
+                    disabled={workflowState.step !== "service"}
+                    className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
+                      workflowState.step === "service"
+                        ? "border-green-400 text-green-700 bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 shadow-green-100"
+                        : workflowState.selectedService
+                          ? "border-green-300 text-green-600 bg-green-50"
+                          : "border-gray-300 text-gray-500 bg-gray-50"
+                    }`}
+                  >
+                    <Package className="mr-3 h-5 w-5" />
+                    {workflowState.selectedService ? "Servicio Seleccionado" : "Seleccionar Servicio"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsTemplateSelectorOpen(true)}
+                    disabled={!workflowState.selectedService || workflowState.step !== "template"}
+                    className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
+                      workflowState.step === "template"
+                        ? "border-purple-400 text-purple-700 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 shadow-purple-100"
+                        : workflowState.selectedTemplate
+                          ? "border-purple-300 text-purple-600 bg-purple-50"
+                          : "border-gray-300 text-gray-500 bg-gray-50"
+                    }`}
+                  >
+                    <FileText className="mr-3 h-5 w-5" />
+                    {workflowState.selectedTemplate ? "Plantilla Seleccionada" : "Seleccionar Plantilla"}
+                  </Button>
+                </div>
 
-              <div className="grid grid-cols-2 gap-4 w-full">
-                <Button
-                  variant="outline"
-                  onClick={() => handleGenerateProposal("create")}
-                  disabled={
-                    !workflowState.selectedTemplate || workflowState.step !== "generate" || isProposalGenerating
-                  }
-                  className="h-12 border-2 border-blue-300 text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:border-blue-400 transition-all duration-200 font-semibold shadow-sm"
-                >
-                  {isProposalGenerating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
-                      Generando...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-3 h-5 w-5" />
-                      Generar Propuesta IA
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleDigitalSignature}
-                  disabled={!workflowState.generatedProposal || workflowState.step !== "signature"}
-                  className="h-12 border-2 border-orange-300 text-orange-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 hover:border-orange-400 transition-all duration-200 font-semibold shadow-sm bg-transparent"
-                >
-                  <Edit className="mr-3 h-5 w-5" />
-                  Firma Digital
-                </Button>
-              </div>
+                <div className="w-full">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleGenerateProposal("create")}
+                    disabled={
+                      !workflowState.selectedTemplate || workflowState.step !== "generate" || isProposalGenerating
+                    }
+                    className={`w-full h-16 border-2 transition-all duration-300 font-semibold shadow-sm ${
+                      workflowState.step === "generate"
+                        ? "border-blue-400 text-blue-700 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 shadow-blue-100"
+                        : workflowState.generatedProposal
+                          ? "border-blue-300 text-blue-600 bg-blue-50"
+                          : "border-gray-300 text-gray-500 bg-gray-50"
+                    }`}
+                  >
+                    {isProposalGenerating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+                        Generando Propuesta con IA...
+                      </>
+                    ) : workflowState.generatedProposal ? (
+                      <>
+                        <CheckCircle className="mr-3 h-6 w-6 text-green-500" />
+                        Propuesta Generada con IA
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-3 h-6 w-6" />
+                        Generar Propuesta con IA
+                      </>
+                    )}
+                  </Button>
+                </div>
 
-              <div className="grid grid-cols-2 gap-4 w-full">
-                <Button
-                  variant="outline"
-                  onClick={handleSendDocument}
-                  disabled={!workflowState.signedDocument || workflowState.step !== "send"}
-                  className="h-12 border-2 border-indigo-300 text-indigo-700 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-indigo-100 hover:border-indigo-400 transition-all duration-200 font-semibold shadow-sm bg-transparent"
-                >
-                  <Mail className="mr-3 h-5 w-5" />
-                  Enviar Documento
-                </Button>
-                <Button
-                  onClick={handleCreateContact}
-                  disabled={workflowState.step !== "complete"}
-                  className="h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
-                >
-                  Guardar Cambios
-                </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                  <Button
+                    variant="outline"
+                    onClick={handleDigitalSignature}
+                    disabled={!workflowState.generatedProposal || workflowState.step !== "signature"}
+                    className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
+                      workflowState.step === "signature"
+                        ? "border-orange-400 text-orange-700 bg-gradient-to-r from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 shadow-orange-100"
+                        : workflowState.signedDocument
+                          ? "border-orange-300 text-orange-600 bg-orange-50"
+                          : "border-gray-300 text-gray-500 bg-gray-50"
+                    }`}
+                  >
+                    <PenTool className="mr-3 h-5 w-5" />
+                    {workflowState.signedDocument ? "Documento Firmado" : "Firma Digital"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleSendDocument}
+                    disabled={!workflowState.signedDocument || workflowState.step !== "send"}
+                    className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
+                      workflowState.step === "send"
+                        ? "border-indigo-400 text-indigo-700 bg-gradient-to-r from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 shadow-indigo-100"
+                        : workflowState.step === "complete"
+                          ? "border-indigo-300 text-indigo-600 bg-indigo-50"
+                          : "border-gray-300 text-gray-500 bg-gray-50"
+                    }`}
+                  >
+                    <Send className="mr-3 h-5 w-5" />
+                    {workflowState.step === "complete" ? "Documento Enviado" : "Enviar Documento"}
+                  </Button>
+                </div>
+
+                <div className="w-full pt-4 border-t border-gray-200">
+                  <div className="flex gap-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsCreateDialogOpen(false)}
+                      className="flex-1 h-12 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={handleCreateContact}
+                      disabled={workflowState.step !== "complete"}
+                      className={`flex-1 h-12 font-semibold shadow-lg transition-all duration-300 ${
+                        workflowState.step === "complete"
+                          ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:shadow-xl"
+                          : "bg-gray-400 cursor-not-allowed"
+                      }`}
+                    >
+                      <Save className="mr-2 h-5 w-5" />
+                      Guardar Contacto
+                    </Button>
+                  </div>
+                </div>
               </div>
             </DialogFooter>
           </DialogContent>
