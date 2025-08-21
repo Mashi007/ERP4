@@ -86,8 +86,8 @@ export default function ContactosPage() {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
 
   const [services, setServices] = useState<Service[]>([])
-  const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [isServiceSelectorOpen, setIsServiceSelectorOpen] = useState(false)
+  const [isServiceSelectorBusy, setIsServiceSelectorBusy] = useState(false)
   const [isProposalGenerating, setIsProposalGenerating] = useState(false)
   const [currentFormType, setCurrentFormType] = useState<"create" | "edit">("create")
 
@@ -97,6 +97,7 @@ export default function ContactosPage() {
 
   const [templates, setTemplates] = useState<Template[]>([])
   const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = useState(false)
+  const [isTemplateSelectorBusy, setIsTemplateSelectorBusy] = useState(false)
   const [workflowState, setWorkflowState] = useState<WorkflowState>({
     step: "service",
     selectedService: null,
@@ -132,8 +133,6 @@ export default function ContactosPage() {
   })
 
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
-  const [isServiceSelectorBusy, setIsServiceSelectorBusy] = useState(false)
-  const [isTemplateSelectorBusy, setIsTemplateSelectorBusy] = useState(false)
   const [isGeneratingProposal, setIsGeneratingProposal] = useState(false)
 
   const stageOptions = [
@@ -554,7 +553,7 @@ export default function ContactosPage() {
       return
     }
 
-    if (!selectedService) {
+    if (!workflowState.selectedService) {
       toast.error("Por favor selecciona un servicio del catálogo")
       return
     }
@@ -599,7 +598,7 @@ export default function ContactosPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contactId,
-          serviceId: selectedService.id,
+          serviceId: workflowState.selectedService.id,
           customRequirements: `Propuesta personalizada para ${contactData.name} de ${contactData.company}`,
         }),
       })
@@ -670,7 +669,7 @@ export default function ContactosPage() {
           body: JSON.stringify({
             method: sendOption,
             recipient: sendOption === "email" ? contactData.email : contactData.phone,
-            message: `Hola ${contactData.name}, adjunto encontrarás nuestra propuesta personalizada para ${selectedService.name}. ¡Esperamos tu respuesta!`,
+            message: `Hola ${contactData.name}, adjunto encontrarás nuestra propuesta personalizada para ${workflowState.selectedService.name}. ¡Esperamos tu respuesta!`,
           }),
         })
 
@@ -697,7 +696,13 @@ export default function ContactosPage() {
         setIsEditDialogOpen(false)
       }
 
-      setSelectedService(null)
+      setWorkflowState((prev) => ({
+        ...prev,
+        selectedService: null,
+        selectedTemplate: null,
+        step: "service",
+        currentStep: 1,
+      }))
       fetchContacts()
     } catch (error) {
       console.error("Error in proposal workflow:", error)
@@ -730,12 +735,13 @@ export default function ContactosPage() {
         })
         fetchContacts()
         setWorkflowState({
-          currentStep: 0,
+          step: "service",
           selectedService: null,
           selectedTemplate: null,
           generatedProposal: null,
           signedDocument: null,
           sentDocument: null,
+          currentStep: 1,
         })
       } else {
         toast.error("Error al crear contacto")
@@ -764,9 +770,9 @@ export default function ContactosPage() {
             <DialogHeader className="space-y-3 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <DialogTitle className="text-2xl font-bold tracking-tight">Crear Nuevo Contacto</DialogTitle>
-                {selectedService && (
+                {workflowState.selectedService && (
                   <Badge className="bg-green-100 text-green-800 border-green-300 px-3 py-1 text-sm font-medium">
-                    Servicio: {selectedService.name}
+                    Servicio: {workflowState.selectedService.name}
                   </Badge>
                 )}
               </div>
@@ -1042,21 +1048,31 @@ export default function ContactosPage() {
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                    {selectedService && (
+                    {workflowState.selectedService && (
                       <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-200 shadow-sm">
                         <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
                           <CheckCircle className="h-4 w-4 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-green-800 truncate">{selectedService.name}</p>
+                          <p className="text-sm font-semibold text-green-800 truncate">
+                            {workflowState.selectedService.name}
+                          </p>
                           <p className="text-xs text-green-600">
-                            {Number(selectedService.base_price || 0).toFixed(2)} {selectedService.currency || "EUR"}
+                            {Number(workflowState.selectedService.base_price || 0).toFixed(2)}{" "}
+                            {workflowState.selectedService.currency || "EUR"}
                           </p>
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setSelectedService(null)}
+                          onClick={() =>
+                            setWorkflowState((prev) => ({
+                              ...prev,
+                              selectedService: null,
+                              step: "service",
+                              currentStep: 1,
+                            }))
+                          }
                           className="text-green-600 hover:text-green-800 hover:bg-green-50 flex-shrink-0"
                         >
                           Cambiar
@@ -1064,19 +1080,28 @@ export default function ContactosPage() {
                       </div>
                     )}
 
-                    {selectedTemplate && (
+                    {workflowState.selectedTemplate && (
                       <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-purple-200 shadow-sm">
                         <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
                           <FileText className="h-4 w-4 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-purple-800 truncate">{selectedTemplate.name}</p>
+                          <p className="text-sm font-semibold text-purple-800 truncate">
+                            {workflowState.selectedTemplate.name}
+                          </p>
                           <p className="text-xs text-purple-600">Plantilla seleccionada</p>
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setSelectedTemplate(null)}
+                          onClick={() =>
+                            setWorkflowState((prev) => ({
+                              ...prev,
+                              selectedTemplate: null,
+                              step: "template",
+                              currentStep: 2,
+                            }))
+                          }
                           className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 flex-shrink-0"
                         >
                           Cambiar
@@ -1098,8 +1123,8 @@ export default function ContactosPage() {
 
                   <Button
                     onClick={handleTemplateSelection}
-                    disabled={!selectedService || isGeneratingProposal}
-                    variant={selectedService ? "default" : "secondary"}
+                    disabled={!workflowState.selectedService || isGeneratingProposal}
+                    variant={workflowState.selectedService ? "default" : "secondary"}
                     className="h-12 font-medium rounded-xl shadow-sm transition-all duration-200 flex items-center gap-2"
                   >
                     <FileText className="h-4 w-4" />
@@ -1108,7 +1133,7 @@ export default function ContactosPage() {
 
                   <Button
                     onClick={handleGenerateProposal}
-                    disabled={!selectedService || !selectedTemplate || isGeneratingProposal}
+                    disabled={!workflowState.selectedService || !workflowState.selectedTemplate || isGeneratingProposal}
                     className="h-12 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-xl shadow-sm transition-all duration-200 flex items-center gap-2"
                   >
                     {isGeneratingProposal ? (
@@ -1229,11 +1254,17 @@ export default function ContactosPage() {
           </DialogContent>
         </Dialog>
 
-        <ServiceSelector
-          open={isServiceSelectorOpen}
-          onOpenChange={setIsServiceSelectorOpen}
-          onServiceSelect={handleServiceSelect}
-        />
+        {isServiceSelectorOpen && (
+          <ServiceSelector
+            isOpen={isServiceSelectorOpen}
+            onClose={() => {
+              setIsServiceSelectorOpen(false)
+              setIsServiceSelectorBusy(false)
+            }}
+            onServiceSelect={handleServiceSelect}
+            services={services}
+          />
+        )}
       </div>
     </div>
   )
