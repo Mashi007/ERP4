@@ -16,7 +16,20 @@ import {
 } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Label } from "@/components/ui/label"
-import { Plus, Search, ArrowRight, Edit, User, Mail, Phone, Building, Briefcase, TrendingUp } from "lucide-react"
+import {
+  Plus,
+  Search,
+  ArrowRight,
+  Edit,
+  User,
+  Mail,
+  Phone,
+  Building,
+  Briefcase,
+  TrendingUp,
+  FileText,
+  Package,
+} from "lucide-react"
 import { toast } from "sonner"
 
 interface Contact {
@@ -477,13 +490,40 @@ export default function ContactosPage() {
               </div>
             </div>
 
-            <DialogFooter className="flex gap-3 pt-6 border-t">
-              <Button variant="outline" onClick={() => setIsNewContactOpen(false)} className="flex-1">
-                Cancelar
-              </Button>
-              <Button onClick={handleCreateContact} className="flex-1 bg-blue-600 hover:bg-blue-700">
-                Crear Contacto
-              </Button>
+            <DialogFooter className="flex flex-col gap-3 pt-6 border-t">
+              <div className="flex gap-3 w-full">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    // TODO: Implement catalog functionality
+                    toast.success("Abriendo catálogo...")
+                  }}
+                  className="flex-1 border-green-300 text-green-700 hover:bg-green-50 hover:border-green-400"
+                >
+                  <Package className="mr-2 h-4 w-4" />
+                  Catálogo
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    // TODO: Implement proposal functionality
+                    toast.success("Creando propuesta...")
+                  }}
+                  className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Propuesta
+                </Button>
+              </div>
+
+              <div className="flex gap-3 w-full">
+                <Button variant="outline" onClick={() => setIsNewContactOpen(false)} className="flex-1">
+                  Cancelar
+                </Button>
+                <Button onClick={handleCreateContact} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                  Crear Contacto
+                </Button>
+              </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>
