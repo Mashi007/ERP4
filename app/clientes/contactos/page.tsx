@@ -124,19 +124,20 @@ export default function ContactosPage() {
               Nuevo Contacto
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader className="flex flex-row items-center justify-between">
-              <DialogTitle className="text-xl font-semibold">Crear Nuevo Contacto</DialogTitle>
-              <Button variant="ghost" size="sm" onClick={() => setIsCreateOpen(false)} className="h-6 w-6 p-0">
-                <X className="h-4 w-4" />
-              </Button>
+          <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-2xl md:max-w-3xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="mb-4">
+              <div className="flex flex-row items-center justify-between">
+                <DialogTitle className="text-xl font-semibold">Crear Nuevo Contacto</DialogTitle>
+                <Button variant="ghost" size="sm" onClick={() => setIsCreateOpen(false)} className="h-6 w-6 p-0 z-10">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Agrega un nuevo contacto a tu base de datos de leads y gestiona su información de manera eficiente.
+              </p>
             </DialogHeader>
 
             <div className="space-y-6">
-              <p className="text-sm text-muted-foreground">
-                Agrega un nuevo contacto a tu base de datos de leads y gestiona su información de manera eficiente.
-              </p>
-
               {/* Contact Information Section */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
@@ -262,7 +263,7 @@ export default function ContactosPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-between pt-4 border-t">
+              <div className="flex justify-between pt-4 mt-6 border-t">
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
                   Cancelar
                 </Button>
