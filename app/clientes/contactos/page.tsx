@@ -514,6 +514,10 @@ export default function ContactosPage() {
       const generatedProposal = await response.json()
       console.log("[v0] Grok AI proposal generated:", generatedProposal)
 
+      if (generatedProposal.content && generatedProposal.content.startsWith("```html")) {
+        generatedProposal.content = generatedProposal.content.replace(/```html\n?/, "").replace(/\n?```$/, "")
+      }
+
       setProposalDocument(generatedProposal)
       setWorkflowState((prev) => ({
         ...prev,
@@ -531,11 +535,8 @@ export default function ContactosPage() {
   }
 
   const handleDigitalSign = async () => {
-    if (!canEnableStep("sign")) return
-
-    // Validate that proposal exists
-    if (!workflowState.generatedProposal) {
-      alert("Debe generar una propuesta antes de firmar")
+    if (!proposalDocument || !proposalDocument.content) {
+      alert("Primero debes generar una propuesta antes de firmar")
       return
     }
 
@@ -543,20 +544,33 @@ export default function ContactosPage() {
       setSignatureLoading(true)
       console.log("[v0] Loading proposal document for signature...")
 
-      // Retrieve the generated proposal document
-      const proposalId = workflowState.generatedProposal.documentId
-      const documentResponse = await fetch(`/api/proposals/${proposalId}/pdf`)
+      if (!proposalDocument.pdfUrl || proposalDocument.pdfUrl.includes("generated-")) {
+        console.log("[v0] Generating PDF from HTML content...")
 
-      if (!documentResponse.ok) {
-        throw new Error("Document not found or corrupted")
+        const pdfResponse = await fetch("/api/generate-pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            htmlContent: proposalDocument.content,
+            contactId: formData.id || Date.now(),
+            proposalId: proposalDocument.id,
+          }),
+        })
+
+        if (pdfResponse.ok) {
+          const pdfData = await pdfResponse.json()
+          setProposalDocument((prev) => ({
+            ...prev,
+            pdfUrl: pdfData.pdfUrl,
+            htmlContent: pdfData.htmlContent,
+          }))
+        }
       }
 
-      const documentData = await documentResponse.json()
-      setProposalDocument(documentData)
       setIsSignatureModalOpen(true)
     } catch (error) {
       console.error("[v0] Error loading document for signature:", error)
-      alert("Error al cargar el documento. ¿Desea regenerar la propuesta?")
+      alert("Error al cargar documento: " + error.message)
     } finally {
       setSignatureLoading(false)
     }
@@ -567,7 +581,7 @@ export default function ContactosPage() {
       setSignatureLoading(true)
       console.log("[v0] Processing digital signature...")
 
-      const proposalId = workflowState.generatedProposal.documentId
+      const proposalId = proposalDocument.id
       const signatureResponse = await fetch(`/api/proposals/${proposalId}/signature`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
