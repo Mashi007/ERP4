@@ -70,6 +70,17 @@ interface Service {
   price: number
 }
 
+interface Template {
+  id: number
+  name: string
+  description: string
+  content: string
+  variables: any
+  category: string
+  is_active: boolean
+  created_at: string
+}
+
 export default function ContactosPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
@@ -117,12 +128,23 @@ export default function ContactosPage() {
   const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = useState(false)
   const [services, setServices] = useState<Service[]>([])
   const [selectedService, setSelectedService] = useState<Service | null>(null)
-  const [selectedTemplate, setSelectedTemplate] = useState<any>(null)
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
+
+  const [templates, setTemplates] = useState<Template[]>([])
+  const [templatesLoading, setTemplatesLoading] = useState(false)
+  const [templateSearchTerm, setTemplateSearchTerm] = useState("")
+  const [selectedTemplateCategory, setSelectedTemplateCategory] = useState<string>("all")
 
   useEffect(() => {
     loadContacts()
     loadServices()
   }, [])
+
+  useEffect(() => {
+    if (isTemplateSelectorOpen) {
+      loadTemplates()
+    }
+  }, [isTemplateSelectorOpen])
 
   const loadContacts = async () => {
     try {
@@ -152,6 +174,25 @@ export default function ContactosPage() {
       }
     } catch (error) {
       console.error("[v0] Error loading services:", error)
+    }
+  }
+
+  const loadTemplates = async () => {
+    try {
+      setTemplatesLoading(true)
+      console.log("[v0] Loading templates from proposals system...")
+      const response = await fetch("/api/templates/proposals")
+      if (response.ok) {
+        const templatesData = await response.json()
+        console.log("[v0] Templates loaded successfully:", templatesData.length, "templates")
+        setTemplates(templatesData)
+      } else {
+        console.error("[v0] Failed to load templates, status:", response.status)
+      }
+    } catch (error) {
+      console.error("[v0] Error loading templates:", error)
+    } finally {
+      setTemplatesLoading(false)
     }
   }
 
@@ -418,7 +459,7 @@ export default function ContactosPage() {
     console.log("[v0] Service selected:", service)
   }
 
-  const handleTemplateSelection = (template: any) => {
+  const handleTemplateSelection = (template: Template) => {
     setSelectedTemplate(template)
     setFlowProgress((prev) => ({ ...prev, template: true }))
     setIsTemplateSelectorOpen(false)
@@ -493,6 +534,35 @@ export default function ContactosPage() {
       contact.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contact.email?.toLowerCase().includes(searchTerm.toLowerCase()),
   )
+
+  const filteredTemplates = useMemo(() => {
+    let filtered = templates.filter((template) => template.is_active)
+
+    // Filter by service category if a service is selected
+    if (selectedService && selectedTemplateCategory !== "all") {
+      filtered = filtered.filter(
+        (template) =>
+          template.category.toLowerCase() === selectedService.category.toLowerCase() ||
+          template.category.toLowerCase() === "general",
+      )
+    }
+
+    // Filter by search term
+    if (templateSearchTerm) {
+      filtered = filtered.filter(
+        (template) =>
+          template.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) ||
+          template.description.toLowerCase().includes(templateSearchTerm.toLowerCase()),
+      )
+    }
+
+    return filtered
+  }, [templates, selectedService, selectedTemplateCategory, templateSearchTerm])
+
+  const templateCategories = useMemo(() => {
+    const categories = ["all", ...new Set(templates.map((t) => t.category.toLowerCase()))]
+    return categories
+  }, [templates])
 
   if (loading) {
     return (
@@ -872,7 +942,7 @@ export default function ContactosPage() {
         ) : (
           <div className="p-12 text-center">
             <div className="flex flex-col items-center gap-4">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="h-8 w-8 text-gray-400" />
               </div>
               <div>
@@ -915,23 +985,155 @@ export default function ContactosPage() {
       </Dialog>
 
       <Dialog open={isTemplateSelectorOpen} onOpenChange={setIsTemplateSelectorOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Seleccionar Plantilla</DialogTitle>
-            <p className="text-sm text-muted-foreground">Elige una plantilla para generar la propuesta</p>
+            <DialogTitle className="text-xl font-semibold">Seleccionar Plantilla de Propuesta</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {selectedService
+                ? `Plantillas compatibles con ${selectedService.name} (${selectedService.category})`
+                : "Selecciona una plantilla para generar la propuesta"}
+            </p>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {["Plantilla Básica", "Plantilla Premium", "Plantilla Personalizada"].map((template, index) => (
-              <div
-                key={index}
-                onClick={() => handleTemplateSelection({ name: template, id: index + 1 })}
-                className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-              >
-                <h3 className="font-medium text-sm">{template}</h3>
-                <p className="text-xs text-gray-500 mt-1">Descripción de la plantilla</p>
+          <div className="space-y-4">
+            {/* Search and Filter Controls */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Buscar plantillas por nombre o descripción..."
+                    value={templateSearchTerm}
+                    onChange={(e) => setTemplateSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
-            ))}
+              <div className="sm:w-48">
+                <select
+                  value={selectedTemplateCategory}
+                  onChange={(e) => setSelectedTemplateCategory(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Todas las categorías</option>
+                  {templateCategories.slice(1).map((category) => (
+                    <option key={category} value={category}>
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Templates Grid */}
+            {templatesLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-3 text-sm text-gray-600">Cargando plantillas...</span>
+              </div>
+            ) : filteredTemplates.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredTemplates.map((template) => (
+                  <div
+                    key={template.id}
+                    onClick={() => handleTemplateSelection(template)}
+                    className={cn(
+                      "p-4 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md",
+                      selectedTemplate?.id === template.id
+                        ? "border-blue-500 bg-blue-50 shadow-md"
+                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50",
+                    )}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-medium text-sm text-gray-900 line-clamp-2">{template.name}</h3>
+                      <Badge variant="outline" className="ml-2 text-xs shrink-0">
+                        {template.category}
+                      </Badge>
+                    </div>
+
+                    <p className="text-xs text-gray-600 mb-3 line-clamp-3">
+                      {template.description || "Plantilla de propuesta profesional"}
+                    </p>
+
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>{new Date(template.created_at).toLocaleDateString("es-ES")}</span>
+                      <div className="flex items-center gap-1">
+                        <FileText className="h-3 w-3" />
+                        <span>Plantilla</span>
+                      </div>
+                    </div>
+
+                    {/* Template Preview Indicator */}
+                    {template.content && (
+                      <div className="mt-2 pt-2 border-t border-gray-100">
+                        <div className="text-xs text-gray-500 flex items-center gap-1">
+                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                          <span>Vista previa disponible</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FileText className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No hay plantillas disponibles</h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  {templateSearchTerm || selectedTemplateCategory !== "all"
+                    ? "No se encontraron plantillas que coincidan con los filtros aplicados."
+                    : selectedService
+                      ? `No hay plantillas disponibles para la categoría ${selectedService.category}.`
+                      : "No hay plantillas de propuesta disponibles en el sistema."}
+                </p>
+                {(templateSearchTerm || selectedTemplateCategory !== "all") && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setTemplateSearchTerm("")
+                      setSelectedTemplateCategory("all")
+                    }}
+                    className="text-sm"
+                  >
+                    Limpiar filtros
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Selected Template Summary */}
+            {selectedTemplate && (
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                    <FileText className="h-3 w-3 text-white" />
+                  </div>
+                  <span className="font-medium text-blue-900">Plantilla Seleccionada</span>
+                </div>
+                <p className="text-sm text-blue-800">
+                  <strong>{selectedTemplate.name}</strong> - {selectedTemplate.description}
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  Categoría: {selectedTemplate.category} | Creada:{" "}
+                  {new Date(selectedTemplate.created_at).toLocaleDateString("es-ES")}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-between items-center pt-4 mt-6 border-t">
+            <Button variant="outline" onClick={() => setIsTemplateSelectorOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => setIsTemplateSelectorOpen(false)}
+              disabled={!selectedTemplate}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Confirmar Selección
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
