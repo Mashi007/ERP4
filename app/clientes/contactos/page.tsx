@@ -143,6 +143,8 @@ export default function ContactosPage() {
 
   const [editingContact, setEditingContact] = useState<Contact | null>(null)
 
+  const [proposalGenerating, setProposalGenerating] = useState(false)
+
   useEffect(() => {
     loadContacts()
     loadServices()
@@ -476,79 +478,55 @@ export default function ContactosPage() {
   }
 
   const handleGenerateProposal = async () => {
-    if (!canEnableStep("generate")) return
+    if (!selectedService || !selectedTemplate) {
+      alert("Por favor, selecciona servicio y plantilla primero")
+      return
+    }
 
     try {
-      console.log("[v0] Generating proposal...")
-      setLoading(true)
+      setProposalGenerating(true)
+      console.log("[v0] Generating proposal with Grok AI...")
 
       const proposalData = {
-        contactId: editingContact?.id || null,
-        serviceId: selectedService?.id,
-        templateId: selectedTemplate?.id,
-        contactData: editingContact?.id
-          ? null
-          : {
-              name: formData.name,
-              email: formData.email,
-              phone: formData.phone,
-              company: formData.company,
-              job_title: formData.position,
-              status: "lead",
-            },
-        customRequirements: null, // Can be extended later for custom requirements
+        contactData: {
+          nombre_fiscal: formData.company || formData.name,
+          email: formData.email,
+          telefono: formData.phone,
+          empresa: formData.company,
+          cargo: formData.position,
+          domicilio: "Dirección a completar",
+          cif_empresa: "CIF a completar",
+        },
+        serviceData: selectedService,
+        templateData: selectedTemplate,
       }
 
-      console.log("[v0] Sending proposal data:", proposalData)
+      console.log("[v0] Sending data to Grok AI:", proposalData)
 
-      // Generate proposal using AI
-      const generateResponse = await fetch("/api/proposals/generate", {
+      const response = await fetch("/api/generate-proposal-grok", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(proposalData),
       })
 
-      if (!generateResponse.ok) {
-        const errorData = await generateResponse.json()
-        console.error("[v0] API Error:", errorData)
-        throw new Error(errorData.details || "Failed to generate proposal")
-      }
+      if (!response.ok) throw new Error(`Error HTTP: ${response.status}`)
 
-      const result = await generateResponse.json()
-      const generatedProposal = result.proposal
+      const generatedProposal = await response.json()
+      console.log("[v0] Grok AI proposal generated:", generatedProposal)
 
-      console.log("[v0] Proposal generated successfully:", generatedProposal)
-
-      // Generate PDF document
-      const pdfResponse = await fetch(`/api/proposals/${generatedProposal.id}/pdf`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      })
-
-      if (!pdfResponse.ok) {
-        throw new Error("Failed to generate PDF")
-      }
-
-      const pdfData = await pdfResponse.json()
-
-      // Update workflow state with generated proposal and document
+      setProposalDocument(generatedProposal)
       setWorkflowState((prev) => ({
         ...prev,
-        generatedProposal: {
-          ...generatedProposal,
-          pdfUrl: pdfData.pdfUrl,
-          documentId: generatedProposal.id,
-        },
+        generatedProposal: generatedProposal,
       }))
-
       setFlowProgress((prev) => ({ ...prev, generate: true }))
-      console.log("[v0] Proposal workflow updated successfully")
-      alert("Propuesta generada exitosamente")
+
+      alert("Propuesta generada exitosamente con Grok AI")
     } catch (error) {
-      console.error("[v0] Error generating proposal:", error)
-      alert(`Error al generar la propuesta: ${error.message}`)
+      console.error("[v0] Error generando propuesta:", error)
+      alert(`Error al generar propuesta: ${error.message}`)
     } finally {
-      setLoading(false)
+      setProposalGenerating(false)
     }
   }
 
@@ -898,14 +876,15 @@ export default function ContactosPage() {
                     {selectedTemplate ? `Plantilla: ${selectedTemplate.name}` : "Seleccionar Plantilla"}
                   </Button>
 
+                  {/* Updating generate proposal button to show Grok AI loading state */}
                   <Button
                     variant="outline"
                     onClick={handleGenerateProposal}
                     className="justify-start bg-transparent"
-                    disabled={!canEnableStep("generate")}
+                    disabled={!canEnableStep("generate") || proposalGenerating}
                   >
                     <PenTool className="mr-2 h-4 w-4" />
-                    Generar Propuesta
+                    {proposalGenerating ? "Generando con IA..." : "Generar Propuesta"}
                   </Button>
 
                   <Button
