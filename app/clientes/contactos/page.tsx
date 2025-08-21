@@ -28,6 +28,8 @@ import {
   Save,
   CheckCircle,
   ChevronRight,
+  Edit,
+  ArrowRight,
 } from "lucide-react"
 import { toast } from "sonner"
 import ServiceSelector from "@/components/servicios/service-selector"
@@ -1312,105 +1314,232 @@ export default function ContactosPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      </div>
 
-        <Dialog open={isTemplateSelectorOpen} onOpenChange={setIsTemplateSelectorOpen}>
-          <DialogContent className="sm:max-w-[900px] max-h-[80vh] overflow-hidden flex flex-col">
-            <DialogHeader className="flex-shrink-0">
-              <DialogTitle className="text-xl font-bold">Seleccionar Plantilla</DialogTitle>
-              <DialogDescription>Elige una plantilla para generar la propuesta personalizada</DialogDescription>
-            </DialogHeader>
+      <div className="bg-white rounded-lg border shadow-sm">
+        <div className="p-6 border-b">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Lista de Contactos</h2>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Buscar contactos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-64"
+                />
+              </div>
+              <Badge variant="outline" className="text-sm">
+                {filteredContacts.length} contactos
+              </Badge>
+            </div>
+          </div>
+        </div>
 
-            <div className="flex-1 overflow-y-auto py-4">
-              <div className="grid gap-4">
-                {templates.map((template) => (
-                  <div
-                    key={template.id}
-                    className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => handleTemplateSelect(template)}
-                  >
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-lg truncate">{template.name}</h3>
-                        <p className="text-gray-600 text-sm mt-1 truncate">{template.category}</p>
-                        <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 max-h-20 overflow-hidden">
-                          <div className="line-clamp-3">{template.content.substring(0, 200)}...</div>
+        <div className="overflow-x-auto">
+          {filteredContacts.length > 0 ? (
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Contacto
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Empresa
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Propietario
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fecha
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredContacts.map((contact) => (
+                  <tr key={contact.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                          <User className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{contact.name}</div>
+                          <div className="text-sm text-gray-500">{contact.email}</div>
+                          {contact.phone && <div className="text-xs text-gray-400">{contact.phone}</div>}
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" className="flex-shrink-0 bg-transparent">
-                        Seleccionar
-                      </Button>
-                    </div>
-                  </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{contact.company || "—"}</div>
+                      {contact.job_title && <div className="text-xs text-gray-500">{contact.job_title}</div>}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge
+                        variant="outline"
+                        className={`text-xs font-medium ${getStatusColor(contact.status || "lead")}`}
+                      >
+                        {getStatusText(contact.status || "lead")}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{contact.sales_owner || "—"}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(contact.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditContact(contact)}
+                          className="text-blue-600 hover:text-blue-700"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleConvertToClient(contact)}
+                          className="text-green-600 hover:text-green-700"
+                        >
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
                 ))}
-              </div>
-
-              {templates.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>No hay plantillas disponibles</p>
+              </tbody>
+            </table>
+          ) : (
+            <div className="p-12 text-center">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Users className="h-8 w-8 text-gray-400" />
                 </div>
-              )}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">No hay contactos</h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {searchTerm
+                      ? "No se encontraron contactos que coincidan con tu búsqueda."
+                      : "Comienza agregando tu primer contacto."}
+                  </p>
+                </div>
+                {!searchTerm && (
+                  <Button onClick={() => setIsCreateContactOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Crear Primer Contacto
+                  </Button>
+                )}
+              </div>
             </div>
-          </DialogContent>
-        </Dialog>
+          )}
+        </div>
+      </div>
 
-        <Dialog open={isConvertDialogOpen} onOpenChange={setIsConvertDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Convertir a Cliente</DialogTitle>
-              <DialogDescription>¿Estás seguro de que quieres convertir este contacto en cliente?</DialogDescription>
-            </DialogHeader>
-            {selectedContact && (
-              <div className="py-4">
-                <p>
-                  <strong>Nombre:</strong> {selectedContact.name}
-                </p>
-                <p>
-                  <strong>Empresa:</strong> {selectedContact.company}
-                </p>
-                <p>
-                  <strong>Email:</strong> {selectedContact.email}
-                </p>
+      <Dialog open={isTemplateSelectorOpen} onOpenChange={setIsTemplateSelectorOpen}>
+        <DialogContent className="sm:max-w-[900px] max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-xl font-bold">Seleccionar Plantilla</DialogTitle>
+            <DialogDescription>Elige una plantilla para generar la propuesta personalizada</DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto py-4">
+            <div className="grid gap-4">
+              {templates.map((template) => (
+                <div
+                  key={template.id}
+                  className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => handleTemplateSelect(template)}
+                >
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-lg truncate">{template.name}</h3>
+                      <p className="text-gray-600 text-sm mt-1 truncate">{template.category}</p>
+                      <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 max-h-20 overflow-hidden">
+                        <div className="line-clamp-3">{template.content.substring(0, 200)}...</div>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" className="flex-shrink-0 bg-transparent">
+                      Seleccionar
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {templates.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>No hay plantillas disponibles</p>
               </div>
             )}
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsConvertDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleConvertToClient}>Convertir a Cliente</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-        {isServiceSelectorOpen && (
-          <ServiceSelector
-            isOpen={isServiceSelectorOpen}
-            onClose={() => {
-              console.log("[v0] Closing service selector dialog")
-              setIsServiceSelectorOpen(false)
-              setIsServiceSelectorBusy(false)
-            }}
-            onServiceSelect={handleServiceSelect}
-            services={services}
-          />
-        )}
+      <Dialog open={isConvertDialogOpen} onOpenChange={setIsConvertDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convertir a Cliente</DialogTitle>
+            <DialogDescription>¿Estás seguro de que quieres convertir este contacto en cliente?</DialogDescription>
+          </DialogHeader>
+          {selectedContact && (
+            <div className="py-4">
+              <p>
+                <strong>Nombre:</strong> {selectedContact.name}
+              </p>
+              <p>
+                <strong>Empresa:</strong> {selectedContact.company}
+              </p>
+              <p>
+                <strong>Email:</strong> {selectedContact.email}
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConvertDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConvertToClient}>Convertir a Cliente</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        {isTemplateSelectorOpen && (
-          <TemplateSelector
-            isOpen={isTemplateSelectorOpen}
-            onClose={() => {
-              console.log("[v0] Closing template selector dialog")
-              setIsTemplateSelectorOpen(false)
-              setIsServiceSelectorBusy(false)
-            }}
-            onTemplateSelect={(template) => {
-              console.log("[v0] Template selected:", template.name)
-              handleTemplateSelect(template)
-            }}
-            serviceId={workflowState.selectedService?.id}
-          />
-        )}
-      </div>
+      {isServiceSelectorOpen && (
+        <ServiceSelector
+          isOpen={isServiceSelectorOpen}
+          onClose={() => {
+            console.log("[v0] Closing service selector dialog")
+            setIsServiceSelectorOpen(false)
+            setIsServiceSelectorBusy(false)
+          }}
+          onServiceSelect={handleServiceSelect}
+          services={services}
+        />
+      )}
+
+      {isTemplateSelectorOpen && (
+        <TemplateSelector
+          isOpen={isTemplateSelectorOpen}
+          onClose={() => {
+            console.log("[v0] Closing template selector dialog")
+            setIsTemplateSelectorOpen(false)
+            setIsServiceSelectorBusy(false)
+          }}
+          onTemplateSelect={(template) => {
+            console.log("[v0] Template selected:", template.name)
+            handleTemplateSelect(template)
+          }}
+          serviceId={workflowState.selectedService?.id}
+        />
+      )}
     </div>
   )
 }
