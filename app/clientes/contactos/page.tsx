@@ -780,9 +780,45 @@ export default function ContactosPage() {
           currentStep: 1,
         })
       } else {
-        const errorData = await response.text()
-        console.log("[v0] API error response:", errorData)
-        toast.error("Error al crear contacto")
+        if (response.status === 409) {
+          const errorData = await response.json()
+          console.log("[v0] Duplicate email detected:", errorData)
+
+          if (errorData.existingContact) {
+            toast.error(`El email ${contactToSave.email} ya existe para el contacto: ${errorData.existingContact.name}`)
+
+            // Optionally populate form with existing contact data for updating
+            const shouldUpdate = confirm(
+              `El email ${contactToSave.email} ya existe para "${errorData.existingContact.name}". ¿Deseas actualizar este contacto?`,
+            )
+
+            if (shouldUpdate) {
+              // Find and select the existing contact
+              const existingContact = contacts.find((c) => c.email === contactToSave.email)
+              if (existingContact) {
+                setSelectedContact(existingContact)
+                setNewContact({
+                  name: existingContact.name,
+                  email: existingContact.email,
+                  phone: existingContact.phone || "",
+                  company: existingContact.company || "",
+                  job_title: existingContact.job_title || "",
+                  sales_owner: existingContact.sales_owner || "María García",
+                  stage: "Nuevo",
+                  status: existingContact.status || "lead",
+                })
+                setSearchTerm(existingContact.name)
+                toast.info("Datos del contacto existente cargados para actualización")
+              }
+            }
+          } else {
+            toast.error("Este email ya está registrado en el sistema")
+          }
+        } else {
+          const errorData = await response.text()
+          console.log("[v0] API error response:", errorData)
+          toast.error("Error al crear contacto")
+        }
       }
     } catch (error) {
       console.error("[v0] Error creating contact:", error)

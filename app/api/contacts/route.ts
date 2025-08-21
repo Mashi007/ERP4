@@ -74,6 +74,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 })
     }
 
+    if (email?.trim()) {
+      const existingContact = await sql`
+        SELECT id, name, email FROM contacts WHERE email = ${email.trim()}
+      `
+
+      if (existingContact.length > 0) {
+        return NextResponse.json(
+          {
+            error: "Email already exists",
+            existingContact: existingContact[0],
+            suggestion: "update",
+          },
+          { status: 409 },
+        )
+      }
+    }
+
     // Check if contacts table exists and has the required columns
     try {
       const result = await sql`
@@ -96,6 +113,13 @@ export async function POST(request: NextRequest) {
           { error: "Contacts table not found. Please run the database setup script." },
           { status: 404 },
         )
+      }
+
+      if (
+        insertError instanceof Error &&
+        insertError.message.includes("duplicate key value violates unique constraint")
+      ) {
+        return NextResponse.json({ error: "Email already exists", suggestion: "update" }, { status: 409 })
       }
 
       throw insertError
