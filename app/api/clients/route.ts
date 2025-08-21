@@ -1,21 +1,22 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
-
-const sql = neon(process.env.DATABASE_URL!)
+import { sql } from "your-sql-library" // Import sql library
+import { NextResponse } from "next/server" // Import NextResponse
+import type { NextRequest } from "next/server" // Import NextRequest
 
 export async function GET() {
   try {
     const result = await sql`
       SELECT 
-        id::text,
-        name,
-        email,
-        phone,
-        company as address,
+        c.id::text,
+        c.name,
+        c.email,
+        c.phone,
+        c.company as address,
         'Cliente' as type,
-        created_at::text
-      FROM contacts 
-      ORDER BY created_at DESC
+        c.created_at::text,
+        c.status
+      FROM contacts c
+      WHERE c.status = 'client' OR c.status = 'active'
+      ORDER BY c.created_at DESC
     `
 
     const clients = result.map((row: any) => ({
@@ -24,7 +25,7 @@ export async function GET() {
       email: row.email,
       phone: row.phone,
       address: row.address,
-      stage: "Nuevo", // Default stage value until column exists
+      stage: "Nuevo",
       type: row.type || "Cliente",
       created_at: row.created_at,
     }))
@@ -46,11 +47,34 @@ export async function POST(request: NextRequest) {
     const clientPhone = clientData.telefono || clientData.phone
     const clientCompany = clientData.empresa || clientData.company || clientName
 
-    const result = await sql`
-      INSERT INTO contacts (name, email, phone, company, job_title, status, sales_owner)
-      VALUES (${clientName}, ${clientEmail}, ${clientPhone}, ${clientCompany}, ${clientData.cargo || ""}, 'active', 'system')
-      RETURNING id::text, name, email, phone, company, created_at::text
+    // First check if contact already exists
+    const existingContact = await sql`
+      SELECT id::text, name, email, phone, company, created_at::text
+      FROM contacts 
+      WHERE email = ${clientEmail}
+      LIMIT 1
     `
+
+    let result
+    if (existingContact.length > 0) {
+      // Update existing contact to client status
+      result = await sql`
+        UPDATE contacts 
+        SET status = 'client', 
+            company = COALESCE(${clientCompany}, company),
+            job_title = COALESCE(${clientData.cargo || ""}, job_title),
+            updated_at = NOW()
+        WHERE email = ${clientEmail}
+        RETURNING id::text, name, email, phone, company, created_at::text
+      `
+    } else {
+      // Create new contact as client
+      result = await sql`
+        INSERT INTO contacts (name, email, phone, company, job_title, status, sales_owner)
+        VALUES (${clientName}, ${clientEmail}, ${clientPhone}, ${clientCompany}, ${clientData.cargo || ""}, 'client', 'system')
+        RETURNING id::text, name, email, phone, company, created_at::text
+      `
+    }
 
     const newClient = {
       id: result[0].id,
@@ -58,7 +82,7 @@ export async function POST(request: NextRequest) {
       email: result[0].email,
       phone: result[0].phone,
       address: result[0].company,
-      stage: "Nuevo", // Default stage value
+      stage: "Nuevo",
       type: "Cliente",
       created_at: result[0].created_at,
     }

@@ -200,16 +200,57 @@ export default function ContactosPage() {
     }
   }
 
-  const handleCreateContact = async () => {
+  const handleSaveContact = async () => {
+    console.log("[v0] Starting contact save process")
+    console.log("[v0] Current newContact state:", newContact)
+    console.log("[v0] Current searchTerm:", searchTerm)
+    console.log("[v0] Workflow state:", workflowState)
+
     try {
+      const contactToSave = {
+        ...newContact,
+        name: newContact.name || searchTerm,
+        status: isWorkflowComplete() ? "client" : "lead",
+      }
+
+      console.log("[v0] Contact data being sent to API:", contactToSave)
+
+      if (!contactToSave.name || !contactToSave.email) {
+        console.log("[v0] Validation failed - missing required fields")
+        toast.error("Nombre y email son requeridos")
+        return
+      }
+
+      const workflowComplete = isWorkflowComplete()
+      console.log("[v0] Workflow complete:", workflowComplete)
+
+      // Always save to contacts first
       const response = await fetch("/api/contacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newContact),
+        body: JSON.stringify(contactToSave),
       })
 
+      console.log("[v0] API response status:", response.status)
+
       if (response.ok) {
-        toast.success("Contacto creado exitosamente")
+        const savedContact = await response.json()
+        console.log("[v0] Contact saved successfully:", savedContact)
+
+        if (workflowComplete) {
+          try {
+            const savedClient = await saveToClients(contactToSave)
+            console.log("[v0] Client status updated successfully:", savedClient)
+            toast.success("Cliente creado exitosamente con propuesta completa")
+          } catch (clientError) {
+            console.error("[v0] Error updating client status:", clientError)
+            toast.success("Contacto creado exitosamente, pero hubo un error al actualizar el estado de cliente")
+          }
+        } else {
+          toast.success("Contacto creado exitosamente")
+        }
+
+        // Reset form and close dialog
         setIsCreateContactOpen(false)
         setNewContact({
           name: "",
@@ -221,12 +262,61 @@ export default function ContactosPage() {
           stage: "Nuevo",
           status: "lead",
         })
+        setSearchTerm("")
         fetchContacts()
+
+        setWorkflowState({
+          step: "service",
+          selectedService: null,
+          selectedTemplate: null,
+          generatedProposal: null,
+          signedDocument: null,
+          sentDocument: null,
+          currentStep: 1,
+        })
       } else {
-        toast.error("Error al crear contacto")
+        if (response.status === 409) {
+          const errorData = await response.json()
+          console.log("[v0] Duplicate email detected:", errorData)
+
+          if (errorData.existingContact) {
+            toast.error(`El email ${contactToSave.email} ya existe para el contacto: ${errorData.existingContact.name}`)
+
+            // Optionally populate form with existing contact data for updating
+            const shouldUpdate = confirm(
+              `El email ${contactToSave.email} ya existe para "${errorData.existingContact.name}". ¿Deseas actualizar este contacto?`,
+            )
+
+            if (shouldUpdate) {
+              // Find and select the existing contact
+              const existingContact = contacts.find((c) => c.email === contactToSave.email)
+              if (existingContact) {
+                setSelectedContact(existingContact)
+                setNewContact({
+                  name: existingContact.name,
+                  email: existingContact.email,
+                  phone: existingContact.phone || "",
+                  company: existingContact.company || "",
+                  job_title: existingContact.job_title || "",
+                  sales_owner: existingContact.sales_owner || "María García",
+                  stage: "Nuevo",
+                  status: existingContact.status || "lead",
+                })
+                setSearchTerm(existingContact.name)
+                toast.info("Datos del contacto existente cargados para actualización")
+              }
+            }
+          } else {
+            toast.error("Este email ya está registrado en el sistema")
+          }
+        } else {
+          const errorData = await response.text()
+          console.log("[v0] API error response:", errorData)
+          toast.error("Error al crear contacto")
+        }
       }
     } catch (error) {
-      console.error("Error creating contact:", error)
+      console.error("[v0] Error creating contact:", error)
       toast.error("Error al crear contacto")
     }
   }
@@ -762,126 +852,6 @@ export default function ContactosPage() {
     }
 
     return await response.json()
-  }
-
-  const handleSaveContact = async () => {
-    console.log("[v0] Starting contact save process")
-    console.log("[v0] Current newContact state:", newContact)
-    console.log("[v0] Current searchTerm:", searchTerm)
-    console.log("[v0] Workflow state:", workflowState)
-
-    try {
-      const contactToSave = {
-        ...newContact,
-        name: newContact.name || searchTerm, // Use searchTerm if name is empty
-      }
-
-      console.log("[v0] Contact data being sent to API:", contactToSave)
-
-      if (!contactToSave.name || !contactToSave.email) {
-        console.log("[v0] Validation failed - missing required fields")
-        toast.error("Nombre y email son requeridos")
-        return
-      }
-
-      const workflowComplete = isWorkflowComplete()
-      console.log("[v0] Workflow complete:", workflowComplete)
-
-      // Always save to contacts first
-      const response = await fetch("/api/contacts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(contactToSave),
-      })
-
-      console.log("[v0] API response status:", response.status)
-
-      if (response.ok) {
-        const savedContact = await response.json()
-        console.log("[v0] Contact saved successfully:", savedContact)
-
-        if (workflowComplete) {
-          try {
-            const savedClient = await saveToClients(contactToSave)
-            console.log("[v0] Client saved successfully:", savedClient)
-            toast.success("Contacto y cliente creados exitosamente con propuesta completa")
-          } catch (clientError) {
-            console.error("[v0] Error saving to clients:", clientError)
-            toast.success("Contacto creado exitosamente, pero hubo un error al crear el cliente")
-          }
-        } else {
-          toast.success("Contacto creado exitosamente")
-        }
-
-        // Reset form and close dialog
-        setIsCreateContactOpen(false)
-        setNewContact({
-          name: "",
-          email: "",
-          phone: "",
-          company: "",
-          job_title: "",
-          sales_owner: "María García",
-          stage: "Nuevo",
-          status: "lead",
-        })
-        setSearchTerm("")
-        fetchContacts()
-
-        setWorkflowState({
-          step: "service",
-          selectedService: null,
-          selectedTemplate: null,
-          generatedProposal: null,
-          signedDocument: null,
-          sentDocument: null,
-          currentStep: 1,
-        })
-      } else {
-        if (response.status === 409) {
-          const errorData = await response.json()
-          console.log("[v0] Duplicate email detected:", errorData)
-
-          if (errorData.existingContact) {
-            toast.error(`El email ${contactToSave.email} ya existe para el contacto: ${errorData.existingContact.name}`)
-
-            // Optionally populate form with existing contact data for updating
-            const shouldUpdate = confirm(
-              `El email ${contactToSave.email} ya existe para "${errorData.existingContact.name}". ¿Deseas actualizar este contacto?`,
-            )
-
-            if (shouldUpdate) {
-              // Find and select the existing contact
-              const existingContact = contacts.find((c) => c.email === contactToSave.email)
-              if (existingContact) {
-                setSelectedContact(existingContact)
-                setNewContact({
-                  name: existingContact.name,
-                  email: existingContact.email,
-                  phone: existingContact.phone || "",
-                  company: existingContact.company || "",
-                  job_title: existingContact.job_title || "",
-                  sales_owner: existingContact.sales_owner || "María García",
-                  stage: "Nuevo",
-                  status: existingContact.status || "lead",
-                })
-                setSearchTerm(existingContact.name)
-                toast.info("Datos del contacto existente cargados para actualización")
-              }
-            }
-          } else {
-            toast.error("Este email ya está registrado en el sistema")
-          }
-        } else {
-          const errorData = await response.text()
-          console.log("[v0] API error response:", errorData)
-          toast.error("Error al crear contacto")
-        }
-      }
-    } catch (error) {
-      console.error("[v0] Error creating contact:", error)
-      toast.error("Error al crear contacto")
-    }
   }
 
   return (
