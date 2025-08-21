@@ -57,12 +57,19 @@ export default function PropuestasUploader() {
     e.preventDefault()
     if (!file) return
 
+    console.log("[v0] Guardar button clicked - File:", file?.name, "Description length:", description.trim().length)
+
     setIsUploading(true)
     try {
       const formData = new FormData()
       formData.append("file", file)
+
+      console.log("[v0] Starting upload to /api/servicios/propuestas/upload")
+
       const res = await fetch("/api/servicios/propuestas/upload", { method: "POST", body: formData })
       const json = await res.json()
+
+      console.log("[v0] Upload response:", { ok: res.ok, status: res.status, data: json })
 
       if (!res.ok) {
         throw new Error(json?.error || "No se pudo subir el documento.")
@@ -87,7 +94,10 @@ export default function PropuestasUploader() {
         title: "Documento subido",
         description: "La propuesta se guardó correctamente.",
       })
+
+      console.log("[v0] Document uploaded successfully:", item.filename)
     } catch (err: any) {
+      console.error("[v0] Upload error:", err)
       toast({
         title: "Error al subir",
         description: err?.message || "Intenta nuevamente.",
@@ -143,19 +153,37 @@ export default function PropuestasUploader() {
           </div>
 
           <div className="sm:col-span-2">
-            <Button type="submit" disabled={!canSave || isUploading} className="inline-flex items-center gap-2">
-              {isUploading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Subiendo...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4" />
-                  Guardar
-                </>
-              )}
-            </Button>
+            <div className="space-y-2">
+              <Button
+                type="submit"
+                disabled={!canSave || isUploading}
+                className={`inline-flex items-center gap-2 transition-all duration-200 ${
+                  canSave && !isUploading
+                    ? "bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg"
+                    : "bg-gray-400 cursor-not-allowed"
+                }`}
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Subiendo...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4" />
+                    Guardar
+                  </>
+                )}
+              </Button>
+
+              <div className="text-xs text-muted-foreground">
+                {!file && !description.trim() && "Selecciona un archivo y agrega una descripción para activar el botón"}
+                {file && !description.trim() && "Agrega una descripción para continuar"}
+                {!file && description.trim() && "Selecciona un archivo para continuar"}
+                {canSave && !isUploading && "✓ Listo para guardar"}
+                {isUploading && "Subiendo documento..."}
+              </div>
+            </div>
           </div>
         </form>
 
