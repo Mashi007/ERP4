@@ -1,6 +1,9 @@
 "use client"
 
+import React from "react"
+
 import { DialogTrigger } from "@/components/ui/dialog"
+import { DialogFooter } from "@/components/ui/dialog"
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,8 +11,30 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Plus, User, Mail, Phone, Building, Briefcase, TrendingUp, Search, Users, FileText } from "lucide-react"
+import {
+  Plus,
+  User,
+  Mail,
+  Phone,
+  Building,
+  Briefcase,
+  TrendingUp,
+  Sparkles,
+  Search,
+  Users,
+  FileText,
+  PenTool,
+  Send,
+  Save,
+  CheckCircle,
+  ChevronRight,
+  Edit,
+  ArrowRight,
+  Eye,
+} from "lucide-react"
 import { toast } from "sonner"
+import ServiceSelector from "@/components/servicios/service-selector"
+import TemplateSelector from "@/components/servicios/template-selector"
 
 interface Contact {
   id: number
@@ -1011,23 +1036,42 @@ export default function ContactosPage() {
 
                               <div className="max-h-64 overflow-y-auto">
                                 {contactSuggestions.map((contact, index) => (
-                                  <div key={contact.id} className="p-3 hover:bg-gray-50 transition-colors duration-200 cursor-pointer" onClick={() => handleContactSelect(contact)}>
-                                    
-                                    
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center space-x-3">
-                                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                          <span className="text-blue-600 font-medium text-sm">
-                                            {contact.name?.charAt(0)?.toUpperCase() || "?"}
-                                          </span>
+                                  <div
+                                    key={contact.id}
+                                    className={`p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200 ${
+                                      index === 0 ? "bg-blue-25" : ""
+                                    }`}
+                                    onClick={() => handleContactSelect(contact)}
+                                  >
+                                    <div className="flex items-center gap-4">
+                                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+                                        <User className="h-6 w-6 text-white" />
+                                      </div>
+
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-gray-900 truncate text-base">{contact.name}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <Building className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                                          <p className="text-sm text-gray-600 truncate">
+                                            {contact.company || "Sin empresa"}
+                                          </p>
                                         </div>
-                                        <div>
-                                          <div className="font-medium text-gray-900">{contact.name}</div>
-                                          <div className="text-sm text-gray-500">{contact.email}</div>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <Mail className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                                          <p className="text-xs text-gray-500 truncate">{contact.email || "Sin email"}</p>
                                         </div>
                                       </div>
-                                      <div className="text-xs text-gray-400">
-                                        {contact.company}
+
+                                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                        <Badge
+                                          variant="outline"
+                                          className={`text-xs font-medium whitespace-nowrap ${getStatusColor(contact.status || "lead")}`}
+                                        >
+                                          {getStatusText(contact.status || "lead")}
+                                        </Badge>
+                                        <div className="text-xs text-gray-400 whitespace-nowrap">
+                                          {new Date(contact.created_at).toLocaleDateString()}
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
@@ -1225,2435 +1269,417 @@ export default function ContactosPage() {
                   </div>
                 </div>
               </div>
-            
+            </div>
 
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              \
+            <DialogFooter className="flex-shrink-0 border-t border-gray-100 pt-6 pb-2">
+              <div className="w-full space-y-6">
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-gray-700">Progreso del Flujo</h3>
+                    <div className="text-xs text-gray-500">Paso {workflowState.currentStep} de 5</div>
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-4">
+                    {["Servicio", "Plantilla", "Generar", "Firmar", "Enviar"].map((step, index) => (
+                      <React.Fragment key={step}>
+                        <div
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                            index + 1 < workflowState.currentStep
+                              ? "bg-green-100 text-green-800 border border-green-300"
+                              : index + 1 === workflowState.currentStep
+                                ? "bg-blue-100 text-blue-800 border border-blue-300"
+                                : "bg-gray-100 text-gray-500 border border-gray-200"
+                          }`}
+                        >
+                          {index + 1 < workflowState.currentStep && <CheckCircle className="h-3 w-3" />}
+                          <span className="whitespace-nowrap">{step}</span>
+                        </div>
+                        {index < 4 && <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />}
+                      </React.Fragment>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {workflowState.selectedService && (
+                      <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-200 shadow-sm">
+                        <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <CheckCircle className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-green-800 truncate">
+                            {workflowState.selectedService.name}
+                          </p>
+                          <p className="text-xs text-green-600">
+                            {Number(workflowState.selectedService.base_price || 0).toFixed(2)}{" "}
+                            {workflowState.selectedService.currency || "EUR"}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setWorkflowState((prev) => ({
+                              ...prev,
+                              selectedService: null,
+                              step: "service",
+                              currentStep: 1,
+                            }))
+                          }
+                          className="text-green-600 hover:text-green-800 hover:bg-green-50 flex-shrink-0"
+                        >
+                          Cambiar
+                        </Button>
+                      </div>
+                    )}
+
+                    {workflowState.selectedTemplate && (
+                      <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-purple-200 shadow-sm">
+                        <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <FileText className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-purple-800 truncate">
+                            {workflowState.selectedTemplate.name}
+                          </p>
+                          <p className="text-xs text-purple-600">Plantilla seleccionada</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setWorkflowState((prev) => ({
+                              ...prev,
+                              selectedTemplate: null,
+                              step: "template",
+                              currentStep: 2,
+                            }))
+                          }
+                          className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 flex-shrink-0"
+                        >
+                          Cambiar
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                  <Button
+                    onClick={handleServiceSelection}
+                    disabled={isGeneratingProposal}
+                    className="h-12 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl shadow-sm transition-all duration-200 flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="truncate">Seleccionar Servicio</span>
+                  </Button>
+
+                  <Button
+                    onClick={handleTemplateSelection}
+                    disabled={!workflowState.selectedService || isGeneratingProposal}
+                    variant={workflowState.selectedService ? "default" : "secondary"}
+                    className="h-12 font-medium rounded-xl shadow-sm transition-all duration-200 flex items-center gap-2"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span className="truncate">Seleccionar Plantilla</span>
+                  </Button>
+
+                  <Button
+                    onClick={handleGenerateProposal}
+                    disabled={!workflowState.selectedService || !workflowState.selectedTemplate || isGeneratingProposal}
+                    className="h-12 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-xl shadow-sm transition-all duration-200 flex items-center gap-2"
+                  >
+                    {isGeneratingProposal ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
+                    <span className="truncate">Generar Propuesta IA</span>
+                  </Button>
+
+                  <Button
+                    disabled
+                    variant="secondary"
+                    className="h-12 font-medium rounded-xl shadow-sm transition-all duration-200 flex items-center gap-2"
+                  >
+                    <PenTool className="h-4 w-4" />
+                    <span className="truncate">Firma Digital</span>
+                  </Button>
+
+                  <Button
+                    disabled
+                    variant="secondary"
+                    className="h-12 font-medium rounded-xl shadow-sm transition-all duration-200 flex items-center gap-2"
+                  >
+                    <Send className="h-4 w-4" />
+                    <span className="truncate">Enviar Documento</span>
+                  </Button>
+                </div>
+
+                <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsCreateContactOpen(false)
+                      setFormMode("create")
+                      setSelectedContactForDetails(null)
+                    }}
+                    className="px-6 py-2 rounded-xl"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      console.log("[v0] Save button clicked, mode:", formMode)
+                      console.log("[v0] Button enabled check - name:", newContact.name || searchTerm, "email:", newContact.email)
+                      handleSaveContact()
+                    }}
+                    disabled={(!newContact.name && !searchTerm) || !newContact.email}
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {formMode === "edit" ? "Guardar Cambios" : "Guardar Contacto"}
+                  </Button>
+                </div>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+
+        {/* Update the contacts table to use handleContactDetails */}
+        <div className="bg-white rounded-lg border shadow-sm">
+          <div className="p-6 border-b">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Lista de Contactos</h2>
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Buscar contactos..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 w-64"
+                  />
+                </div>
+                <Badge variant="outline" className="text-sm">
+                  {filteredContacts.length} contactos
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            {filteredContacts.length > 0 ? (
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Contacto
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Empresa
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Propietario
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Fecha
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredContacts.map((contact) => (
+                    <tr key={contact.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                            <User className="h-5 w-5 text-white" />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{contact.name}</div>
+                            <div className="text-sm text-gray-500">{contact.email}</div>
+                            {contact.phone && <div className="text-xs text-gray-400">{contact.phone}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{contact.company || "—"}</div>
+                        {contact.job_title && <div className="text-xs text-gray-500">{contact.job_title}</div>}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge
+                          variant="outline"
+                          className={`text-xs font-medium ${getStatusColor(contact.status || "lead")}`}
+                        >
+                          {getStatusText(contact.status || "lead")}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{contact.sales_owner || "—"}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(contact.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleContactDetails(contact)}
+                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Detalles
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditContact(contact)}
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleConvertToClient(contact)}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            <ArrowRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="p-12 text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Users className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900">No hay contactos</h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {searchTerm
+                        ? "No se encontraron contactos que coincidan con tu búsqueda."
+                        : "Comienza agregando tu primer contacto."}
+                    </p>
+                  </div>
+                  {!searchTerm && (
+                    <Button onClick={() => setIsCreateContactOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Crear Primer Contacto
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+      <Dialog open={isTemplateSelectorOpen} onOpenChange={setIsTemplateSelectorOpen}>
+        <DialogContent className="sm:max-w-[900px] max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-xl font-bold">Seleccionar Plantilla</DialogTitle>
+            <DialogDescription>Elige una plantilla para generar la propuesta personalizada</DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto py-4">
+            <div className="grid gap-4">
+              {templates.map((template) => (
+                <div
+                  key={template.id}
+                  className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => handleTemplateSelect(template)}
+                >
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-lg truncate">{template.name}</h3>
+                      <p className="text-gray-600 text-sm mt-1 truncate">{template.category}</p>
+                      <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 max-h-20 overflow-hidden">
+                        <div className="line-clamp-3">{template.content.substring(0, 200)}...</div>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" className="flex-shrink-0 bg-transparent">
+                      Seleccionar
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {templates.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>No hay plantillas disponibles</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isConvertDialogOpen} onOpenChange={setIsConvertDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convertir a Cliente</DialogTitle>
+            <DialogDescription>¿Estás seguro de que quieres convertir este contacto en cliente?</DialogDescription>
+          </DialogHeader>
+          {selectedContact && (
+            <div className="py-4">
+              <p>
+                <strong>Nombre:</strong> {selectedContact.name}
+              </p>
+              <p>
+                <strong>Empresa:</strong> {selectedContact.company}
+              </p>
+              <p>
+                <strong>Email:</strong> {selectedContact.email}
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConvertDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConvertToClient}>Convertir a Cliente</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {isServiceSelectorOpen && (
+        <ServiceSelector
+          isOpen={isServiceSelectorOpen}
+          onClose={() => {
+            console.log("[v0] Closing service selector dialog")
+            setIsServiceSelectorOpen(false)
+            setIsServiceSelectorBusy(false)
+          }}
+          onServiceSelect={handleServiceSelect}
+          services={services}
+        />
+      )}
+
+      {isTemplateSelectorOpen && (
+        <TemplateSelector
+          isOpen={isTemplateSelectorOpen}
+          onClose={() => {
+            console.log("[v0] Closing template selector dialog")
+            setIsTemplateSelectorOpen(false)
+            setIsServiceSelectorBusy(false)
+          }}
+          onTemplateSelect={(template) => {
+            console.log("[v0] Template selected:", template.name)
+            handleTemplateSelect(template)
+          }}
+          serviceId={workflowState.selectedService?.id}
+        />
+      )}
+    </div>
+  )\
+}
