@@ -143,6 +143,7 @@ export default function ContactosPage() {
   }
 
   useEffect(() => {
+    fetchContacts()
     fetchServices()
     fetchTemplates()
   }, [])
