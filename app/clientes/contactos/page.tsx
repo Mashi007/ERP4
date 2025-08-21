@@ -202,6 +202,10 @@ export default function ContactosPage() {
         body: JSON.stringify(contact),
       })
       if (!response.ok) throw new Error("Failed to update contact")
+
+      // Update local state with updated contact
+      const updatedContact = await response.json()
+      setContacts((prev) => prev.map((c) => (c.id === existingContact.id ? { ...c, ...updatedContact } : c)))
     } else {
       const response = await fetch("/api/contacts", {
         method: "POST",
@@ -209,13 +213,27 @@ export default function ContactosPage() {
         body: JSON.stringify(contact),
       })
       if (!response.ok) throw new Error("Failed to create contact")
+
+      // Add new contact to local state
+      const newContact = await response.json()
+      setContacts((prev) => [...prev, newContact])
     }
   }
 
   const saveToClients = async (contact: any) => {
-    // Logic for saving to clients table
-    console.log("[v0] Guardado en tabla de clientes:", contact)
-    // This would be implemented based on your clients API
+    try {
+      const response = await fetch("/api/clients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contact),
+      })
+
+      if (!response.ok) throw new Error("Failed to save to clients")
+      return await response.json()
+    } catch (error) {
+      console.error("[v0] Error saving to clients:", error)
+      throw error
+    }
   }
 
   const resetForm = () => {
