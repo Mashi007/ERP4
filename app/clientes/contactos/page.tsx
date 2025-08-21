@@ -29,7 +29,6 @@ import {
   Search,
   Users,
   FileText,
-  CheckCircle,
   PenTool,
   Send,
   Save,
@@ -408,112 +407,13 @@ export default function ContactosPage() {
     setIsServiceSelectorOpen(true)
   }
 
-  const handleGenerateProposal = async (formType: "create" | "edit") => {
-    const contactData = formType === "create" ? newContact : editContact
-
-    if (!contactData.name || !contactData.email) {
-      toast.error("Por favor completa la información del contacto")
-      return
-    }
-
-    if (!workflowState.selectedService) {
-      toast.error("Por favor selecciona un servicio del catálogo")
-      return
-    }
-
-    if (!workflowState.selectedTemplate) {
-      toast.error("Por favor selecciona una plantilla")
-      return
-    }
-
-    setIsProposalGenerating(true)
-
-    try {
-      let contactId: number
-
-      if (formType === "create") {
-        const contactResponse = await fetch("/api/contacts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(contactData),
-        })
-
-        if (!contactResponse.ok) {
-          throw new Error("Error creating contact")
-        }
-
-        const createdContact = await contactResponse.json()
-        contactId = createdContact.id
-      } else {
-        if (!selectedContact) {
-          throw new Error("No contact selected for editing")
-        }
-        contactId = selectedContact.id
-
-        const updateResponse = await fetch(`/api/contacts/${contactId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(contactData),
-        })
-
-        if (!updateResponse.ok) {
-          throw new Error("Error updating contact")
-        }
-      }
-
-      const proposalResponse = await fetch("/api/proposals/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contactId,
-          serviceId: workflowState.selectedService.id,
-          templateId: workflowState.selectedTemplate.id,
-          customRequirements: `Propuesta personalizada para ${contactData.name} de ${contactData.company}`,
-        }),
-      })
-
-      if (!proposalResponse.ok) {
-        throw new Error("Error generating proposal")
-      }
-
-      const proposal = await proposalResponse.json()
-
-      setWorkflowState((prev) => ({
-        ...prev,
-        generatedProposal: proposal,
-        step: "signature",
-      }))
-
-      toast.success("¡Propuesta generada exitosamente!")
-    } catch (error) {
-      console.error("Error generating proposal:", error)
-      toast.error("Error generando la propuesta")
-    } finally {
-      setIsProposalGenerating(false)
-    }
-  }
-
-  const handleDigitalSignature = () => {
-    setIsSignatureDialogOpen(true)
-  }
-
-  const handleSignatureComplete = (signatureData: any) => {
-    setWorkflowState((prev) => ({
-      ...prev,
-      signedDocument: signatureData,
-      step: "send",
-    }))
-    setIsSignatureDialogOpen(false)
-    toast.success("Documento firmado digitalmente")
-  }
-
   const handleServiceSelection = () => {
-    // Open service selector dialog
+    console.log("[v0] Opening service selector dialog")
     setIsServiceSelectorOpen(true)
   }
 
   const handleTemplateSelection = () => {
-    // Navigate to services/proposals or open template selector
+    console.log("[v0] Template selection clicked, current service:", workflowState.selectedService)
     if (workflowState.selectedService) {
       setIsTemplateSelectorOpen(true)
     } else {
@@ -521,78 +421,79 @@ export default function ContactosPage() {
     }
   }
 
+  const handleGenerateProposal = async (formType: "create" | "edit") => {
+    console.log("[v0] Generating proposal, workflow state:", workflowState)
+
+    if (!workflowState.selectedService || !workflowState.selectedTemplate) {
+      toast.error("Debe seleccionar un servicio y una plantilla primero")
+      return
+    }
+
+    const contactData = formType === "create" ? newContact : editContact
+
+    if (!contactData.name || !contactData.email) {
+      toast.error("Complete los datos del contacto primero")
+      return
+    }
+
+    setIsProposalGenerating(true)
+
+    try {
+      const response = await fetch("/api/proposals/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contactId: formType === "edit" ? selectedContact?.id : null,
+          contactData,
+          serviceId: workflowState.selectedService.id,
+          templateId: workflowState.selectedTemplate.id,
+          requirements: "Propuesta generada desde formulario de contacto",
+        }),
+      })
+
+      if (response.ok) {
+        const proposal = await response.json()
+        setWorkflowState((prev) => ({
+          ...prev,
+          generatedProposal: proposal,
+          step: "signature",
+        }))
+        toast.success("Propuesta generada exitosamente")
+      } else {
+        throw new Error("Error al generar propuesta")
+      }
+    } catch (error) {
+      console.error("[v0] Error generating proposal:", error)
+      toast.error("Error al generar la propuesta")
+    } finally {
+      setIsProposalGenerating(false)
+    }
+  }
+
+  const handleSignature = () => {
+    console.log("[v0] Opening signature dialog")
+    if (!workflowState.generatedProposal) {
+      toast.error("Primero debe generar la propuesta")
+      return
+    }
+    setIsSignatureDialogOpen(true)
+  }
+
   const handleSendDocument = async () => {
+    console.log("[v0] Opening send document dialog")
     const contactData = currentFormType === "create" ? newContact : editContact
-    const editingContact = currentFormType === "edit" ? selectedContact : null
 
     if (!workflowState.signedDocument) {
       toast.error("No hay documento firmado para enviar")
       return
     }
 
-    try {
-      // Show communication options dialog
-      const sendMethod = await new Promise<"email" | "whatsapp">((resolve) => {
-        const dialog = document.createElement("div")
-        dialog.innerHTML = `
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
-            <h3 class="text-lg font-semibold mb-4">¿Cómo desea enviar el documento?</h3>
-            <div class="flex gap-4">
-              <button id="email-btn" class="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                📧 Email
-              </button>
-              <button id="whatsapp-btn" class="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors">
-                📱 WhatsApp
-              </button>
-            </div>
-            <button id="cancel-btn" class="w-full mt-3 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors">
-              Cancelar
-            </button>
-          </div>
-        </div>
-      `
-        document.body.appendChild(dialog)
-
-        dialog.querySelector("#email-btn")?.addEventListener("click", () => {
-          document.body.removeChild(dialog)
-          resolve("email")
-        })
-
-        dialog.querySelector("#whatsapp-btn")?.addEventListener("click", () => {
-          document.body.removeChild(dialog)
-          resolve("whatsapp")
-        })
-
-        dialog.querySelector("#cancel-btn")?.addEventListener("click", () => {
-          document.body.removeChild(dialog)
-          throw new Error("Cancelled")
-        })
-      })
-
-      // Send document via selected method
-      const response = await fetch(`/api/proposals/${workflowState.generatedProposal.id}/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          method: sendMethod,
-          contactId: editingContact?.id,
-          email: newContact.email,
-          phone: newContact.phone,
-        }),
-      })
-
-      if (response.ok) {
-        setWorkflowState((prev) => ({ ...prev, step: "complete" }))
-        toast.success(`Documento enviado por ${sendMethod === "email" ? "email" : "WhatsApp"} exitosamente`)
-      } else {
-        throw new Error("Error al enviar documento")
-      }
-    } catch (error: any) {
-      if (error.message !== "Cancelled") {
-        toast.error("Error al enviar documento")
-      }
+    if (!contactData.email && !contactData.phone) {
+      toast.error("El contacto debe tener email o teléfono para enviar el documento")
+      return
     }
+
+    setIsSendDialogOpen(true)
   }
 
   const resetWorkflow = () => {
@@ -1211,46 +1112,48 @@ export default function ContactosPage() {
               </div>
 
               <div className="space-y-4 w-full">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <div className="grid grid-cols-2 gap-4 mb-4">
                   <Button
                     variant="outline"
-                    onClick={handleServiceSelection} // Connect to service catalog
-                    disabled={workflowState.step !== "service"}
+                    onClick={handleServiceSelection} // Properly connected to service selection
+                    disabled={false} // Always enabled to allow service selection
                     className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
                       workflowState.step === "service"
                         ? "border-green-400 text-green-700 bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 shadow-green-100"
                         : workflowState.selectedService
                           ? "border-green-300 text-green-600 bg-green-50"
-                          : "border-gray-300 text-gray-500 bg-gray-50"
+                          : "border-gray-300 text-gray-500 bg-gray-50 hover:bg-gray-100"
                     }`}
                   >
                     <Package className="mr-3 h-5 w-5" />
-                    {workflowState.selectedService ? "Servicio Seleccionado" : "Seleccionar Servicio"}
+                    {workflowState.selectedService ? `✓ ${workflowState.selectedService.name}` : "Seleccionar Servicio"}
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={handleTemplateSelection} // Connect to template selection
-                    disabled={!workflowState.selectedService || workflowState.step !== "template"}
+                    onClick={handleTemplateSelection} // Properly connected to template selection
+                    disabled={!workflowState.selectedService} // Only disabled if no service selected
                     className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
                       workflowState.step === "template"
                         ? "border-purple-400 text-purple-700 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 shadow-purple-100"
                         : workflowState.selectedTemplate
                           ? "border-purple-300 text-purple-600 bg-purple-50"
-                          : "border-gray-300 text-gray-500 bg-gray-50"
+                          : !workflowState.selectedService
+                            ? "border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed"
+                            : "border-gray-300 text-gray-500 bg-gray-50 hover:bg-gray-100"
                     }`}
                   >
                     <FileText className="mr-3 h-5 w-5" />
-                    {workflowState.selectedTemplate ? "Plantilla Seleccionada" : "Seleccionar Plantilla"}
+                    {workflowState.selectedTemplate
+                      ? `✓ ${workflowState.selectedTemplate.name}`
+                      : "Seleccionar Plantilla"}
                   </Button>
                 </div>
 
-                <div className="w-full">
+                <div className="w-full mb-4">
                   <Button
                     variant="outline"
-                    onClick={() => handleGenerateProposal("create")}
-                    disabled={
-                      !workflowState.selectedTemplate || workflowState.step !== "generate" || isProposalGenerating
-                    }
+                    onClick={() => handleGenerateProposal("create")} // Enhanced with proper form type
+                    disabled={!workflowState.selectedService || !workflowState.selectedTemplate || isProposalGenerating}
                     className={`w-full h-16 border-2 transition-all duration-300 font-semibold shadow-sm ${
                       workflowState.step === "generate"
                         ? "border-blue-400 text-blue-700 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 shadow-blue-100"
@@ -1261,28 +1164,23 @@ export default function ContactosPage() {
                   >
                     {isProposalGenerating ? (
                       <>
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
-                        Generando Propuesta con IA...
-                      </>
-                    ) : workflowState.generatedProposal ? (
-                      <>
-                        <CheckCircle className="mr-3 h-6 w-6 text-green-500" />
-                        Propuesta Generada con IA
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current mr-3"></div>
+                        Generando Propuesta...
                       </>
                     ) : (
                       <>
-                        <Sparkles className="mr-3 h-6 w-6" />
-                        Generar Propuesta con IA
+                        <Sparkles className="mr-3 h-5 w-5" />
+                        {workflowState.generatedProposal ? "✓ Propuesta Generada" : "Generar Propuesta con IA"}
                       </>
                     )}
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <div className="grid grid-cols-2 gap-4 mb-6">
                   <Button
                     variant="outline"
-                    onClick={handleDigitalSignature}
-                    disabled={!workflowState.generatedProposal || workflowState.step !== "signature"}
+                    onClick={handleSignature} // Connected to signature handler
+                    disabled={!workflowState.generatedProposal}
                     className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
                       workflowState.step === "signature"
                         ? "border-orange-400 text-orange-700 bg-gradient-to-r from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 shadow-orange-100"
@@ -1292,22 +1190,20 @@ export default function ContactosPage() {
                     }`}
                   >
                     <PenTool className="mr-3 h-5 w-5" />
-                    {workflowState.signedDocument ? "Documento Firmado" : "Firma Digital"}
+                    {workflowState.signedDocument ? "✓ Documento Firmado" : "Firma Digital"}
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={handleSendDocument} // Enhanced with email/WhatsApp selection
-                    disabled={!workflowState.signedDocument || workflowState.step !== "send"}
+                    onClick={handleSendDocument} // Connected to send document handler
+                    disabled={!workflowState.signedDocument}
                     className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
                       workflowState.step === "send"
                         ? "border-indigo-400 text-indigo-700 bg-gradient-to-r from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 shadow-indigo-100"
-                        : workflowState.step === "complete"
-                          ? "border-indigo-300 text-indigo-600 bg-indigo-50"
-                          : "border-gray-300 text-gray-500 bg-gray-50"
+                        : "border-gray-300 text-gray-500 bg-gray-50"
                     }`}
                   >
                     <Send className="mr-3 h-5 w-5" />
-                    {workflowState.step === "complete" ? "Documento Enviado" : "Enviar Documento"}
+                    Enviar Documento
                   </Button>
                 </div>
 
