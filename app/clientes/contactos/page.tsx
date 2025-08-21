@@ -385,6 +385,16 @@ export default function ContactosPage() {
     )
   }
 
+  const handleServiceSelection = () => {
+    console.log("[v0] Opening service selector dialog")
+    if (!isServiceSelectorOpen && !isServiceSelectorBusy) {
+      setIsServiceSelectorBusy(true)
+      setIsServiceSelectorOpen(true)
+      // Reset busy state after a short delay to prevent rapid clicks
+      setTimeout(() => setIsServiceSelectorBusy(false), 500)
+    }
+  }
+
   const handleServiceSelect = (service: any) => {
     console.log("[v0] Service selected:", service.name)
     setWorkflowState((prev) => ({
@@ -413,12 +423,6 @@ export default function ContactosPage() {
   const handleCatalogClick = (formType: "create" | "edit") => {
     setCurrentFormType(formType)
     setIsServiceSelectorOpen(true)
-  }
-
-  const handleServiceSelection = () => {
-    console.log("[v0] Opening service selector dialog")
-    setIsServiceSelectorOpen(true)
-    // Don't set busy state here - let the dialog handle its own state
   }
 
   const handleTemplateSelection = () => {
@@ -1242,11 +1246,9 @@ export default function ContactosPage() {
             onClose={() => {
               console.log("[v0] Closing service selector dialog")
               setIsServiceSelectorOpen(false)
+              setIsServiceSelectorBusy(false)
             }}
-            onServiceSelect={(service) => {
-              console.log("[v0] Service selected:", service.name)
-              handleServiceSelect(service)
-            }}
+            onServiceSelect={handleServiceSelect}
             services={services}
           />
         )}
