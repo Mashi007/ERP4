@@ -583,8 +583,7 @@ export default function ContactosPage() {
 
       let proposalId = proposalDocument.id
 
-      // If the proposal ID is not numeric (Grok AI generated), save it to database first
-      if (isNaN(Number(proposalId))) {
+      if (proposalId.toString().startsWith("prop_")) {
         console.log("[v0] Saving Grok AI proposal to database...")
         const saveResponse = await fetch("/api/proposals", {
           method: "POST",

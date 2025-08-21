@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     console.log("[v0] Grok AI generated content:", content)
 
     const proposalDocument = {
-      id: Date.now().toString(),
+      id: `prop_${Date.now()}`,
       content: content,
       pdfUrl: `/proposals/generated-${Date.now()}.pdf`,
       status: "generated",
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     console.error("[v0] Grok AI error:", error)
 
     const fallbackProposal = {
-      id: Date.now().toString(),
+      id: `prop_${Date.now()}`,
       content: `Propuesta para ${contactData?.nombre_fiscal || "Cliente"}\nServicio: ${serviceData?.name || "Servicio"}\nPrecio: €${serviceData?.price || "0"}`,
       status: "generated-fallback",
       created_at: new Date().toISOString(),
