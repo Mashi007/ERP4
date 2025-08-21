@@ -87,7 +87,7 @@ export default function ContactosPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [isEditMode, setIsEditMode] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(isEditMode)
   const [editingContactId, setEditingContactId] = useState<string | null>(null)
 
   const [searchSuggestions, setSearchSuggestions] = useState<Contact[]>([])
@@ -483,18 +483,23 @@ export default function ContactosPage() {
       setLoading(true)
 
       const proposalData = {
-        contact_id: editingContact?.id || null,
-        service_id: selectedService?.id,
-        template_id: selectedTemplate?.id,
-        contact_name: formData.name,
-        contact_email: formData.email,
-        contact_phone: formData.phone,
-        contact_company: formData.company,
-        service_name: selectedService?.name,
-        service_description: selectedService?.description,
-        service_price: selectedService?.base_price,
-        template_content: selectedTemplate?.content,
+        contactId: editingContact?.id || null,
+        serviceId: selectedService?.id,
+        templateId: selectedTemplate?.id,
+        contactData: editingContact?.id
+          ? null
+          : {
+              name: formData.name,
+              email: formData.email,
+              phone: formData.phone,
+              company: formData.company,
+              job_title: formData.position,
+              status: "lead",
+            },
+        customRequirements: null, // Can be extended later for custom requirements
       }
+
+      console.log("[v0] Sending proposal data:", proposalData)
 
       // Generate proposal using AI
       const generateResponse = await fetch("/api/proposals/generate", {
@@ -504,10 +509,15 @@ export default function ContactosPage() {
       })
 
       if (!generateResponse.ok) {
-        throw new Error("Failed to generate proposal")
+        const errorData = await generateResponse.json()
+        console.error("[v0] API Error:", errorData)
+        throw new Error(errorData.details || "Failed to generate proposal")
       }
 
-      const generatedProposal = await generateResponse.json()
+      const result = await generateResponse.json()
+      const generatedProposal = result.proposal
+
+      console.log("[v0] Proposal generated successfully:", generatedProposal)
 
       // Generate PDF document
       const pdfResponse = await fetch(`/api/proposals/${generatedProposal.id}/pdf`, {
@@ -532,11 +542,11 @@ export default function ContactosPage() {
       }))
 
       setFlowProgress((prev) => ({ ...prev, generate: true }))
-      console.log("[v0] Proposal generated successfully:", generatedProposal)
+      console.log("[v0] Proposal workflow updated successfully")
       alert("Propuesta generada exitosamente")
     } catch (error) {
       console.error("[v0] Error generating proposal:", error)
-      alert("Error al generar la propuesta")
+      alert(`Error al generar la propuesta: ${error.message}`)
     } finally {
       setLoading(false)
     }
