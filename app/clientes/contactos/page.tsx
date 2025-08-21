@@ -674,7 +674,9 @@ export default function ContactosPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader className="space-y-3">
-            <DialogTitle className="text-xl font-semibold">Editar Contacto</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-xl font-semibold">Editar Contacto</DialogTitle>
+            </div>
             <DialogDescription className="text-sm text-muted-foreground">
               Modifica la información del contacto.
             </DialogDescription>
@@ -803,13 +805,40 @@ export default function ContactosPage() {
             </div>
           </div>
 
-          <DialogFooter className="flex gap-3 pt-6 border-t">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1">
-              Cancelar
-            </Button>
-            <Button onClick={handleEditContact} className="flex-1 bg-blue-600 hover:bg-blue-700">
-              Guardar Cambios
-            </Button>
+          <DialogFooter className="flex flex-col gap-3 pt-6 border-t">
+            <div className="flex gap-3 w-full">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // TODO: Implement catalog functionality
+                  toast.success("Abriendo catálogo...")
+                }}
+                className="flex-1 border-green-300 text-green-700 hover:bg-green-50 hover:border-green-400"
+              >
+                <Package className="mr-2 h-4 w-4" />
+                Catálogo
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // TODO: Implement proposal functionality
+                  toast.success("Creando propuesta...")
+                }}
+                className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Propuesta
+              </Button>
+            </div>
+
+            <div className="flex gap-3 w-full">
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1">
+                Cancelar
+              </Button>
+              <Button onClick={handleEditContact} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                Guardar Cambios
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
