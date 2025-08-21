@@ -550,21 +550,89 @@ export default function ContactosPage() {
           </div>
         </div>
 
-        <div className="p-12 text-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-              <Users className="h-8 w-8 text-gray-400" />
-            </div>
-            <div>
-              <h3 className="text-lg font-medium text-gray-900">No hay contactos</h3>
-              <p className="text-sm text-gray-500 mt-1">Comienza agregando tu primer contacto.</p>
-            </div>
-            <Button onClick={() => setIsCreateOpen(true)} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="mr-2 h-4 w-4" />
-              Crear Primer Contacto
-            </Button>
+        {/* Conditional rendering for contacts table vs empty state */}
+        {filteredContacts.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Contacto
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Teléfono
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Empresa
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fecha
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredContacts.map((contact) => (
+                  <tr key={contact.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                          <User className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-gray-900">{contact.name}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{contact.email}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{contact.phone || "-"}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{contact.company || "-"}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge
+                        variant={contact.status === "client" ? "default" : "secondary"}
+                        className={
+                          contact.status === "client" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                        }
+                      >
+                        {contact.status === "client" ? "Cliente" : "Contacto"}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(contact.created_at).toLocaleDateString("es-ES")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
+        ) : (
+          <div className="p-12 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                <Users className="h-8 w-8 text-gray-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">No hay contactos</h3>
+                <p className="text-sm text-gray-500 mt-1">Comienza agregando tu primer contacto.</p>
+              </div>
+              <Button onClick={() => setIsCreateOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="mr-2 h-4 w-4" />
+                Crear Primer Contacto
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
