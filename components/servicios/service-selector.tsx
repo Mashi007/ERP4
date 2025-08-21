@@ -139,7 +139,7 @@ export default function ServiceSelector({ open, onOpenChange, onServiceSelect, c
                           <div className="flex items-center gap-1">
                             <Euro className="h-4 w-4" />
                             <span className="font-semibold">
-                              {service.base_price.toFixed(2)} {service.currency}
+                              {(Number(service.base_price) || 0).toFixed(2)} {service.currency}
                             </span>
                           </div>
                           {service.duration_hours > 0 && (
