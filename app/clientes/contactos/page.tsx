@@ -1,5 +1,7 @@
 "use client"
 
+import { DialogFooter } from "@/components/ui/dialog"
+
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,7 +11,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -32,6 +33,7 @@ import {
   PenTool,
   Send,
   Save,
+  Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -131,6 +133,9 @@ export default function ContactosPage() {
     stage: "",
     status: "",
   })
+
+  const [isServiceSelectorBusy, setIsServiceSelectorBusy] = useState(false)
+  const [isTemplateSelectorBusy, setIsTemplateSelectorBusy] = useState(false)
 
   const stageOptions = [
     { value: "Nuevo", label: "Nuevo" },
@@ -383,22 +388,26 @@ export default function ContactosPage() {
   }
 
   const handleServiceSelect = (service: Service) => {
+    console.log("[v0] Service selected:", service.name)
     setWorkflowState((prev) => ({
       ...prev,
       selectedService: service,
       step: "template",
     }))
     setIsServiceSelectorOpen(false)
+    setIsServiceSelectorBusy(false)
     toast.success(`Servicio seleccionado: ${service.name}`)
   }
 
   const handleTemplateSelect = (template: Template) => {
+    console.log("[v0] Template selected:", template.name)
     setWorkflowState((prev) => ({
       ...prev,
       selectedTemplate: template,
       step: "generate",
     }))
     setIsTemplateSelectorOpen(false)
+    setIsTemplateSelectorBusy(false)
     toast.success(`Plantilla seleccionada: ${template.name}`)
   }
 
@@ -408,91 +417,121 @@ export default function ContactosPage() {
   }
 
   const handleServiceSelection = () => {
+    if (isServiceSelectorBusy || isServiceSelectorOpen) {
+      console.log("[v0] Service selector already busy or open, ignoring click")
+      return
+    }
+
     console.log("[v0] Opening service selector dialog")
+    setIsServiceSelectorBusy(true)
     setIsServiceSelectorOpen(true)
+
+    // Reset busy state after a short delay
+    setTimeout(() => {
+      setIsServiceSelectorBusy(false)
+    }, 1000)
   }
 
   const handleTemplateSelection = () => {
+    if (isTemplateSelectorBusy || isTemplateSelectorOpen) {
+      console.log("[v0] Template selector already busy or open, ignoring click")
+      return
+    }
+
     console.log("[v0] Template selection clicked, current service:", workflowState.selectedService)
     if (workflowState.selectedService) {
+      setIsTemplateSelectorBusy(true)
       setIsTemplateSelectorOpen(true)
+
+      // Reset busy state after a short delay
+      setTimeout(() => {
+        setIsTemplateSelectorBusy(false)
+      }, 1000)
     } else {
       toast.error("Primero debe seleccionar un servicio")
     }
   }
 
-  const handleGenerateProposal = async (formType: "create" | "edit") => {
-    console.log("[v0] Generating proposal, workflow state:", workflowState)
-
+  const handleGenerateProposal = async () => {
     if (!workflowState.selectedService || !workflowState.selectedTemplate) {
       toast.error("Debe seleccionar un servicio y una plantilla primero")
       return
     }
 
-    const contactData = formType === "create" ? newContact : editContact
-
-    if (!contactData.name || !contactData.email) {
-      toast.error("Complete los datos del contacto primero")
+    const contactData = currentFormType === "create" ? newContact : editContact
+    if (!contactData?.name || !contactData?.email) {
+      toast.error("Información del contacto incompleta")
       return
     }
 
     setIsProposalGenerating(true)
+    console.log("[v0] Generating AI proposal with:", {
+      contact: contactData,
+      service: workflowState.selectedService,
+      template: workflowState.selectedTemplate,
+    })
 
     try {
       const response = await fetch("/api/proposals/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          contactId: formType === "edit" ? selectedContact?.id : null,
-          contactData,
+          contactId: contactData.id || null,
           serviceId: workflowState.selectedService.id,
           templateId: workflowState.selectedTemplate.id,
-          requirements: "Propuesta generada desde formulario de contacto",
+          contactData: {
+            name: contactData.name,
+            email: contactData.email,
+            phone: contactData.phone,
+            company: contactData.company,
+            job_title: contactData.job_title,
+          },
         }),
       })
 
       if (response.ok) {
         const proposal = await response.json()
+        console.log("[v0] AI proposal generated successfully:", proposal)
+
         setWorkflowState((prev) => ({
           ...prev,
           generatedProposal: proposal,
           step: "signature",
         }))
-        toast.success("Propuesta generada exitosamente")
+
+        toast.success("Propuesta generada exitosamente con IA")
       } else {
-        throw new Error("Error al generar propuesta")
+        const error = await response.json()
+        console.error("[v0] Error generating proposal:", error)
+        toast.error("Error al generar la propuesta: " + (error.message || "Error desconocido"))
       }
     } catch (error) {
-      console.error("[v0] Error generating proposal:", error)
-      toast.error("Error al generar la propuesta")
+      console.error("[v0] Network error generating proposal:", error)
+      toast.error("Error de conexión al generar la propuesta")
     } finally {
       setIsProposalGenerating(false)
     }
   }
 
-  const handleSignature = () => {
-    console.log("[v0] Opening signature dialog")
+  const handleDigitalSignature = async () => {
     if (!workflowState.generatedProposal) {
-      toast.error("Primero debe generar la propuesta")
+      toast.error("Debe generar una propuesta primero")
       return
     }
+
+    console.log("[v0] Opening digital signature for proposal:", workflowState.generatedProposal.id)
     setIsSignatureDialogOpen(true)
   }
 
   const handleSendDocument = async () => {
-    console.log("[v0] Opening send document dialog")
-    const contactData = currentFormType === "create" ? newContact : editContact
-
     if (!workflowState.signedDocument) {
-      toast.error("No hay documento firmado para enviar")
+      toast.error("Debe firmar el documento primero")
       return
     }
 
-    if (!contactData.email && !contactData.phone) {
-      toast.error("El contacto debe tener email o teléfono para enviar el documento")
-      return
-    }
-
+    console.log("[v0] Opening send document dialog for:", workflowState.signedDocument)
     setIsSendDialogOpen(true)
   }
 
@@ -1115,8 +1154,8 @@ export default function ContactosPage() {
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <Button
                     variant="outline"
-                    onClick={handleServiceSelection} // Properly connected to service selection
-                    disabled={false} // Always enabled to allow service selection
+                    onClick={handleServiceSelection}
+                    disabled={isServiceSelectorBusy} // Disable button when busy
                     className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
                       workflowState.step === "service"
                         ? "border-green-400 text-green-700 bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 shadow-green-100"
@@ -1126,52 +1165,57 @@ export default function ContactosPage() {
                     }`}
                   >
                     <Package className="mr-3 h-5 w-5" />
-                    {workflowState.selectedService ? `✓ ${workflowState.selectedService.name}` : "Seleccionar Servicio"}
+                    {isServiceSelectorBusy
+                      ? "Cargando..."
+                      : workflowState.selectedService
+                        ? `✓ ${workflowState.selectedService.name}`
+                        : "Seleccionar Servicio"}
                   </Button>
+
                   <Button
                     variant="outline"
-                    onClick={handleTemplateSelection} // Properly connected to template selection
-                    disabled={!workflowState.selectedService} // Only disabled if no service selected
+                    onClick={handleTemplateSelection}
+                    disabled={!workflowState.selectedService || isTemplateSelectorBusy} // Proper validation and busy state
                     className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
                       workflowState.step === "template"
-                        ? "border-purple-400 text-purple-700 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 shadow-purple-100"
+                        ? "border-blue-400 text-blue-700 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 shadow-blue-100"
                         : workflowState.selectedTemplate
-                          ? "border-purple-300 text-purple-600 bg-purple-50"
-                          : !workflowState.selectedService
-                            ? "border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed"
-                            : "border-gray-300 text-gray-500 bg-gray-50 hover:bg-gray-100"
+                          ? "border-blue-300 text-blue-600 bg-blue-50"
+                          : "border-gray-300 text-gray-500 bg-gray-50 hover:bg-gray-100"
                     }`}
                   >
                     <FileText className="mr-3 h-5 w-5" />
-                    {workflowState.selectedTemplate
-                      ? `✓ ${workflowState.selectedTemplate.name}`
-                      : "Seleccionar Plantilla"}
+                    {isTemplateSelectorBusy
+                      ? "Cargando..."
+                      : workflowState.selectedTemplate
+                        ? `✓ ${workflowState.selectedTemplate.name}`
+                        : "Seleccionar Plantilla"}
                   </Button>
                 </div>
 
                 <div className="w-full mb-4">
                   <Button
                     variant="outline"
-                    onClick={() => handleGenerateProposal("create")} // Enhanced with proper form type
+                    onClick={handleGenerateProposal}
                     disabled={!workflowState.selectedService || !workflowState.selectedTemplate || isProposalGenerating}
-                    className={`w-full h-16 border-2 transition-all duration-300 font-semibold shadow-sm ${
+                    className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
                       workflowState.step === "generate"
-                        ? "border-blue-400 text-blue-700 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 shadow-blue-100"
+                        ? "border-purple-400 text-purple-700 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 shadow-purple-100"
                         : workflowState.generatedProposal
-                          ? "border-blue-300 text-blue-600 bg-blue-50"
-                          : "border-gray-300 text-gray-500 bg-gray-50"
+                          ? "border-purple-300 text-purple-600 bg-purple-50"
+                          : "border-gray-300 text-gray-500 bg-gray-50 hover:bg-gray-100"
                     }`}
                   >
+                    <Sparkles className="mr-3 h-5 w-5" />
                     {isProposalGenerating ? (
                       <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current mr-3"></div>
-                        Generando Propuesta...
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generando con IA...
                       </>
+                    ) : workflowState.generatedProposal ? (
+                      "✓ Propuesta Generada"
                     ) : (
-                      <>
-                        <Sparkles className="mr-3 h-5 w-5" />
-                        {workflowState.generatedProposal ? "✓ Propuesta Generada" : "Generar Propuesta con IA"}
-                      </>
+                      "Generar Propuesta IA"
                     )}
                   </Button>
                 </div>
@@ -1179,27 +1223,28 @@ export default function ContactosPage() {
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <Button
                     variant="outline"
-                    onClick={handleSignature} // Connected to signature handler
+                    onClick={handleDigitalSignature}
                     disabled={!workflowState.generatedProposal}
                     className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
                       workflowState.step === "signature"
                         ? "border-orange-400 text-orange-700 bg-gradient-to-r from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 shadow-orange-100"
                         : workflowState.signedDocument
                           ? "border-orange-300 text-orange-600 bg-orange-50"
-                          : "border-gray-300 text-gray-500 bg-gray-50"
+                          : "border-gray-300 text-gray-500 bg-gray-50 hover:bg-gray-100"
                     }`}
                   >
                     <PenTool className="mr-3 h-5 w-5" />
                     {workflowState.signedDocument ? "✓ Documento Firmado" : "Firma Digital"}
                   </Button>
+
                   <Button
                     variant="outline"
-                    onClick={handleSendDocument} // Connected to send document handler
+                    onClick={handleSendDocument}
                     disabled={!workflowState.signedDocument}
                     className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
                       workflowState.step === "send"
-                        ? "border-indigo-400 text-indigo-700 bg-gradient-to-r from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 shadow-indigo-100"
-                        : "border-gray-300 text-gray-500 bg-gray-50"
+                        ? "border-teal-400 text-teal-700 bg-gradient-to-r from-teal-50 to-teal-100 hover:from-teal-100 hover:to-teal-200 shadow-teal-100"
+                        : "border-gray-300 text-gray-500 bg-gray-50 hover:bg-gray-100"
                     }`}
                   >
                     <Send className="mr-3 h-5 w-5" />
