@@ -295,9 +295,9 @@ export default function ContactosPage() {
 
   const filteredContacts = contacts.filter(
     (contact) =>
-      contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contact.company.toLowerCase().includes(searchTerm.toLowerCase()),
+      (contact.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (contact.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (contact.company?.toLowerCase() || "").includes(searchTerm.toLowerCase()),
   )
 
   const getStatusColor = (status: string) => {
@@ -359,9 +359,9 @@ export default function ContactosPage() {
     try {
       const filteredContacts = contacts.filter(
         (contact) =>
-          contact.name.toLowerCase().includes(query.toLowerCase()) ||
-          contact.email.toLowerCase().includes(query.toLowerCase()) ||
-          contact.company.toLowerCase().includes(query.toLowerCase()),
+          (contact.name?.toLowerCase() || "").includes(query.toLowerCase()) ||
+          (contact.email?.toLowerCase() || "").includes(query.toLowerCase()) ||
+          (contact.company?.toLowerCase() || "").includes(query.toLowerCase()),
       )
 
       setContactSuggestions(filteredContacts.slice(0, 8))
