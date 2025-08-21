@@ -41,6 +41,11 @@ export default function ContactosPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateOpen, setIsCreateOpen] = useState(false)
 
+  const [searchSuggestions, setSearchSuggestions] = useState<Contact[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
+
   const [formData, setFormData] = useState<ContactFormData>({
     name: "",
     email: "",
@@ -60,20 +65,116 @@ export default function ContactosPage() {
   })
 
   useEffect(() => {
-    // Simular carga de contactos
-    setLoading(false)
-    setContacts([])
+    loadContacts()
   }, [])
+
+  const loadContacts = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/contacts")
+      if (response.ok) {
+        const contactsData = await response.json()
+        setContacts(contactsData)
+      }
+    } catch (error) {
+      console.error("[v0] Error loading contacts:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleNameSearch = (value: string) => {
+    setFormData((prev) => ({ ...prev, name: value }))
+
+    // Clear previous timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout)
+    }
+
+    // Start search when 4+ characters
+    if (value.length >= 4) {
+      setSearchLoading(true)
+      setShowSuggestions(true)
+
+      // Simulate API search (replace with actual API call)
+      const filtered = contacts.filter(
+        (contact) =>
+          contact.name?.toLowerCase().includes(value.toLowerCase()) ||
+          contact.email?.toLowerCase().includes(value.toLowerCase()) ||
+          contact.company?.toLowerCase().includes(value.toLowerCase()),
+      )
+
+      setSearchSuggestions(filtered)
+      setSearchLoading(false)
+
+      // Auto-fade after 1.5 seconds if no results
+      const timeout = setTimeout(() => {
+        if (filtered.length === 0) {
+          setShowSuggestions(false)
+        }
+      }, 1500)
+
+      setSearchTimeout(timeout)
+    } else {
+      setShowSuggestions(false)
+      setSearchSuggestions([])
+    }
+  }
+
+  const selectExistingContact = (contact: Contact) => {
+    setFormData({
+      name: contact.name,
+      email: contact.email,
+      phone: contact.phone,
+      company: contact.company,
+      position: "", // This field might not exist in Contact interface
+    })
+    setShowSuggestions(false)
+    setSearchSuggestions([])
+  }
 
   const handleInputChange = (field: keyof ContactFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSaveContact = () => {
+  const handleSaveContact = async () => {
     console.log("[v0] Saving contact:", formData)
-    // TODO: Implement actual save logic
-    setIsCreateOpen(false)
-    resetForm()
+
+    try {
+      // Check if contact already exists
+      const existingContact = contacts.find((c) => c.email.toLowerCase() === formData.email.toLowerCase())
+
+      if (existingContact) {
+        // Update existing contact
+        const response = await fetch(`/api/contacts/${existingContact.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        })
+
+        if (response.ok) {
+          console.log("[v0] Contact updated successfully")
+        }
+      } else {
+        // Create new contact
+        const response = await fetch("/api/contacts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        })
+
+        if (response.ok) {
+          console.log("[v0] Contact created successfully")
+        }
+      }
+
+      // Reload contacts and close dialog
+      await loadContacts()
+      setIsCreateOpen(false)
+      resetForm()
+    } catch (error) {
+      console.error("[v0] Error saving contact:", error)
+    }
   }
 
   const resetForm = () => {
@@ -147,12 +248,43 @@ export default function ContactosPage() {
                   <span className="font-medium text-sm">Nombre completo</span>
                 </div>
 
-                <Input
-                  placeholder="Buscar contacto existente o escribir nuevo nombre..."
-                  value={formData.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  className="w-full"
-                />
+                <div className="relative">
+                  <Input
+                    placeholder="Buscar contacto existente o escribir nuevo nombre..."
+                    value={formData.name}
+                    onChange={(e) => handleNameSearch(e.target.value)}
+                    className="w-full"
+                  />
+
+                  {/* Search suggestions dropdown */}
+                  {showSuggestions && (
+                    <div className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto mt-1">
+                      {searchLoading ? (
+                        <div className="p-3 text-center text-sm text-gray-500">Buscando...</div>
+                      ) : searchSuggestions.length > 0 ? (
+                        <>
+                          <div className="p-2 text-xs text-gray-500 border-b">Contactos encontrados:</div>
+                          {searchSuggestions.map((contact) => (
+                            <div
+                              key={contact.id}
+                              className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                              onClick={() => selectExistingContact(contact)}
+                            >
+                              <div className="font-medium text-sm">{contact.name}</div>
+                              <div className="text-xs text-gray-500">{contact.email}</div>
+                              {contact.company && <div className="text-xs text-gray-400">{contact.company}</div>}
+                            </div>
+                          ))}
+                        </>
+                      ) : (
+                        <div className="p-3 text-center text-sm text-gray-500">
+                          No se encontraron contactos
+                          <div className="text-xs mt-1">Continúa escribiendo para crear un nuevo contacto</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
