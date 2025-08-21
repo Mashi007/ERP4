@@ -1537,6 +1537,32 @@ export default function ContactosPage() {
                       className="w-full"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
+                    <Input
+                      value={selectedContactForDetails.job_title || ""}
+                      onChange={(e) =>
+                        setSelectedContactForDetails({
+                          ...selectedContactForDetails,
+                          job_title: e.target.value,
+                        })
+                      }
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">NIF</label>
+                    <Input
+                      value={selectedContactForDetails.nif || ""}
+                      onChange={(e) =>
+                        setSelectedContactForDetails({
+                          ...selectedContactForDetails,
+                          nif: e.target.value,
+                        })
+                      }
+                      className="w-full"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1678,8 +1704,8 @@ export default function ContactosPage() {
               </Button>
               <Button
                 onClick={async () => {
-                  // Update contact information
                   try {
+                    console.log("[v0] Updating contact:", selectedContactForDetails.id)
                     const response = await fetch(`/api/contacts/${selectedContactForDetails.id}`, {
                       method: "PUT",
                       headers: { "Content-Type": "application/json" },
@@ -1687,11 +1713,15 @@ export default function ContactosPage() {
                     })
 
                     if (response.ok) {
+                      const result = await response.json()
+                      console.log("[v0] Contact updated successfully:", result)
                       toast.success("Contacto actualizado correctamente")
-                      fetchContacts()
+                      await fetchContacts()
                       setIsContactDetailsOpen(false)
                     } else {
-                      toast.error("Error al actualizar el contacto")
+                      const error = await response.json()
+                      console.error("[v0] Error updating contact:", error)
+                      toast.error(error.error || "Error al actualizar el contacto")
                     }
                   } catch (error) {
                     console.error("[v0] Error updating contact:", error)
