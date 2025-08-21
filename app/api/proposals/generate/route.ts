@@ -7,29 +7,62 @@ const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(request: NextRequest) {
   try {
-    const { contactId, serviceId, customRequirements } = await request.json()
+    const { contactId, serviceId, templateId, contactData, customRequirements } = await request.json()
 
-    if (!contactId || !serviceId) {
-      return NextResponse.json({ error: "Contact ID and Service ID are required" }, { status: 400 })
+    if (!serviceId) {
+      return NextResponse.json({ error: "Service ID is required" }, { status: 400 })
     }
 
-    const [contactResult, serviceResult, templateResult] = await Promise.all([
-      sql`SELECT * FROM contacts WHERE id = ${contactId}`,
-      sql`SELECT * FROM services WHERE id = ${serviceId} AND is_active = true`,
-      sql`SELECT * FROM proposal_templates WHERE is_default = true AND is_active = true LIMIT 1`,
-    ])
-
-    if (contactResult.length === 0) {
-      return NextResponse.json({ error: "Contact not found" }, { status: 404 })
+    let contact
+    if (contactId) {
+      const contactResult = await sql`SELECT * FROM contacts WHERE id = ${contactId}`
+      if (contactResult.length === 0) {
+        return NextResponse.json({ error: "Contact not found" }, { status: 404 })
+      }
+      contact = contactResult[0]
+    } else if (contactData) {
+      contact = contactData
+    } else {
+      return NextResponse.json({ error: "Contact ID or contact data is required" }, { status: 400 })
     }
+
+    const serviceResult = await sql`
+      SELECT id, name, description, base_price, currency, 
+             COALESCE(category_id::text, 'General') as category,
+             0 as duration_hours,
+             '[]'::json as features,
+             '[]'::json as requirements, 
+             '[]'::json as deliverables,
+             is_active
+      FROM products 
+      WHERE id = ${serviceId} AND is_service = true AND is_active = true
+    `
 
     if (serviceResult.length === 0) {
       return NextResponse.json({ error: "Service not found" }, { status: 404 })
     }
 
-    const contact = contactResult[0]
     const service = serviceResult[0]
-    const template = templateResult[0] || null
+
+    let template = null
+    if (templateId) {
+      const templateResult = await sql`
+        SELECT * FROM campaign_templates 
+        WHERE id = ${templateId} AND type = 'proposal' AND is_active = true
+      `
+      if (templateResult.length > 0) {
+        template = templateResult[0]
+      }
+    }
+
+    if (!template) {
+      const defaultTemplateResult = await sql`
+        SELECT * FROM campaign_templates 
+        WHERE type = 'proposal' AND name ILIKE '%estándar%' AND is_active = true 
+        LIMIT 1
+      `
+      template = defaultTemplateResult[0] || null
+    }
 
     const prompt = `
 Eres un experto consultor comercial especializado en redacción de propuestas profesionales. Genera una propuesta comercial completa y persuasiva utilizando la siguiente información:
@@ -94,31 +127,32 @@ La propuesta debe ser completa, profesional y lista para enviar al cliente.
     expiresAt.setDate(expiresAt.getDate() + 30) // 30 days expiration
 
     const proposalResult = await sql`
-      INSERT INTO proposals (
-        contact_id, service_id, template_id, title, content, total_amount, currency, 
-        status, expires_at, created_by, created_at, updated_at
+      INSERT INTO contacts (
+        name, email, phone, company, job_title, status, stage, 
+        sales_owner, source, industry, notes, created_at, updated_at
       ) VALUES (
-        ${contactId}, ${serviceId}, ${template?.id || null}, ${proposalTitle}, 
-        ${proposalContent}, ${service.base_price}, ${service.currency}, 
-        'draft', ${expiresAt.toISOString()}, 'system', NOW(), NOW()
+        ${contact.name}, ${contact.email}, ${contact.phone || null}, 
+        ${contact.company || null}, ${contact.job_title || null}, 
+        'qualified', 'proposal', 'Sistema IA', 'ai_generated', 
+        ${service.category}, ${`Propuesta generada: ${proposalTitle}\n\nContenido:\n${proposalContent}`}, 
+        NOW(), NOW()
       )
-      RETURNING id, title, content, total_amount, currency, status, created_at
-    `
-
-    await sql`
-      INSERT INTO proposal_ai_generations (
-        proposal_id, prompt_used, ai_model, generation_time_ms, tokens_used, 
-        variables_data, generated_content, created_at
-      ) VALUES (
-        ${proposalResult[0].id}, ${prompt}, 'grok-4', ${generationTime}, 
-        ${result.usage?.totalTokens || 0}, 
-        ${JSON.stringify({ contact, service, customRequirements })}, 
-        ${proposalContent}, NOW()
-      )
+      ON CONFLICT (email) DO UPDATE SET
+        notes = CONCAT(COALESCE(contacts.notes, ''), '\n\n--- Nueva Propuesta ---\n', ${`${proposalTitle}\n\nContenido:\n${proposalContent}`}),
+        updated_at = NOW()
+      RETURNING id, name, email, notes, created_at
     `
 
     return NextResponse.json({
-      proposal: proposalResult[0],
+      proposal: {
+        id: proposalResult[0].id,
+        title: proposalTitle,
+        content: proposalContent,
+        total_amount: service.base_price,
+        currency: service.currency,
+        status: "draft",
+        created_at: proposalResult[0].created_at,
+      },
       generationTime,
       tokensUsed: result.usage?.totalTokens || 0,
       success: true,
