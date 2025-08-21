@@ -507,35 +507,91 @@ export default function ContactosPage() {
     toast.success("Documento firmado digitalmente")
   }
 
-  const handleSendDocument = () => {
-    setIsSendDialogOpen(true)
+  const handleServiceSelection = () => {
+    // Open service selector dialog
+    setIsServiceSelectorOpen(true)
   }
 
-  const handleSendComplete = async (method: "email" | "whatsapp", recipient: string) => {
+  const handleTemplateSelection = () => {
+    // Navigate to services/proposals or open template selector
+    if (workflowState.selectedService) {
+      setIsTemplateSelectorOpen(true)
+    } else {
+      toast.error("Primero debe seleccionar un servicio")
+    }
+  }
+
+  const handleSendDocument = async () => {
+    const contactData = currentFormType === "create" ? newContact : editContact
+    const editingContact = currentFormType === "edit" ? selectedContact : null
+
+    if (!workflowState.signedDocument) {
+      toast.error("No hay documento firmado para enviar")
+      return
+    }
+
     try {
-      const sendResponse = await fetch(`/api/proposals/${workflowState.generatedProposal.id}/send`, {
+      // Show communication options dialog
+      const sendMethod = await new Promise<"email" | "whatsapp">((resolve) => {
+        const dialog = document.createElement("div")
+        dialog.innerHTML = `
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <h3 class="text-lg font-semibold mb-4">¿Cómo desea enviar el documento?</h3>
+            <div class="flex gap-4">
+              <button id="email-btn" class="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                📧 Email
+              </button>
+              <button id="whatsapp-btn" class="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                📱 WhatsApp
+              </button>
+            </div>
+            <button id="cancel-btn" class="w-full mt-3 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      `
+        document.body.appendChild(dialog)
+
+        dialog.querySelector("#email-btn")?.addEventListener("click", () => {
+          document.body.removeChild(dialog)
+          resolve("email")
+        })
+
+        dialog.querySelector("#whatsapp-btn")?.addEventListener("click", () => {
+          document.body.removeChild(dialog)
+          resolve("whatsapp")
+        })
+
+        dialog.querySelector("#cancel-btn")?.addEventListener("click", () => {
+          document.body.removeChild(dialog)
+          throw new Error("Cancelled")
+        })
+      })
+
+      // Send document via selected method
+      const response = await fetch(`/api/proposals/${workflowState.generatedProposal.id}/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          method,
-          recipient,
-          message: `Propuesta personalizada para ${workflowState.selectedService?.name}`,
+          method: sendMethod,
+          contactId: editingContact?.id,
+          email: newContact.email,
+          phone: newContact.phone,
         }),
       })
 
-      if (sendResponse.ok) {
-        setWorkflowState((prev) => ({
-          ...prev,
-          step: "complete",
-        }))
-        toast.success(`Propuesta enviada por ${method === "email" ? "email" : "WhatsApp"}`)
-        setIsSendDialogOpen(false)
+      if (response.ok) {
+        setWorkflowState((prev) => ({ ...prev, step: "complete" }))
+        toast.success(`Documento enviado por ${sendMethod === "email" ? "email" : "WhatsApp"} exitosamente`)
       } else {
-        toast.error(`Error enviando por ${method === "email" ? "email" : "WhatsApp"}`)
+        throw new Error("Error al enviar documento")
       }
-    } catch (error) {
-      console.error("Error sending document:", error)
-      toast.error("Error enviando el documento")
+    } catch (error: any) {
+      if (error.message !== "Cancelled") {
+        toast.error("Error al enviar documento")
+      }
     }
   }
 
@@ -1158,7 +1214,7 @@ export default function ContactosPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                   <Button
                     variant="outline"
-                    onClick={() => setIsServiceSelectorOpen(true)}
+                    onClick={handleServiceSelection} // Connect to service catalog
                     disabled={workflowState.step !== "service"}
                     className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
                       workflowState.step === "service"
@@ -1173,7 +1229,7 @@ export default function ContactosPage() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => setIsTemplateSelectorOpen(true)}
+                    onClick={handleTemplateSelection} // Connect to template selection
                     disabled={!workflowState.selectedService || workflowState.step !== "template"}
                     className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
                       workflowState.step === "template"
@@ -1240,7 +1296,7 @@ export default function ContactosPage() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={handleSendDocument}
+                    onClick={handleSendDocument} // Enhanced with email/WhatsApp selection
                     disabled={!workflowState.signedDocument || workflowState.step !== "send"}
                     className={`h-14 border-2 transition-all duration-300 font-semibold shadow-sm ${
                       workflowState.step === "send"
