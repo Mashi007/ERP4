@@ -72,6 +72,7 @@ interface WorkflowState {
   selectedTemplate: Template | null
   generatedProposal: any | null
   signedDocument: any | null
+  sentDocument: any | null
   currentStep: number
 }
 
@@ -79,7 +80,7 @@ export default function ContactosPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [isNewContactOpen, setIsNewContactOpen] = useState(false)
+  const [isCreateContactOpen, setIsCreateContactOpen] = useState(false)
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
@@ -102,12 +103,11 @@ export default function ContactosPage() {
     selectedTemplate: null,
     generatedProposal: null,
     signedDocument: null,
+    sentDocument: null,
     currentStep: 1,
   })
   const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false)
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false)
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [isCreateContactOpen, setIsCreateContactOpen] = useState(false)
 
   const [newContact, setNewContact] = useState({
     name: "",
@@ -208,7 +208,7 @@ export default function ContactosPage() {
 
       if (response.ok) {
         toast.success("Contacto creado exitosamente")
-        setIsNewContactOpen(false)
+        setIsCreateContactOpen(false)
         setNewContact({
           name: "",
           email: "",
@@ -541,6 +541,7 @@ export default function ContactosPage() {
       selectedTemplate: null,
       generatedProposal: null,
       signedDocument: null,
+      sentDocument: null,
       currentStep: 1,
     })
   }
@@ -681,7 +682,7 @@ export default function ContactosPage() {
       }
 
       if (formType === "create") {
-        setIsNewContactOpen(false)
+        setIsCreateContactOpen(false)
         setNewContact({
           name: "",
           email: "",
@@ -728,6 +729,14 @@ export default function ContactosPage() {
           status: "lead",
         })
         fetchContacts()
+        setWorkflowState({
+          currentStep: 0,
+          selectedService: null,
+          selectedTemplate: null,
+          generatedProposal: null,
+          signedDocument: null,
+          sentDocument: null,
+        })
       } else {
         toast.error("Error al crear contacto")
       }
@@ -744,15 +753,13 @@ export default function ContactosPage() {
           <h1 className="text-3xl font-bold tracking-tight">Contactos</h1>
           <p className="text-muted-foreground">Gestiona tus leads y conviértelos en clientes</p>
         </div>
-        <Dialog open={isNewContactOpen} onOpenChange={setIsNewContactOpen}>
+        <Dialog open={isCreateContactOpen} onOpenChange={setIsCreateContactOpen}>
           <DialogTrigger asChild>
             <Button className="bg-blue-600 hover:bg-blue-700">
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Contacto
             </Button>
           </DialogTrigger>
-        </Dialog>
-        <Dialog open={isCreateContactOpen} onOpenChange={setIsCreateContactOpen}>
           <DialogContent className="sm:max-w-[1000px] max-h-[95vh] overflow-hidden flex flex-col">
             <DialogHeader className="space-y-3 flex-shrink-0">
               <div className="flex items-center justify-between">
