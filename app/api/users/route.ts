@@ -5,21 +5,20 @@ const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET() {
   try {
-    console.log("[v0] Fetching users from users table...")
+    console.log("[v0] Fetching users from neon_auth.users_sync table...")
 
     const users = await sql`
       SELECT 
         u.id,
         u.name,
         u.email,
-        r.name as role,
-        u.status,
-        u.last_login,
+        'Usuario' as role,
+        'active' as status,
+        u.updated_at as last_login,
         u.created_at,
         '[]'::json as permissions
-      FROM users u
-      LEFT JOIN roles r ON u.role_id = r.id
-      WHERE u.status = 'active'
+      FROM neon_auth.users_sync u
+      WHERE u.deleted_at IS NULL
       ORDER BY u.created_at DESC
     `
 

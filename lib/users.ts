@@ -17,10 +17,9 @@ export async function getUsers() {
     const sql = neon(process.env.DATABASE_URL)
 
     const users = await sql`
-      SELECT u.id, u.name, u.email, u.created_at, u.updated_at, r.name as role
-      FROM users u
-      LEFT JOIN roles r ON u.role_id = r.id
-      WHERE u.status = 'active'
+      SELECT u.id, u.name, u.email, u.created_at, u.updated_at
+      FROM neon_auth.users_sync u
+      WHERE u.deleted_at IS NULL
       ORDER BY u.name ASC
     `
 
@@ -31,7 +30,7 @@ export async function getUsers() {
         id: user.id.toString(),
         name: user.name || user.email?.split("@")[0] || "Usuario",
         email: user.email,
-        role: user.role || "Usuario",
+        role: "Usuario", // Default role since roles table doesn't exist
       }))
       console.log("[v0] Returning database users:", mappedUsers.length)
       return mappedUsers
