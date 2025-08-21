@@ -87,7 +87,7 @@ export default function ContactosPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [isEditMode, setIsEditMode] = useState(isEditMode)
+  const [isEditMode, setIsEditMode] = useState(false)
   const [editingContactId, setEditingContactId] = useState<string | null>(null)
 
   const [searchSuggestions, setSearchSuggestions] = useState<Contact[]>([])
