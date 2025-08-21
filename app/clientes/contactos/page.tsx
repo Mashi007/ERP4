@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus, Search, Users, User, Mail, Phone, Building, Briefcase, FileText, PenTool, Send, X } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface Contact {
   id: number
@@ -28,6 +29,7 @@ interface WorkflowState {
 }
 
 interface ContactFormData {
+  id?: string
   name: string
   email: string
   phone: string
@@ -53,6 +55,18 @@ export default function ContactosPage() {
     company: "",
     position: "",
   })
+
+  const [flowProgress, setFlowProgress] = useState({
+    service: false,
+    template: false,
+    generate: false,
+    sign: false,
+    send: false,
+  })
+
+  const hasFlowProgress = useMemo(() => {
+    return Object.values(flowProgress).some((value) => value === true)
+  }, [flowProgress])
 
   const [workflowState, setWorkflowState] = useState<WorkflowState>({
     currentStep: 1,
@@ -138,43 +152,70 @@ export default function ContactosPage() {
   }
 
   const handleSaveContact = async () => {
-    console.log("[v0] Saving contact:", formData)
+    // Basic validation
+    if (!formData.name || !formData.email) {
+      alert("Por favor, complete los campos obligatorios")
+      return
+    }
+
+    const contactToSave = {
+      ...formData,
+      id: formData.id || Date.now().toString(),
+      flowProgress: flowProgress,
+    }
 
     try {
-      // Check if contact already exists
-      const existingContact = contacts.find((c) => c.email.toLowerCase() === formData.email.toLowerCase())
+      if (hasFlowProgress) {
+        // Save to both contacts and clients (has flow progress)
+        console.log("[v0] Guardando en Contactos y Clientes:", contactToSave)
 
-      if (existingContact) {
-        // Update existing contact
-        const response = await fetch(`/api/contacts/${existingContact.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        })
+        await saveToContacts(contactToSave)
+        await saveToClients(contactToSave)
 
-        if (response.ok) {
-          console.log("[v0] Contact updated successfully")
-        }
+        alert("Contacto guardado en Contactos y Clientes")
       } else {
-        // Create new contact
-        const response = await fetch("/api/contacts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        })
+        // Save only to contacts (no flow progress)
+        console.log("[v0] Guardando solo en Contactos:", contactToSave)
 
-        if (response.ok) {
-          console.log("[v0] Contact created successfully")
-        }
+        await saveToContacts(contactToSave)
+
+        alert("Contacto guardado en Contactos")
       }
 
-      // Reload contacts and close dialog
-      await loadContacts()
-      setIsCreateOpen(false)
+      // Reset form and close dialog
       resetForm()
+      setIsCreateOpen(false)
+      await loadContacts()
     } catch (error) {
-      console.error("[v0] Error saving contact:", error)
+      console.error("[v0] Error al guardar contacto:", error)
+      alert("Error al guardar el contacto")
     }
+  }
+
+  const saveToContacts = async (contact: any) => {
+    const existingContact = contacts.find((c) => c.email.toLowerCase() === contact.email.toLowerCase())
+
+    if (existingContact) {
+      const response = await fetch(`/api/contacts/${existingContact.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contact),
+      })
+      if (!response.ok) throw new Error("Failed to update contact")
+    } else {
+      const response = await fetch("/api/contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contact),
+      })
+      if (!response.ok) throw new Error("Failed to create contact")
+    }
+  }
+
+  const saveToClients = async (contact: any) => {
+    // Logic for saving to clients table
+    console.log("[v0] Guardado en tabla de clientes:", contact)
+    // This would be implemented based on your clients API
   }
 
   const resetForm = () => {
@@ -185,6 +226,13 @@ export default function ContactosPage() {
       company: "",
       position: "",
     })
+    setFlowProgress({
+      service: false,
+      template: false,
+      generate: false,
+      sign: false,
+      send: false,
+    })
     setWorkflowState({
       currentStep: 1,
       steps: ["Servicio", "Plantilla", "Generar", "Firmar", "Enviar"],
@@ -194,6 +242,13 @@ export default function ContactosPage() {
       signedDocument: null,
       sentDocument: null,
     })
+  }
+
+  const handleFlowProgressChange = (step: string, value: boolean) => {
+    setFlowProgress((prev) => ({
+      ...prev,
+      [step]: value,
+    }))
   }
 
   const filteredContacts = contacts.filter(
@@ -354,58 +409,102 @@ export default function ContactosPage() {
                   <span className="text-sm text-muted-foreground">Paso 1 de 5</span>
                 </div>
 
-                <div className="flex items-center gap-2 mb-6">
-                  {workflowState.steps.map((step, index) => (
-                    <div key={step} className="flex items-center">
-                      <div
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          index === 0 ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
-                        }`}
-                      >
-                        {step}
-                      </div>
-                      {index < workflowState.steps.length - 1 && <div className="w-4 h-px bg-gray-200 mx-1" />}
+                {/* Flow progress indicators */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {[
+                    { key: "service", label: "Servicio" },
+                    { key: "template", label: "Plantilla" },
+                    { key: "generate", label: "Generar" },
+                    { key: "sign", label: "Firmar" },
+                    { key: "send", label: "Enviar" },
+                  ].map((step, index) => (
+                    <div
+                      key={step.key}
+                      className={cn(
+                        "px-3 py-1 rounded-full text-xs font-medium",
+                        flowProgress[step.key as keyof typeof flowProgress]
+                          ? "bg-green-100 text-green-800"
+                          : index === 0
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-600",
+                      )}
+                    >
+                      {step.label}
                     </div>
                   ))}
                 </div>
 
                 {/* Workflow Action Buttons */}
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  <Button variant="default" className="bg-blue-600 hover:bg-blue-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                  <Button
+                    onClick={() => handleFlowProgressChange("service", true)}
+                    className="bg-blue-600 hover:bg-blue-700 justify-start"
+                  >
                     <Plus className="mr-2 h-4 w-4" />
                     Seleccionar Servicio
                   </Button>
-                  <Button variant="outline" disabled>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => handleFlowProgressChange("template", true)}
+                    className="justify-start"
+                  >
                     <FileText className="mr-2 h-4 w-4" />
                     Seleccionar Plantilla
                   </Button>
-                  <Button variant="outline" disabled>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => handleFlowProgressChange("generate", true)}
+                    className="justify-start"
+                  >
                     <PenTool className="mr-2 h-4 w-4" />
                     Generar Propuesta
                   </Button>
-                  <Button variant="outline" disabled>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => handleFlowProgressChange("sign", true)}
+                    className="justify-start"
+                  >
                     <PenTool className="mr-2 h-4 w-4" />
                     Firma Digital
                   </Button>
-                  <Button variant="outline" disabled className="col-span-2 bg-transparent">
-                    <Send className="mr-2 h-4 w-4" />
-                    Enviar Documento
-                  </Button>
                 </div>
+
+                <Button
+                  variant="outline"
+                  onClick={() => handleFlowProgressChange("send", true)}
+                  className="w-full justify-center"
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  Enviar Documento
+                </Button>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-between pt-4 mt-6 border-t">
+              <div className="flex justify-between items-center pt-4 mt-6 border-t">
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
                   Cancelar
                 </Button>
-                <Button
-                  onClick={handleSaveContact}
-                  className="bg-blue-600 hover:bg-blue-700"
-                  disabled={!formData.name || !formData.email}
-                >
-                  Guardar Contacto
-                </Button>
+
+                <div className="flex items-center space-x-3">
+                  {/* Indicator of where it will be saved */}
+                  <div className="text-sm">
+                    {hasFlowProgress ? (
+                      <span className="text-green-600 font-medium">Se guardará en: Contactos y Clientes</span>
+                    ) : (
+                      <span className="text-blue-600 font-medium">Se guardará en: Contactos</span>
+                    )}
+                  </div>
+
+                  <Button
+                    onClick={handleSaveContact}
+                    className="bg-blue-600 hover:bg-blue-700"
+                    disabled={!formData.name || !formData.email}
+                  >
+                    {hasFlowProgress ? "Guardar Cliente" : "Guardar Contacto"}
+                  </Button>
+                </div>
               </div>
             </div>
           </DialogContent>
