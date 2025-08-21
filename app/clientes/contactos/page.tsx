@@ -726,10 +726,49 @@ export default function ContactosPage() {
     }
   }
 
+  const isWorkflowComplete = () => {
+    return (
+      workflowState.currentStep >= 5 &&
+      workflowState.selectedService &&
+      workflowState.selectedTemplate &&
+      workflowState.generatedProposal
+    )
+  }
+
+  const saveToClients = async (contactData: any) => {
+    console.log("[v0] Saving to clients collection:", contactData)
+
+    const clientData = {
+      name: contactData.name,
+      email: contactData.email,
+      phone: contactData.phone,
+      company: contactData.company,
+      cargo: contactData.job_title,
+      // Include workflow data for clients
+      service: workflowState.selectedService?.name,
+      template: workflowState.selectedTemplate?.name,
+      proposal: workflowState.generatedProposal,
+      workflow_status: "completed",
+    }
+
+    const response = await fetch("/api/clients", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(clientData),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to save to clients: ${response.status}`)
+    }
+
+    return await response.json()
+  }
+
   const handleSaveContact = async () => {
     console.log("[v0] Starting contact save process")
     console.log("[v0] Current newContact state:", newContact)
     console.log("[v0] Current searchTerm:", searchTerm)
+    console.log("[v0] Workflow state:", workflowState)
 
     try {
       const contactToSave = {
@@ -745,6 +784,10 @@ export default function ContactosPage() {
         return
       }
 
+      const workflowComplete = isWorkflowComplete()
+      console.log("[v0] Workflow complete:", workflowComplete)
+
+      // Always save to contacts first
       const response = await fetch("/api/contacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -756,7 +799,21 @@ export default function ContactosPage() {
       if (response.ok) {
         const savedContact = await response.json()
         console.log("[v0] Contact saved successfully:", savedContact)
-        toast.success("Contacto creado exitosamente")
+
+        if (workflowComplete) {
+          try {
+            const savedClient = await saveToClients(contactToSave)
+            console.log("[v0] Client saved successfully:", savedClient)
+            toast.success("Contacto y cliente creados exitosamente con propuesta completa")
+          } catch (clientError) {
+            console.error("[v0] Error saving to clients:", clientError)
+            toast.success("Contacto creado exitosamente, pero hubo un error al crear el cliente")
+          }
+        } else {
+          toast.success("Contacto creado exitosamente")
+        }
+
+        // Reset form and close dialog
         setIsCreateContactOpen(false)
         setNewContact({
           name: "",
@@ -770,6 +827,7 @@ export default function ContactosPage() {
         })
         setSearchTerm("")
         fetchContacts()
+
         setWorkflowState({
           step: "service",
           selectedService: null,
