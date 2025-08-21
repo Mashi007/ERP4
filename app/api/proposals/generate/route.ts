@@ -126,7 +126,7 @@ La propuesta debe ser completa, profesional y lista para enviar al cliente.
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 30) // 30 days expiration
 
-    const proposalResult = await sql`
+    const contactResult = await sql`
       INSERT INTO contacts (
         name, email, phone, company, job_title, status, 
         sales_owner, nif, tags, created_at, updated_at
@@ -143,6 +143,22 @@ La propuesta debe ser completa, profesional y lista para enviar al cliente.
       RETURNING id, name, email, created_at
     `
 
+    const proposalInsertResult = await sql`
+      INSERT INTO proposals (
+        title, content, contact_id, service_id, template_id,
+        total_amount, currency, status, expires_at, 
+        created_at, updated_at
+      ) VALUES (
+        ${proposalTitle}, ${proposalContent}, ${contactResult[0].id}, 
+        ${serviceId}, ${templateId || null}, ${service.base_price}, 
+        ${service.currency}, 'draft', ${expiresAt.toISOString()}, 
+        NOW(), NOW()
+      )
+      RETURNING id, title, content, total_amount, currency, status, created_at, expires_at
+    `
+
+    const savedProposal = proposalInsertResult[0]
+
     const noteContent = `Propuesta generada: ${proposalTitle}\n\nContenido:\n${proposalContent}`
 
     // Store as activity record for tracking
@@ -151,20 +167,21 @@ La propuesta debe ser completa, profesional y lista para enviar al cliente.
         contact_id, type, title, notes, status, 
         sales_owner, activity_date, created_at, updated_at
       ) VALUES (
-        ${proposalResult[0].id}, 'proposal', ${proposalTitle}, 
+        ${contactResult[0].id}, 'proposal', ${proposalTitle}, 
         ${noteContent}, 'completed', 'Sistema IA', NOW(), NOW(), NOW()
       )
     `
 
     return NextResponse.json({
       proposal: {
-        id: proposalResult[0].id,
-        title: proposalTitle,
-        content: proposalContent,
-        total_amount: service.base_price,
-        currency: service.currency,
-        status: "draft",
-        created_at: proposalResult[0].created_at,
+        id: savedProposal.id,
+        title: savedProposal.title,
+        content: savedProposal.content,
+        total_amount: savedProposal.total_amount,
+        currency: savedProposal.currency,
+        status: savedProposal.status,
+        created_at: savedProposal.created_at,
+        expires_at: savedProposal.expires_at,
       },
       generationTime,
       tokensUsed: result.usage?.totalTokens || 0,
