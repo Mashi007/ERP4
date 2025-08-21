@@ -153,6 +153,8 @@ export default function ContactosPage() {
     { value: "inactive", label: "Inactivo" },
   ]
 
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
   const fetchTemplates = async () => {
     try {
       const response = await fetch("/api/templates/proposals")
@@ -330,6 +332,22 @@ export default function ContactosPage() {
 
   const searchTimeout = useRef<any>(null)
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+
+    if (showSuggestions) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [showSuggestions])
+
   const searchContacts = async (query: string) => {
     if (query.length < 2) {
       setContactSuggestions([])
@@ -375,6 +393,15 @@ export default function ContactosPage() {
   const handleNameChange = (value: string) => {
     setNewContact({ ...newContact, name: value })
     searchContacts(value)
+  }
+
+  const handleCreateNewContact = () => {
+    setNewContact({
+      ...newContact,
+      name: searchTerm,
+    })
+    setShowSuggestions(false)
+    toast.success(`Nuevo contacto "${searchTerm}" creado`)
   }
 
   if (loading) {
@@ -777,97 +804,129 @@ export default function ContactosPage() {
                     Nombre completo
                   </Label>
 
-                  <div className="relative">
-                    <Input
-                      id="search"
-                      placeholder="Buscar contacto existente o escribir nuevo nombre..."
-                      value={searchTerm}
-                      onChange={(e) => {
-                        const value = e.target.value
-                        setSearchTerm(value)
-                        setNewContact({ ...newContact, name: value })
+                  <div className="relative" ref={dropdownRef}>
+                    <div className="relative">
+                      <Input
+                        placeholder="Buscar contacto existente o escribir nuevo nombre..."
+                        value={searchTerm}
+                        onChange={(e) => {
+                          const value = e.target.value
+                          setSearchTerm(value)
+                          handleNameChange(value)
 
-                        clearTimeout(searchTimeout.current)
-                        searchTimeout.current = setTimeout(() => {
-                          searchContacts(value)
-                        }, 300)
-                      }}
-                      className="h-12 text-base border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 pl-4 pr-12 rounded-xl shadow-sm"
-                    />
+                          clearTimeout(searchTimeout.current)
+                          searchTimeout.current = setTimeout(() => {
+                            searchContacts(value)
+                          }, 300)
+                        }}
+                        onFocus={() => {
+                          if (searchTerm.length >= 2) {
+                            setShowSuggestions(true)
+                          }
+                        }}
+                        className="h-12 text-base border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 pl-4 pr-12 rounded-xl shadow-sm"
+                      />
 
-                    {isSearching && (
-                      <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
-                      </div>
-                    )}
+                      {isSearching && (
+                        <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
+                        </div>
+                      )}
 
-                    {!isSearching && (
-                      <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                        <Search className="h-5 w-5 text-gray-400" />
+                      {!isSearching && (
+                        <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                          <Search className="h-5 w-5 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+
+                    {showSuggestions && (
+                      <div className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-2xl max-h-80 overflow-auto">
+                        {contactSuggestions.length > 0 ? (
+                          <>
+                            <div className="p-4 text-sm font-semibold text-gray-700 border-b bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
+                              <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4 text-blue-600" />
+                                Contactos encontrados ({contactSuggestions.length}) - Selecciona para auto-completar
+                              </div>
+                            </div>
+
+                            <div className="max-h-64 overflow-y-auto">
+                              {contactSuggestions.map((contact, index) => (
+                                <div
+                                  key={contact.id}
+                                  className={`p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200 ${
+                                    index === 0 ? "bg-blue-25" : ""
+                                  }`}
+                                  onClick={() => handleContactSelect(contact)}
+                                >
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+                                      <User className="h-6 w-6 text-white" />
+                                    </div>
+
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-semibold text-gray-900 truncate text-base">{contact.name}</p>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <Building className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                                        <p className="text-sm text-gray-600 truncate">
+                                          {contact.company || "Sin empresa"}
+                                        </p>
+                                      </div>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <Mail className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                                        <p className="text-xs text-gray-500 truncate">{contact.email || "Sin email"}</p>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                      <Badge
+                                        variant="outline"
+                                        className={`text-xs font-medium whitespace-nowrap ${getStatusColor(contact.status || "lead")}`}
+                                      >
+                                        {getStatusText(contact.status || "lead")}
+                                      </Badge>
+                                      <div className="text-xs text-gray-400 whitespace-nowrap">
+                                        {new Date(contact.created_at).toLocaleDateString()}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="p-3 bg-gray-50 border-t text-center rounded-b-xl">
+                              <p className="text-xs text-gray-600">
+                                {contactSuggestions.length === 8
+                                  ? "Mostrando primeros 8 resultados"
+                                  : `${contactSuggestions.length} contacto(s) encontrado(s)`}
+                              </p>
+                            </div>
+                          </>
+                        ) : searchTerm.length >= 2 && !isSearching ? (
+                          <div className="p-6 text-center">
+                            <div className="flex flex-col items-center gap-4">
+                              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                                <Search className="h-6 w-6 text-gray-400" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">No se encontraron contactos</p>
+                                <p className="text-sm text-gray-500 mt-1">
+                                  ¿Deseas crear un nuevo contacto con el nombre "{searchTerm}"?
+                                </p>
+                              </div>
+                              <button
+                                onClick={handleCreateNewContact}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                              >
+                                Crear nuevo contacto
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
                       </div>
                     )}
                   </div>
-
-                  {showSuggestions && contactSuggestions.length > 0 && (
-                    <div className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-2xl max-h-80 overflow-auto">
-                      <div className="p-4 text-sm font-semibold text-gray-700 border-b bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-blue-600" />
-                          Contactos encontrados ({contactSuggestions.length}) - Selecciona para auto-completar
-                        </div>
-                      </div>
-
-                      <div className="max-h-64 overflow-y-auto">
-                        {contactSuggestions.map((contact, index) => (
-                          <div
-                            key={contact.id}
-                            className={`p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200 ${
-                              index === 0 ? "bg-blue-25" : ""
-                            }`}
-                            onClick={() => handleContactSelect(contact)}
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
-                                <User className="h-6 w-6 text-white" />
-                              </div>
-
-                              <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-gray-900 truncate text-base">{contact.name}</p>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <Building className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                                  <p className="text-sm text-gray-600 truncate">{contact.company || "Sin empresa"}</p>
-                                </div>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <Mail className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                                  <p className="text-xs text-gray-500 truncate">{contact.email || "Sin email"}</p>
-                                </div>
-                              </div>
-
-                              <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                                <Badge
-                                  variant="outline"
-                                  className={`text-xs font-medium whitespace-nowrap ${getStatusColor(contact.status || "lead")}`}
-                                >
-                                  {getStatusText(contact.status || "lead")}
-                                </Badge>
-                                <div className="text-xs text-gray-400 whitespace-nowrap">
-                                  {new Date(contact.created_at).toLocaleDateString()}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="p-3 bg-gray-50 border-t text-center rounded-b-xl">
-                        <p className="text-xs text-gray-600">
-                          {contactSuggestions.length === 8
-                            ? "Mostrando primeros 8 resultados"
-                            : `${contactSuggestions.length} contacto(s) encontrado(s)`}
-                        </p>
-                      </div>
-                    </div>
-                  )}
 
                   {showSuggestions && contactSuggestions.length === 0 && searchTerm.length >= 2 && !isSearching && (
                     <div className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-xl p-6 text-center">
