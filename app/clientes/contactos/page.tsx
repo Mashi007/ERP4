@@ -312,20 +312,22 @@ export default function ContactosPage() {
               Nuevo Contacto
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
             <DialogHeader className="space-y-3">
               <div className="flex items-center justify-between">
-                <DialogTitle className="text-xl font-semibold">Crear Nuevo Contacto</DialogTitle>
+                <DialogTitle className="text-2xl font-bold tracking-tight">Crear Nuevo Contacto</DialogTitle>
               </div>
-              <DialogDescription className="text-sm text-muted-foreground">
-                Agrega un nuevo contacto a tu base de datos de leads.
+              <DialogDescription className="text-base text-muted-foreground leading-relaxed">
+                Agrega un nuevo contacto a tu base de datos de leads y gestiona su información de manera eficiente.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6 py-6">
-              <div className="space-y-2 relative">
-                <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
-                  <User className="h-4 w-4 text-blue-600" />
+            <div className="space-y-8 py-8">
+              <div className="space-y-3 relative">
+                <Label htmlFor="name" className="text-sm font-semibold flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+                    <User className="h-4 w-4 text-white" />
+                  </div>
                   Nombre completo
                 </Label>
                 <div className="relative">
@@ -343,7 +345,7 @@ export default function ContactosPage() {
                       // Delay hiding suggestions to allow clicking
                       setTimeout(() => setShowSuggestions(false), 200)
                     }}
-                    className="h-11"
+                    className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                   />
                   {isSearching && (
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -353,26 +355,29 @@ export default function ContactosPage() {
                 </div>
 
                 {showSuggestions && contactSuggestions.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
-                    <div className="p-2 text-xs text-gray-500 border-b">
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-auto">
+                    <div className="p-3 text-xs font-medium text-gray-600 border-b bg-gray-50">
                       Contactos existentes - Selecciona para auto-completar
                     </div>
                     {contactSuggestions.map((contact) => (
                       <div
                         key={contact.id}
-                        className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        className="p-4 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors duration-150"
                         onClick={() => handleContactSelect(contact)}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <User className="h-4 w-4 text-blue-600" />
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
+                            <User className="h-5 w-5 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{contact.name}</p>
-                            <p className="text-sm text-gray-500 truncate">{contact.company}</p>
-                            <p className="text-xs text-gray-400 truncate">{contact.email}</p>
+                            <p className="font-semibold text-gray-900 truncate text-base">{contact.name}</p>
+                            <p className="text-sm text-gray-600 truncate">{contact.company}</p>
+                            <p className="text-xs text-gray-500 truncate">{contact.email}</p>
                           </div>
-                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                          <Badge
+                            variant="outline"
+                            className="text-xs bg-blue-50 text-blue-700 border-blue-200 font-medium"
+                          >
                             {contact.stage || "Nuevo"}
                           </Badge>
                         </div>
@@ -382,10 +387,12 @@ export default function ContactosPage() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-blue-600" />
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-sm">
+                      <Mail className="h-4 w-4 text-white" />
+                    </div>
                     Correo electrónico
                   </Label>
                   <Input
@@ -394,13 +401,15 @@ export default function ContactosPage() {
                     placeholder="juan.perez@empresa.com"
                     value={newContact.email}
                     onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
-                    className="h-11"
+                    className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-blue-600" />
+                <div className="space-y-3">
+                  <Label htmlFor="phone" className="text-sm font-semibold flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
+                      <Phone className="h-4 w-4 text-white" />
+                    </div>
                     Teléfono
                   </Label>
                   <Input
@@ -408,15 +417,17 @@ export default function ContactosPage() {
                     placeholder="+34 600 123 456"
                     value={newContact.phone}
                     onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
-                    className="h-11"
+                    className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="company" className="text-sm font-medium flex items-center gap-2">
-                    <Building className="h-4 w-4 text-blue-600" />
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <Label htmlFor="company" className="text-sm font-semibold flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-sm">
+                      <Building className="h-4 w-4 text-white" />
+                    </div>
                     Empresa
                   </Label>
                   <Input
@@ -424,13 +435,15 @@ export default function ContactosPage() {
                     placeholder="Nombre de la empresa"
                     value={newContact.company}
                     onChange={(e) => setNewContact({ ...newContact, company: e.target.value })}
-                    className="h-11"
+                    className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="job_title" className="text-sm font-medium flex items-center gap-2">
-                    <Briefcase className="h-4 w-4 text-blue-600" />
+                <div className="space-y-3">
+                  <Label htmlFor="job_title" className="text-sm font-semibold flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
+                      <Briefcase className="h-4 w-4 text-white" />
+                    </div>
                     Cargo
                   </Label>
                   <Input
@@ -438,22 +451,22 @@ export default function ContactosPage() {
                     placeholder="Director de Marketing"
                     value={newContact.job_title}
                     onChange={(e) => setNewContact({ ...newContact, job_title: e.target.value })}
-                    className="h-11"
+                    className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 p-4 bg-blue-50/30 rounded-lg border border-blue-200">
-                <div className="space-y-2">
-                  <Label htmlFor="status" className="text-sm font-semibold flex items-center gap-2 text-blue-800">
-                    <div className="w-4 h-4 rounded-full bg-blue-600"></div>
+              <div className="grid grid-cols-2 gap-8 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 shadow-sm">
+                <div className="space-y-3">
+                  <Label htmlFor="status" className="text-sm font-bold flex items-center gap-3 text-blue-900">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm"></div>
                     Estado
                   </Label>
                   <Select
                     value={newContact.status}
                     onValueChange={(value) => setNewContact({ ...newContact, status: value })}
                   >
-                    <SelectTrigger className="h-11 bg-white border-blue-300 focus:border-blue-500">
+                    <SelectTrigger className="h-12 bg-white border-2 border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 shadow-sm">
                       <SelectValue placeholder="Seleccionar estado" />
                     </SelectTrigger>
                     <SelectContent>
@@ -466,16 +479,18 @@ export default function ContactosPage() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="stage" className="text-sm font-semibold flex items-center gap-2 text-blue-800">
-                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                <div className="space-y-3">
+                  <Label htmlFor="stage" className="text-sm font-bold flex items-center gap-3 text-blue-900">
+                    <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-sm">
+                      <TrendingUp className="h-3 w-3 text-white" />
+                    </div>
                     Etapa
                   </Label>
                   <Select
                     value={newContact.stage}
                     onValueChange={(value) => setNewContact({ ...newContact, stage: value })}
                   >
-                    <SelectTrigger className="h-11 bg-white border-blue-300 focus:border-blue-500">
+                    <SelectTrigger className="h-12 bg-white border-2 border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 shadow-sm">
                       <SelectValue placeholder="Seleccionar etapa" />
                     </SelectTrigger>
                     <SelectContent>
@@ -490,17 +505,17 @@ export default function ContactosPage() {
               </div>
             </div>
 
-            <DialogFooter className="flex flex-col gap-3 pt-6 border-t">
-              <div className="flex gap-3 w-full">
+            <DialogFooter className="flex flex-col gap-4 pt-8 border-t border-gray-100">
+              <div className="flex gap-4 w-full">
                 <Button
                   variant="outline"
                   onClick={() => {
                     // TODO: Implement catalog functionality
                     toast.success("Abriendo catálogo...")
                   }}
-                  className="flex-1 border-green-300 text-green-700 hover:bg-green-50 hover:border-green-400"
+                  className="flex-1 h-12 border-2 border-green-300 text-green-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-green-100 hover:border-green-400 transition-all duration-200 font-semibold shadow-sm"
                 >
-                  <Package className="mr-2 h-4 w-4" />
+                  <Package className="mr-3 h-5 w-5" />
                   Catálogo
                 </Button>
                 <Button
@@ -509,18 +524,25 @@ export default function ContactosPage() {
                     // TODO: Implement proposal functionality
                     toast.success("Creando propuesta...")
                   }}
-                  className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+                  className="flex-1 h-12 border-2 border-blue-300 text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:border-blue-400 transition-all duration-200 font-semibold shadow-sm"
                 >
-                  <FileText className="mr-2 h-4 w-4" />
+                  <FileText className="mr-3 h-5 w-5" />
                   Propuesta
                 </Button>
               </div>
 
-              <div className="flex gap-3 w-full">
-                <Button variant="outline" onClick={() => setIsNewContactOpen(false)} className="flex-1">
+              <div className="flex gap-4 w-full">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsNewContactOpen(false)}
+                  className="flex-1 h-12 border-2 border-gray-300 hover:bg-gray-50 transition-all duration-200 font-semibold"
+                >
                   Cancelar
                 </Button>
-                <Button onClick={handleCreateContact} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                <Button
+                  onClick={handleCreateContact}
+                  className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
+                >
                   Crear Contacto
                 </Button>
               </div>
