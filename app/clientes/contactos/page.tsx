@@ -31,6 +31,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import ServiceSelector from "@/components/servicios/service-selector"
+import TemplateSelector from "@/components/servicios/template-selector"
 
 interface Contact {
   id: number
@@ -384,13 +385,12 @@ export default function ContactosPage() {
     )
   }
 
-  const handleServiceSelect = (service: Service) => {
+  const handleServiceSelect = (service: any) => {
     console.log("[v0] Service selected:", service.name)
     setWorkflowState((prev) => ({
       ...prev,
       selectedService: service,
-      step: "template",
-      currentStep: 2,
+      currentStep: 2, // Move to template selection step
     }))
     setIsServiceSelectorOpen(false)
     setIsServiceSelectorBusy(false)
@@ -416,8 +416,13 @@ export default function ContactosPage() {
   }
 
   const handleServiceSelection = () => {
-    if (isServiceSelectorBusy || isServiceSelectorOpen) {
-      console.log("[v0] Service selector already busy or open, ignoring click")
+    if (isServiceSelectorBusy) {
+      console.log("[v0] Service selector is busy, ignoring click")
+      return
+    }
+
+    if (isServiceSelectorOpen) {
+      console.log("[v0] Service selector already open")
       return
     }
 
@@ -425,28 +430,30 @@ export default function ContactosPage() {
     setIsServiceSelectorBusy(true)
     setIsServiceSelectorOpen(true)
 
+    // Reset busy state after dialog opens
     setTimeout(() => {
       setIsServiceSelectorBusy(false)
-    }, 1000)
+    }, 500)
   }
 
   const handleTemplateSelection = () => {
-    if (isTemplateSelectorBusy || isTemplateSelectorOpen) {
-      console.log("[v0] Template selector already busy or open, ignoring click")
+    if (!workflowState.selectedService) {
+      toast.error("Primero debe seleccionar un servicio")
       return
     }
 
-    console.log("[v0] Template selection clicked, current service:", workflowState.selectedService)
-    if (workflowState.selectedService) {
-      setIsTemplateSelectorBusy(true)
-      setIsTemplateSelectorOpen(true)
-
-      setTimeout(() => {
-        setIsTemplateSelectorBusy(false)
-      }, 1000)
-    } else {
-      toast.error("Primero debe seleccionar un servicio")
+    if (isTemplateSelectorBusy) {
+      console.log("[v0] Template selector is busy, ignoring click")
+      return
     }
+
+    console.log("[v0] Opening template selector dialog")
+    setIsTemplateSelectorBusy(true)
+    setIsTemplateSelectorOpen(true)
+
+    setTimeout(() => {
+      setIsTemplateSelectorBusy(false)
+    }, 500)
   }
 
   const handleGenerateProposal = async () => {
@@ -1263,6 +1270,18 @@ export default function ContactosPage() {
             }}
             onServiceSelect={handleServiceSelect}
             services={services}
+          />
+        )}
+
+        {isTemplateSelectorOpen && (
+          <TemplateSelector
+            isOpen={isTemplateSelectorOpen}
+            onClose={() => {
+              setIsTemplateSelectorOpen(false)
+              setIsTemplateSelectorBusy(false)
+            }}
+            onTemplateSelect={handleTemplateSelect}
+            serviceId={workflowState.selectedService?.id}
           />
         )}
       </div>
