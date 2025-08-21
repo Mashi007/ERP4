@@ -6,10 +6,11 @@ const sql = neon(process.env.DATABASE_URL!)
 export async function GET() {
   try {
     const services = await sql`
-      SELECT id, name, description, base_price, currency, tax_rate, is_active, created_at
-      FROM products 
-      WHERE is_service = true AND is_active = true
-      ORDER BY created_at DESC
+      SELECT id, name, description, category, base_price, currency, duration_hours, 
+             features, requirements, deliverables, is_active, created_at
+      FROM services 
+      WHERE is_active = true
+      ORDER BY category, name
     `
 
     return NextResponse.json(services)
@@ -22,16 +23,34 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, description, base_price, currency, tax_rate, is_service, is_active } = body
+    const { name, description, category, base_price, currency, duration_hours, features, requirements, deliverables } =
+      body
 
     if (!name || base_price === undefined) {
       return NextResponse.json({ error: "Name and base_price are required" }, { status: 400 })
     }
 
     const result = await sql`
-      INSERT INTO products (name, description, base_price, currency, tax_rate, is_service, is_active, created_at)
-      VALUES (${name}, ${description || ""}, ${base_price}, ${currency || "EUR"}, ${tax_rate || 0}, ${is_service || true}, ${is_active || true}, NOW())
-      RETURNING id, name, description, base_price, currency, tax_rate, is_active, created_at
+      INSERT INTO services (
+        name, description, category, base_price, currency, duration_hours, 
+        features, requirements, deliverables, is_active, created_at, updated_at
+      )
+      VALUES (
+        ${name}, 
+        ${description || ""}, 
+        ${category || "General"}, 
+        ${base_price}, 
+        ${currency || "EUR"}, 
+        ${duration_hours || 0}, 
+        ${JSON.stringify(features || [])}, 
+        ${JSON.stringify(requirements || [])}, 
+        ${JSON.stringify(deliverables || [])}, 
+        true, 
+        NOW(), 
+        NOW()
+      )
+      RETURNING id, name, description, category, base_price, currency, duration_hours, 
+                features, requirements, deliverables, is_active, created_at
     `
 
     return NextResponse.json(result[0])

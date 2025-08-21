@@ -18,9 +18,11 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
-import { ChevronDown, ChevronRight, Search, User } from "lucide-react"
+import { ChevronDown, ChevronRight, Search, User, Package, Sparkles } from "lucide-react"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import ServiceSelector from "@/components/servicios/service-selector"
+import ProposalGenerator from "@/components/proposals/proposal-generator"
 
 interface ContactField {
   field_name: string
@@ -161,6 +163,10 @@ export default function DynamicContactForm({ isOpen, onClose, onSave, editingCon
   const [contactSearchQuery, setContactSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
+  const [servicesSelectorOpen, setServicesSelectorOpen] = useState(false)
+  const [proposalGeneratorOpen, setProposalGeneratorOpen] = useState(false)
+  const [selectedService, setSelectedService] = useState<any>(null)
+  const [currentContactForProposal, setCurrentContactForProposal] = useState<any>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -491,6 +497,76 @@ export default function DynamicContactForm({ isOpen, onClose, onSave, editingCon
     }))
     .filter((group) => group.fields.length > 0)
 
+  const handleCatalogoClick = () => {
+    if (!formData.name || !formData.email) {
+      toast({
+        title: "Información requerida",
+        description: "Por favor completa al menos el nombre y email antes de acceder al catálogo",
+        variant: "destructive",
+      })
+      return
+    }
+    setServicesSelectorOpen(true)
+  }
+
+  const handlePropuestaClick = () => {
+    if (!formData.name || !formData.email) {
+      toast({
+        title: "Información requerida",
+        description: "Por favor completa al menos el nombre y email antes de generar una propuesta",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // If we have a selected service, go directly to proposal generation
+    if (selectedService) {
+      setCurrentContactForProposal({
+        id: editingContact?.id || null,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        company: formData.company,
+        job_title: formData.job_title,
+      })
+      setProposalGeneratorOpen(true)
+    } else {
+      // Otherwise, open service selector first
+      setServicesSelectorOpen(true)
+    }
+  }
+
+  const handleServiceSelect = (service: any) => {
+    setSelectedService(service)
+    toast({
+      title: "Servicio seleccionado",
+      description: `${service.name} - ${service.base_price.toFixed(2)} ${service.currency}`,
+    })
+
+    // If we have contact data, offer to generate proposal immediately
+    if (formData.name && formData.email) {
+      setTimeout(() => {
+        setCurrentContactForProposal({
+          id: editingContact?.id || null,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          company: formData.company,
+          job_title: formData.job_title,
+        })
+        setProposalGeneratorOpen(true)
+      }, 500)
+    }
+  }
+
+  const handleProposalGenerated = (proposal: any) => {
+    toast({
+      title: "Propuesta generada",
+      description: "La propuesta se ha creado exitosamente con IA",
+    })
+    // Optionally close the contact form or keep it open for further editing
+  }
+
   if (loading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -512,75 +588,118 @@ export default function DynamicContactForm({ isOpen, onClose, onSave, editingCon
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{editingContact ? "Editar Contacto" : "Agregar Nuevo Contacto"}</DialogTitle>
-          <DialogDescription>
-            {editingContact
-              ? "Modifica la información del contacto"
-              : "Agrega un nuevo contacto a tu CRM. Los campos marcados con * son obligatorios."}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingContact ? "Editar Contacto" : "Agregar Nuevo Contacto"}</DialogTitle>
+            <DialogDescription>
+              {editingContact
+                ? "Modifica la información del contacto"
+                : "Agrega un nuevo contacto a tu CRM. Los campos marcados con * son obligatorios."}
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {groupedFields.map((group, groupIndex) => (
-            <div key={group.group_name} className="space-y-4">
-              {group.is_collapsible ? (
-                <button
-                  type="button"
-                  onClick={() => toggleGroupCollapse(group.group_name)}
-                  className="flex items-center justify-between w-full text-left"
-                >
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {groupedFields.map((group, groupIndex) => (
+              <div key={group.group_name} className="space-y-4">
+                {group.is_collapsible ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleGroupCollapse(group.group_name)}
+                    className="flex items-center justify-between w-full text-left"
+                  >
+                    <h3 className="text-lg font-semibold">{group.group_label}</h3>
+                    {collapsedGroups.has(group.group_name) ? (
+                      <ChevronRight className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+                ) : (
                   <h3 className="text-lg font-semibold">{group.group_label}</h3>
-                  {collapsedGroups.has(group.group_name) ? (
-                    <ChevronRight className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </button>
-              ) : (
-                <h3 className="text-lg font-semibold">{group.group_label}</h3>
-              )}
+                )}
 
-              {(!group.is_collapsible || !collapsedGroups.has(group.group_name)) && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {group.fields.map((field) => (
-                    <div key={field.field_name} className="space-y-2">
-                      <Label className="flex items-center gap-1">
-                        {field.field_label}
-                        {field.is_required && <span className="text-red-500">*</span>}
-                      </Label>
-                      {renderField(field)}
-                      {field.help_text && <p className="text-xs text-muted-foreground">{field.help_text}</p>}
-                    </div>
-                  ))}
-                </div>
-              )}
+                {(!group.is_collapsible || !collapsedGroups.has(group.group_name)) && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {group.fields.map((field) => (
+                      <div key={field.field_name} className="space-y-2">
+                        <Label className="flex items-center gap-1">
+                          {field.field_label}
+                          {field.is_required && <span className="text-red-500">*</span>}
+                        </Label>
+                        {renderField(field)}
+                        {field.help_text && <p className="text-xs text-muted-foreground">{field.help_text}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-              {groupIndex < groupedFields.length - 1 && <Separator />}
+                {groupIndex < groupedFields.length - 1 && <Separator />}
+              </div>
+            ))}
+          </form>
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCatalogoClick}
+                className="flex-1 sm:flex-none bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700"
+              >
+                <Package className="mr-2 h-4 w-4" />
+                Catálogo
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePropuestaClick}
+                className="flex-1 sm:flex-none bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                Propuesta
+              </Button>
             </div>
-          ))}
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  {editingContact ? "Guardando..." : "Creando..."}
-                </>
-              ) : editingContact ? (
-                "Guardar Cambios"
-              ) : (
-                "Agregar Contacto"
-              )}
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto sm:ml-auto">
+              <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    {editingContact ? "Guardando..." : "Creando..."}
+                  </>
+                ) : editingContact ? (
+                  "Guardar Cambios"
+                ) : (
+                  "Agregar Contacto"
+                )}
+              </Button>
+            </div>
           </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <ServiceSelector
+        open={servicesSelectorOpen}
+        onOpenChange={setServicesSelectorOpen}
+        onServiceSelect={handleServiceSelect}
+        contactId={editingContact?.id}
+      />
+
+      {currentContactForProposal && selectedService && (
+        <ProposalGenerator
+          open={proposalGeneratorOpen}
+          onOpenChange={setProposalGeneratorOpen}
+          contact={currentContactForProposal}
+          service={selectedService}
+          onProposalGenerated={handleProposalGenerated}
+        />
+      )}
+    </>
   )
 }

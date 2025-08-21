@@ -34,9 +34,13 @@ type Servicio = {
   id: number
   name: string
   description: string
+  category: string
   base_price: number
   currency: string
-  tax_rate: number
+  duration_hours: number
+  features: string[]
+  requirements: string[]
+  deliverables: string[]
   is_active: boolean
   created_at: string
 }
@@ -64,8 +68,11 @@ export default function CatalogoClient() {
   // Form state for "Nuevo Servicio"
   const [nNombre, setNNombre] = useState("")
   const [nDesc, setNDesc] = useState("")
+  const [nCategoria, setNCategoria] = useState("General")
   const [nImporte, setNImporte] = useState<number | "">("")
-  const [nImpuesto, setNImpuesto] = useState<number | "">("")
+  const [nDuracion, setNDuracion] = useState<number | "">("")
+  const [nCaracteristicas, setNCaracteristicas] = useState("")
+  const [nEntregables, setNEntregables] = useState("")
   const [nMoneda, setNMoneda] = useState("EUR")
 
   useEffect(() => {
@@ -100,22 +107,25 @@ export default function CatalogoClient() {
 
   const nTotal = useMemo(() => {
     const imp = typeof nImporte === "number" ? nImporte : Number.parseFloat(`${nImporte}`)
-    const iva = typeof nImpuesto === "number" ? nImpuesto : Number.parseFloat(`${nImpuesto}`)
+    const iva = typeof nDuracion === "number" ? nDuracion : Number.parseFloat(`${nDuracion}`)
     if (isNaN(imp)) return 0
     return calcTotal(imp, isNaN(iva) ? 0 : iva)
-  }, [nImporte, nImpuesto])
+  }, [nImporte, nDuracion])
 
   function resetNewForm() {
     setNNombre("")
     setNDesc("")
+    setNCategoria("General")
     setNImporte("")
-    setNImpuesto("")
+    setNDuracion("")
+    setNCaracteristicas("")
+    setNEntregables("")
     setNMoneda("EUR")
   }
 
   async function handleAdd() {
     const importe = typeof nImporte === "number" ? nImporte : Number.parseFloat(`${nImporte}`)
-    const impuesto = typeof nImpuesto === "number" ? nImpuesto : Number.parseFloat(`${nImpuesto}`)
+    const duracion = typeof nDuracion === "number" ? nDuracion : Number.parseFloat(`${nDuracion}`)
     if (!nNombre.trim() || isNaN(importe)) return
 
     try {
@@ -127,11 +137,12 @@ export default function CatalogoClient() {
         body: JSON.stringify({
           name: nNombre.trim(),
           description: nDesc.trim(),
+          category: nCategoria,
           base_price: Math.round(importe * 100) / 100,
           currency: nMoneda,
-          tax_rate: isNaN(impuesto) ? 0 : Math.round(impuesto * 100) / 100,
-          is_service: true,
-          is_active: true,
+          duration_hours: isNaN(duracion) ? 0 : Math.round(duracion),
+          features: nCaracteristicas.split("\n").filter((f) => f.trim()),
+          deliverables: nEntregables.split("\n").filter((d) => d.trim()),
         }),
       })
 
@@ -162,23 +173,29 @@ export default function CatalogoClient() {
   const [editRow, setEditRow] = useState<Servicio | null>(null)
   const [eNombre, setENombre] = useState("")
   const [eDesc, setEDesc] = useState("")
+  const [eCategoria, setECategoria] = useState("General")
   const [eImporte, setEImporte] = useState<number | "">("")
-  const [eImpuesto, setEImpuesto] = useState<number | "">("")
+  const [eDuracion, setEDuracion] = useState<number | "">("")
+  const [eCaracteristicas, setECaracteristicas] = useState("")
+  const [eEntregables, setEEntregables] = useState("")
   const [eMoneda, setEMoneda] = useState("EUR")
 
   const eTotal = useMemo(() => {
     const imp = typeof eImporte === "number" ? eImporte : Number.parseFloat(`${eImporte}`)
-    const iva = typeof eImpuesto === "number" ? eImpuesto : Number.parseFloat(`${eImpuesto}`)
+    const iva = typeof eDuracion === "number" ? eDuracion : Number.parseFloat(`${eDuracion}`)
     if (isNaN(imp)) return 0
     return calcTotal(imp, isNaN(iva) ? 0 : iva)
-  }, [eImporte, eImpuesto])
+  }, [eImporte, eDuracion])
 
   function openEdit(row: Servicio) {
     setEditRow(row)
     setENombre(row.name)
     setEDesc(row.description)
+    setECategoria(row.category)
     setEImporte(row.base_price)
-    setEImpuesto(row.tax_rate)
+    setEDuracion(row.duration_hours)
+    setECaracteristicas(row.features.join("\n"))
+    setEEntregables(row.deliverables.join("\n"))
     setEMoneda(row.currency)
     setEditOpen(true)
   }
@@ -186,7 +203,7 @@ export default function CatalogoClient() {
   async function saveEdit() {
     if (!editRow) return
     const importe = typeof eImporte === "number" ? eImporte : Number.parseFloat(`${eImporte}`)
-    const impuesto = typeof eImpuesto === "number" ? eImpuesto : Number.parseFloat(`${eImpuesto}`)
+    const duracion = typeof eDuracion === "number" ? eDuracion : Number.parseFloat(`${eDuracion}`)
     if (!eNombre.trim() || isNaN(importe)) return
 
     try {
@@ -198,9 +215,12 @@ export default function CatalogoClient() {
         body: JSON.stringify({
           name: eNombre.trim(),
           description: eDesc.trim(),
+          category: eCategoria,
           base_price: Math.round(importe * 100) / 100,
           currency: eMoneda,
-          tax_rate: isNaN(impuesto) ? 0 : Math.round(impuesto * 100) / 100,
+          duration_hours: isNaN(duracion) ? 0 : Math.round(duracion),
+          features: eCaracteristicas.split("\n").filter((f) => f.trim()),
+          deliverables: eEntregables.split("\n").filter((d) => d.trim()),
         }),
       })
 
@@ -307,6 +327,54 @@ export default function CatalogoClient() {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="n-categoria">Categoría</Label>
+                  <Input
+                    id="n-categoria"
+                    placeholder="General"
+                    value={nCategoria}
+                    onChange={(e) => setNCategoria(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="n-duracion">Duración (horas)</Label>
+                  <Input
+                    id="n-duracion"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={nDuracion}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setNDuracion(v === "" ? "" : Number(v))
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="n-caracteristicas">Características (una por línea)</Label>
+                <Textarea
+                  id="n-caracteristicas"
+                  placeholder="Análisis completo\nEstrategia personalizada\nSeguimiento mensual"
+                  value={nCaracteristicas}
+                  onChange={(e) => setNCaracteristicas(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="n-entregables">Entregables (uno por línea)</Label>
+                <Textarea
+                  id="n-entregables"
+                  placeholder="Informe de diagnóstico\nPlan de implementación\n3 sesiones de seguimiento"
+                  value={nEntregables}
+                  onChange={(e) => setNEntregables(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
               <div className="grid grid-cols-3 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="n-importe">
@@ -322,21 +390,6 @@ export default function CatalogoClient() {
                     onChange={(e) => {
                       const v = e.target.value
                       setNImporte(v === "" ? "" : Number(v))
-                    }}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="n-impuesto">Impuesto %</Label>
-                  <Input
-                    id="n-impuesto"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0"
-                    value={nImpuesto}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      setNImpuesto(v === "" ? "" : Number(v))
                     }}
                   />
                 </div>
@@ -370,7 +423,7 @@ export default function CatalogoClient() {
                 <TableHead>Servicio</TableHead>
                 <TableHead>Descripción</TableHead>
                 <TableHead className="text-right">Precio</TableHead>
-                <TableHead className="text-right">Impuesto %</TableHead>
+                <TableHead className="text-right">Duración (horas)</TableHead>
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead>Creado</TableHead>
                 <TableHead className="w-[120px]">Acciones</TableHead>
@@ -391,9 +444,9 @@ export default function CatalogoClient() {
                     <TableCell className="text-right">
                       {Number(it.base_price || 0).toFixed(2)} {it.currency}
                     </TableCell>
-                    <TableCell className="text-right">{Number(it.tax_rate || 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{Number(it.duration_hours || 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right">
-                      {calcTotal(Number(it.base_price || 0), Number(it.tax_rate || 0)).toFixed(2)} {it.currency}
+                      {calcTotal(Number(it.base_price || 0), Number(it.duration_hours || 0)).toFixed(2)} {it.currency}
                     </TableCell>
                     <TableCell>{formatDateEs(it.created_at)}</TableCell>
                     <TableCell>
@@ -458,6 +511,54 @@ export default function CatalogoClient() {
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="e-categoria">Categoría</Label>
+                <Input
+                  id="e-categoria"
+                  placeholder="General"
+                  value={eCategoria}
+                  onChange={(e) => setECategoria(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="e-duracion">Duración (horas)</Label>
+                <Input
+                  id="e-duracion"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={eDuracion}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setEDuracion(v === "" ? "" : Number(v))
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="e-caracteristicas">Características (una por línea)</Label>
+              <Textarea
+                id="e-caracteristicas"
+                placeholder="Análisis completo\nEstrategia personalizada\nSeguimiento mensual"
+                value={eCaracteristicas}
+                onChange={(e) => setECaracteristicas(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="e-entregables">Entregables (uno por línea)</Label>
+              <Textarea
+                id="e-entregables"
+                placeholder="Informe de diagnóstico\nPlan de implementación\n3 sesiones de seguimiento"
+                value={eEntregables}
+                onChange={(e) => setEEntregables(e.target.value)}
+                rows={3}
+              />
+            </div>
+
             <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="e-importe">
@@ -473,21 +574,6 @@ export default function CatalogoClient() {
                   onChange={(e) => {
                     const v = e.target.value
                     setEImporte(v === "" ? "" : Number(v))
-                  }}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="e-impuesto">Impuesto %</Label>
-                <Input
-                  id="e-impuesto"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0"
-                  value={eImpuesto}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    setEImpuesto(v === "" ? "" : Number(v))
                   }}
                 />
               </div>
