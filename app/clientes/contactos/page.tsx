@@ -126,7 +126,6 @@ export default function ContactosPage() {
   })
 
   const [isServiceCatalogOpen, setIsServiceCatalogOpen] = useState(false)
-  const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = useState(false)
   const [services, setServices] = useState<Service[]>([])
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
@@ -144,6 +143,7 @@ export default function ContactosPage() {
   const [editingContact, setEditingContact] = useState<Contact | null>(null)
 
   const [proposalGenerating, setProposalGenerating] = useState(false)
+  const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = useState(false)
 
   useEffect(() => {
     loadContacts()
@@ -581,20 +581,51 @@ export default function ContactosPage() {
       setSignatureLoading(true)
       console.log("[v0] Processing digital signature...")
 
-      const proposalId = proposalDocument.id
+      let proposalId = proposalDocument.id
+
+      // If the proposal ID is not numeric (Grok AI generated), save it to database first
+      if (isNaN(Number(proposalId))) {
+        console.log("[v0] Saving Grok AI proposal to database...")
+        const saveResponse = await fetch("/api/proposals", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contact_id: editingContact?.id || null,
+            service_id: workflowState.selectedService?.id || null,
+            template_id: workflowState.selectedTemplate?.id || null,
+            title: `Propuesta para ${formData.name}`,
+            content: proposalDocument.content,
+            status: "draft",
+            total_amount: workflowState.selectedService?.base_price || "0",
+            currency: workflowState.selectedService?.currency || "EUR",
+            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+          }),
+        })
+
+        if (!saveResponse.ok) {
+          throw new Error("Failed to save proposal to database")
+        }
+
+        const savedProposal = await saveResponse.json()
+        proposalId = savedProposal.id
+        console.log("[v0] Proposal saved with ID:", proposalId)
+      }
+
       const signatureResponse = await fetch(`/api/proposals/${proposalId}/signature`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          signature_data: signature,
-          signer_name: formData.name,
-          signer_email: formData.email,
-          contact_id: editingContact?.id || null,
+          signatureData: signature,
+          signerName: formData.name,
+          signerEmail: formData.email,
+          signedAt: new Date().toISOString(),
         }),
       })
 
       if (!signatureResponse.ok) {
-        throw new Error("Failed to process signature")
+        const errorData = await signatureResponse.json()
+        console.error("[v0] Signature API error:", errorData)
+        throw new Error(errorData.error || "Failed to process signature")
       }
 
       const signedDocument = await signatureResponse.json()
