@@ -416,19 +416,9 @@ export default function ContactosPage() {
   }
 
   const handleServiceSelection = () => {
-    if (isServiceSelectorBusy) {
-      console.log("[v0] Service selector is busy, ignoring click")
-      return
-    }
-
     console.log("[v0] Opening service selector dialog")
-    setIsServiceSelectorBusy(true)
     setIsServiceSelectorOpen(true)
-
-    // Reset busy state after dialog opens
-    setTimeout(() => {
-      setIsServiceSelectorBusy(false)
-    }, 500)
+    // Don't set busy state here - let the dialog handle its own state
   }
 
   const handleTemplateSelection = () => {
@@ -437,19 +427,8 @@ export default function ContactosPage() {
       return
     }
 
-    if (isTemplateSelectorBusy) {
-      console.log("[v0] Template selector is busy, ignoring click")
-      return
-    }
-
     console.log("[v0] Opening template selector dialog")
-    setIsTemplateSelectorBusy(true)
     setIsTemplateSelectorOpen(true)
-
-    // Reset busy state after dialog opens
-    setTimeout(() => {
-      setIsTemplateSelectorBusy(false)
-    }, 500)
   }
 
   const handleGenerateProposal = async () => {
@@ -1263,13 +1242,10 @@ export default function ContactosPage() {
             onClose={() => {
               console.log("[v0] Closing service selector dialog")
               setIsServiceSelectorOpen(false)
-              setIsServiceSelectorBusy(false)
             }}
             onServiceSelect={(service) => {
               console.log("[v0] Service selected:", service.name)
               handleServiceSelect(service)
-              setIsServiceSelectorOpen(false)
-              setIsServiceSelectorBusy(false)
             }}
             services={services}
           />
@@ -1281,13 +1257,11 @@ export default function ContactosPage() {
             onClose={() => {
               console.log("[v0] Closing template selector dialog")
               setIsTemplateSelectorOpen(false)
-              setIsServiceSelectorBusy(false)
+              setIsTemplateSelectorBusy(false)
             }}
             onTemplateSelect={(template) => {
               console.log("[v0] Template selected:", template.name)
               handleTemplateSelect(template)
-              setIsTemplateSelectorOpen(false)
-              setIsServiceSelectorBusy(false)
             }}
             serviceId={workflowState.selectedService?.id}
           />
