@@ -27,8 +27,8 @@ import {
   Building,
   Briefcase,
   TrendingUp,
-  FileText,
   Package,
+  Sparkles,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -46,6 +46,18 @@ interface Contact {
   updated_at: string
 }
 
+interface Service {
+  id: number
+  name: string
+  description: string
+  category: string
+  base_price: number
+  currency: string
+  duration: string
+  features: string[]
+  deliverables: string[]
+}
+
 export default function ContactosPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
@@ -54,6 +66,12 @@ export default function ContactosPage() {
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
+
+  const [services, setServices] = useState<Service[]>([])
+  const [selectedService, setSelectedService] = useState<Service | null>(null)
+  const [isServiceSelectorOpen, setIsServiceSelectorOpen] = useState(false)
+  const [isProposalGenerating, setIsProposalGenerating] = useState(false)
+  const [currentFormType, setCurrentFormType] = useState<"create" | "edit">("create")
 
   const [contactSuggestions, setContactSuggestions] = useState<Contact[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -101,7 +119,20 @@ export default function ContactosPage() {
 
   useEffect(() => {
     fetchContacts()
+    fetchServices()
   }, [])
+
+  const fetchServices = async () => {
+    try {
+      const response = await fetch("/api/services")
+      if (response.ok) {
+        const data = await response.json()
+        setServices(data)
+      }
+    } catch (error) {
+      console.error("Error fetching services:", error)
+    }
+  }
 
   const fetchContacts = async () => {
     try {
@@ -298,6 +329,178 @@ export default function ContactosPage() {
     )
   }
 
+  const handleServiceSelect = (service: Service) => {
+    setSelectedService(service)
+    setIsServiceSelectorOpen(false)
+    toast.success(`Servicio seleccionado: ${service.name}`)
+  }
+
+  const handleCatalogClick = (formType: "create" | "edit") => {
+    setCurrentFormType(formType)
+    setIsServiceSelectorOpen(true)
+  }
+
+  const handleProposalClick = async (formType: "create" | "edit") => {
+    const contactData = formType === "create" ? newContact : editContact
+
+    if (!contactData.name || !contactData.email) {
+      toast.error("Por favor completa la información del contacto")
+      return
+    }
+
+    if (!selectedService) {
+      toast.error("Por favor selecciona un servicio del catálogo")
+      return
+    }
+
+    setIsProposalGenerating(true)
+
+    try {
+      let contactId: number
+
+      if (formType === "create") {
+        const contactResponse = await fetch("/api/contacts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(contactData),
+        })
+
+        if (!contactResponse.ok) {
+          throw new Error("Error creating contact")
+        }
+
+        const createdContact = await contactResponse.json()
+        contactId = createdContact.id
+      } else {
+        if (!selectedContact) {
+          throw new Error("No contact selected for editing")
+        }
+        contactId = selectedContact.id
+
+        const updateResponse = await fetch(`/api/contacts/${contactId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(contactData),
+        })
+
+        if (!updateResponse.ok) {
+          throw new Error("Error updating contact")
+        }
+      }
+
+      const proposalResponse = await fetch("/api/proposals/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contactId,
+          serviceId: selectedService.id,
+          customRequirements: `Propuesta personalizada para ${contactData.name} de ${contactData.company}`,
+        }),
+      })
+
+      if (!proposalResponse.ok) {
+        throw new Error("Error generating proposal")
+      }
+
+      const proposal = await proposalResponse.json()
+
+      const pdfResponse = await fetch(`/api/proposals/${proposal.id}/pdf`, {
+        method: "POST",
+      })
+
+      if (!pdfResponse.ok) {
+        throw new Error("Error generating PDF")
+      }
+
+      const pdfData = await pdfResponse.json()
+
+      toast.success("¡Propuesta generada exitosamente!")
+
+      const sendOption = await new Promise<string>((resolve) => {
+        const dialog = document.createElement("div")
+        dialog.innerHTML = `
+          <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+              <h3 class="text-lg font-semibold mb-4">Enviar Propuesta</h3>
+              <p class="text-gray-600 mb-6">¿Cómo deseas enviar la propuesta a ${contactData.name}?</p>
+              <div class="flex gap-3">
+                <button id="email-btn" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                  📧 Email
+                </button>
+                <button id="whatsapp-btn" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                  📱 WhatsApp
+                </button>
+                <button id="download-btn" class="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                  📥 Descargar
+                </button>
+              </div>
+            </div>
+          </div>
+        `
+        document.body.appendChild(dialog)
+
+        dialog.querySelector("#email-btn")?.addEventListener("click", () => {
+          document.body.removeChild(dialog)
+          resolve("email")
+        })
+
+        dialog.querySelector("#whatsapp-btn")?.addEventListener("click", () => {
+          document.body.removeChild(dialog)
+          resolve("whatsapp")
+        })
+
+        dialog.querySelector("#download-btn")?.addEventListener("click", () => {
+          document.body.removeChild(dialog)
+          resolve("download")
+        })
+      })
+
+      if (sendOption === "download") {
+        window.open(pdfData.pdfUrl, "_blank")
+      } else {
+        const sendResponse = await fetch(`/api/proposals/${proposal.id}/send`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            method: sendOption,
+            recipient: sendOption === "email" ? contactData.email : contactData.phone,
+            message: `Hola ${contactData.name}, adjunto encontrarás nuestra propuesta personalizada para ${selectedService.name}. ¡Esperamos tu respuesta!`,
+          }),
+        })
+
+        if (sendResponse.ok) {
+          toast.success(`Propuesta enviada por ${sendOption === "email" ? "email" : "WhatsApp"}`)
+        } else {
+          toast.error(`Error enviando por ${sendOption === "email" ? "email" : "WhatsApp"}`)
+        }
+      }
+
+      if (formType === "create") {
+        setIsNewContactOpen(false)
+        setNewContact({
+          name: "",
+          email: "",
+          phone: "",
+          company: "",
+          job_title: "",
+          sales_owner: "María García",
+          stage: "Nuevo",
+          status: "lead",
+        })
+      } else {
+        setIsEditDialogOpen(false)
+      }
+
+      setSelectedService(null)
+      fetchContacts()
+    } catch (error) {
+      console.error("Error in proposal workflow:", error)
+      toast.error("Error generando la propuesta")
+    } finally {
+      setIsProposalGenerating(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -312,10 +515,15 @@ export default function ContactosPage() {
               Nuevo Contacto
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
             <DialogHeader className="space-y-3">
               <div className="flex items-center justify-between">
                 <DialogTitle className="text-2xl font-bold tracking-tight">Crear Nuevo Contacto</DialogTitle>
+                {selectedService && (
+                  <Badge className="bg-green-100 text-green-800 border-green-300">
+                    Servicio: {selectedService.name}
+                  </Badge>
+                )}
               </div>
               <DialogDescription className="text-base text-muted-foreground leading-relaxed">
                 Agrega un nuevo contacto a tu base de datos de leads y gestiona su información de manera eficiente.
@@ -342,7 +550,6 @@ export default function ContactosPage() {
                       }
                     }}
                     onBlur={() => {
-                      // Delay hiding suggestions to allow clicking
                       setTimeout(() => setShowSuggestions(false), 200)
                     }}
                     className="h-12 text-base border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
@@ -506,28 +713,54 @@ export default function ContactosPage() {
             </div>
 
             <DialogFooter className="flex flex-col gap-4 pt-8 border-t border-gray-100">
+              {selectedService && (
+                <div className="w-full p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold text-green-800">{selectedService.name}</h4>
+                      <p className="text-sm text-green-600">{selectedService.description}</p>
+                      <p className="text-xs text-green-500 mt-1">
+                        {selectedService.currency} {selectedService.base_price} • {selectedService.duration}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedService(null)}
+                      className="text-green-700 border-green-300 hover:bg-green-100"
+                    >
+                      Cambiar
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-4 w-full">
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    // TODO: Implement catalog functionality
-                    toast.success("Abriendo catálogo...")
-                  }}
+                  onClick={() => handleCatalogClick("create")}
                   className="flex-1 h-12 border-2 border-green-300 text-green-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-green-100 hover:border-green-400 transition-all duration-200 font-semibold shadow-sm"
                 >
                   <Package className="mr-3 h-5 w-5" />
-                  Catálogo
+                  {selectedService ? "Cambiar Servicio" : "Seleccionar Servicio"}
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    // TODO: Implement proposal functionality
-                    toast.success("Creando propuesta...")
-                  }}
-                  className="flex-1 h-12 border-2 border-blue-300 text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:border-blue-400 transition-all duration-200 font-semibold shadow-sm"
+                  onClick={() => handleProposalClick("create")}
+                  disabled={isProposalGenerating || !selectedService}
+                  className="flex-1 h-12 border-2 border-blue-300 text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:border-blue-400 transition-all duration-200 font-semibold shadow-sm disabled:opacity-50"
                 >
-                  <FileText className="mr-3 h-5 w-5" />
-                  Propuesta
+                  {isProposalGenerating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
+                      Generando...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-3 h-5 w-5" />
+                      Generar Propuesta IA
+                    </>
+                  )}
                 </Button>
               </div>
 
@@ -694,10 +927,13 @@ export default function ContactosPage() {
       )}
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
           <DialogHeader className="space-y-3">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-2xl font-bold tracking-tight">Editar Contacto</DialogTitle>
+              {selectedService && (
+                <Badge className="bg-green-100 text-green-800 border-green-300">Servicio: {selectedService.name}</Badge>
+              )}
             </div>
             <DialogDescription className="text-base text-muted-foreground leading-relaxed">
               Modifica la información del contacto y gestiona sus datos de manera eficiente.
@@ -840,28 +1076,54 @@ export default function ContactosPage() {
           </div>
 
           <DialogFooter className="flex flex-col gap-4 pt-8 border-t border-gray-100">
+            {selectedService && (
+              <div className="w-full p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold text-green-800">{selectedService.name}</h4>
+                    <p className="text-sm text-green-600">{selectedService.description}</p>
+                    <p className="text-xs text-green-500 mt-1">
+                      {selectedService.currency} {selectedService.base_price} • {selectedService.duration}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedService(null)}
+                    className="text-green-700 border-green-300 hover:bg-green-100"
+                  >
+                    Cambiar
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-4 w-full">
               <Button
                 variant="outline"
-                onClick={() => {
-                  // TODO: Implement catalog functionality
-                  toast.success("Abriendo catálogo...")
-                }}
+                onClick={() => handleCatalogClick("edit")}
                 className="flex-1 h-12 border-2 border-green-300 text-green-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-green-100 hover:border-green-400 transition-all duration-200 font-semibold shadow-sm"
               >
                 <Package className="mr-3 h-5 w-5" />
-                Catálogo
+                {selectedService ? "Cambiar Servicio" : "Seleccionar Servicio"}
               </Button>
               <Button
                 variant="outline"
-                onClick={() => {
-                  // TODO: Implement proposal functionality
-                  toast.success("Creando propuesta...")
-                }}
-                className="flex-1 h-12 border-2 border-blue-300 text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:border-blue-400 transition-all duration-200 font-semibold shadow-sm"
+                onClick={() => handleProposalClick("edit")}
+                disabled={isProposalGenerating || !selectedService}
+                className="flex-1 h-12 border-2 border-blue-300 text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:border-blue-400 transition-all duration-200 font-semibold shadow-sm disabled:opacity-50"
               >
-                <FileText className="mr-3 h-5 w-5" />
-                Propuesta
+                {isProposalGenerating ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-3 h-5 w-5" />
+                    Generar Propuesta IA
+                  </>
+                )}
               </Button>
             </div>
 
@@ -881,6 +1143,47 @@ export default function ContactosPage() {
               </Button>
             </div>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isServiceSelectorOpen} onOpenChange={setIsServiceSelectorOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Seleccionar Servicio</DialogTitle>
+            <DialogDescription>
+              Elige un servicio del catálogo para generar una propuesta personalizada
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            {services.map((service) => (
+              <div
+                key={service.id}
+                className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                onClick={() => handleServiceSelect(service)}
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg">{service.name}</h3>
+                    <p className="text-gray-600 text-sm mt-1">{service.description}</p>
+                    <div className="flex items-center gap-4 mt-2">
+                      <Badge variant="outline" className="text-xs">
+                        {service.category}
+                      </Badge>
+                      <span className="text-sm text-gray-500">{service.duration}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-lg text-green-600">
+                      {service.currency} {service.base_price}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {services.length === 0 && <div className="text-center py-8 text-gray-500">No hay servicios disponibles</div>}
         </DialogContent>
       </Dialog>
 
