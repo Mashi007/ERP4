@@ -1,6 +1,8 @@
-import { sql } from "your-sql-library" // Import sql library
-import { NextResponse } from "next/server" // Import NextResponse
-import type { NextRequest } from "next/server" // Import NextRequest
+import { neon } from "@neondatabase/serverless"
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET() {
   try {
