@@ -15,27 +15,31 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 
     const result = await sql`
-      UPDATE services 
+      UPDATE products 
       SET name = ${name}, 
           description = ${description || ""}, 
-          category = ${category || "General"}, 
-          base_price = ${base_price}, 
+          price = ${base_price}, 
           currency = ${currency || "EUR"}, 
-          duration_hours = ${duration_hours || 0}, 
-          features = ${JSON.stringify(features || [])}, 
-          requirements = ${JSON.stringify(requirements || [])}, 
-          deliverables = ${JSON.stringify(deliverables || [])}, 
           updated_at = NOW()
-      WHERE id = ${serviceId} AND is_active = true
-      RETURNING id, name, description, category, base_price, currency, duration_hours, 
-                features, requirements, deliverables, is_active, created_at, updated_at
+      WHERE id = ${serviceId} AND is_service = true
+      RETURNING id, name, description, price as base_price, currency, created_at, updated_at,
+                'General' as category, 0 as duration_hours,
+                '[]' as features, '[]' as requirements, '[]' as deliverables,
+                true as is_active
     `
 
     if (result.length === 0) {
       return NextResponse.json({ error: "Service not found" }, { status: 404 })
     }
 
-    return NextResponse.json(result[0])
+    const service = {
+      ...result[0],
+      features: JSON.parse(result[0].features || "[]"),
+      requirements: JSON.parse(result[0].requirements || "[]"),
+      deliverables: JSON.parse(result[0].deliverables || "[]"),
+    }
+
+    return NextResponse.json(service)
   } catch (error) {
     console.error("Error updating service:", error)
     return NextResponse.json({ error: "Failed to update service" }, { status: 500 })
@@ -47,9 +51,8 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     const serviceId = Number.parseInt(params.id)
 
     const result = await sql`
-      UPDATE services 
-      SET is_active = false, updated_at = NOW()
-      WHERE id = ${serviceId} AND is_active = true
+      DELETE FROM products 
+      WHERE id = ${serviceId} AND is_service = true
       RETURNING id
     `
 
@@ -69,17 +72,26 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const serviceId = Number.parseInt(params.id)
 
     const result = await sql`
-      SELECT id, name, description, category, base_price, currency, duration_hours, 
-             features, requirements, deliverables, is_active, created_at, updated_at
-      FROM services 
-      WHERE id = ${serviceId} AND is_active = true
+      SELECT id, name, description, price as base_price, currency, created_at, updated_at,
+             'General' as category, 0 as duration_hours,
+             '[]' as features, '[]' as requirements, '[]' as deliverables,
+             true as is_active
+      FROM products 
+      WHERE id = ${serviceId} AND is_service = true
     `
 
     if (result.length === 0) {
       return NextResponse.json({ error: "Service not found" }, { status: 404 })
     }
 
-    return NextResponse.json(result[0])
+    const service = {
+      ...result[0],
+      features: JSON.parse(result[0].features || "[]"),
+      requirements: JSON.parse(result[0].requirements || "[]"),
+      deliverables: JSON.parse(result[0].deliverables || "[]"),
+    }
+
+    return NextResponse.json(service)
   } catch (error) {
     console.error("Error fetching service:", error)
     return NextResponse.json({ error: "Failed to fetch service" }, { status: 500 })
