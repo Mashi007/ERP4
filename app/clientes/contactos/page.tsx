@@ -391,6 +391,7 @@ export default function ContactosPage() {
   }
 
   const handleNameChange = (value: string) => {
+    console.log("[v0] Name change - value:", value)
     setNewContact({ ...newContact, name: value })
     searchContacts(value)
   }
@@ -726,14 +727,35 @@ export default function ContactosPage() {
   }
 
   const handleSaveContact = async () => {
+    console.log("[v0] Starting contact save process")
+    console.log("[v0] Current newContact state:", newContact)
+    console.log("[v0] Current searchTerm:", searchTerm)
+
     try {
+      const contactToSave = {
+        ...newContact,
+        name: newContact.name || searchTerm, // Use searchTerm if name is empty
+      }
+
+      console.log("[v0] Contact data being sent to API:", contactToSave)
+
+      if (!contactToSave.name || !contactToSave.email) {
+        console.log("[v0] Validation failed - missing required fields")
+        toast.error("Nombre y email son requeridos")
+        return
+      }
+
       const response = await fetch("/api/contacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newContact),
+        body: JSON.stringify(contactToSave),
       })
 
+      console.log("[v0] API response status:", response.status)
+
       if (response.ok) {
+        const savedContact = await response.json()
+        console.log("[v0] Contact saved successfully:", savedContact)
         toast.success("Contacto creado exitosamente")
         setIsCreateContactOpen(false)
         setNewContact({
@@ -746,6 +768,7 @@ export default function ContactosPage() {
           stage: "Nuevo",
           status: "lead",
         })
+        setSearchTerm("")
         fetchContacts()
         setWorkflowState({
           step: "service",
@@ -757,10 +780,12 @@ export default function ContactosPage() {
           currentStep: 1,
         })
       } else {
+        const errorData = await response.text()
+        console.log("[v0] API error response:", errorData)
         toast.error("Error al crear contacto")
       }
     } catch (error) {
-      console.error("Error creating contact:", error)
+      console.error("[v0] Error creating contact:", error)
       toast.error("Error al crear contacto")
     }
   }
@@ -811,6 +836,7 @@ export default function ContactosPage() {
                         value={searchTerm}
                         onChange={(e) => {
                           const value = e.target.value
+                          console.log("[v0] Search input changed:", value) // Added debugging
                           setSearchTerm(value)
                           handleNameChange(value)
 
@@ -1217,9 +1243,13 @@ export default function ContactosPage() {
                     Cancelar
                   </Button>
                   <Button
-                    onClick={handleSaveContact}
-                    disabled={!newContact.name || !newContact.email}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+                    onClick={() => {
+                      console.log("[v0] Guardar Contacto button clicked") // Added click debugging
+                      console.log("[v0] Button enabled check - name:", newContact.name, "email:", newContact.email)
+                      handleSaveContact()
+                    }}
+                    disabled={(!newContact.name && !searchTerm) || !newContact.email} // Fixed validation to check both name and searchTerm
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Save className="h-4 w-4 mr-2" />
                     Guardar Contacto
@@ -1318,7 +1348,7 @@ export default function ContactosPage() {
             onClose={() => {
               console.log("[v0] Closing template selector dialog")
               setIsTemplateSelectorOpen(false)
-              setIsTemplateSelectorBusy(false)
+              setIsServiceSelectorBusy(false)
             }}
             onTemplateSelect={(template) => {
               console.log("[v0] Template selected:", template.name)
