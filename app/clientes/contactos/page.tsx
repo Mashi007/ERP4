@@ -30,6 +30,8 @@ import {
   ChevronRight,
   Edit,
   ArrowRight,
+  Settings,
+  Package,
 } from "lucide-react"
 import { toast } from "sonner"
 import ServiceSelector from "@/components/servicios/service-selector"
@@ -137,6 +139,9 @@ export default function ContactosPage() {
 
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
   const [isGeneratingProposal, setIsGeneratingProposal] = useState(false)
+
+  const [isContactDetailsOpen, setIsContactDetailsOpen] = useState(false)
+  const [selectedContactForDetails, setSelectedContactForDetails] = useState<any>(null)
 
   const stageOptions = [
     { value: "Nuevo", label: "Nuevo" },
@@ -845,6 +850,12 @@ export default function ContactosPage() {
     return await response.json()
   }
 
+  const handleOpenContactDetails = (contact: any) => {
+    console.log("[v0] Opening contact details for:", contact.name)
+    setSelectedContactForDetails(contact)
+    setIsContactDetailsOpen(true)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -1396,6 +1407,15 @@ export default function ContactosPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
                         <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenContactDetails(contact)}
+                          className="text-purple-600 hover:text-purple-700 border-purple-200 hover:border-purple-300"
+                        >
+                          <FileText className="h-4 w-4 mr-1" />
+                          Detalles
+                        </Button>
+                        <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEditContact(contact)}
@@ -1442,6 +1462,251 @@ export default function ContactosPage() {
           )}
         </div>
       </div>
+
+      {isContactDetailsOpen && selectedContactForDetails && (
+        <Dialog open={isContactDetailsOpen} onOpenChange={setIsContactDetailsOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Detalles del Contacto: {selectedContactForDetails.name}
+              </DialogTitle>
+              <DialogDescription>
+                Gestiona la información del contacto y configura servicios y plantillas
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* Contact Information Section */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Información del Contacto
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
+                    <Input
+                      value={selectedContactForDetails.name || ""}
+                      onChange={(e) =>
+                        setSelectedContactForDetails({
+                          ...selectedContactForDetails,
+                          name: e.target.value,
+                        })
+                      }
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
+                    <Input
+                      type="email"
+                      value={selectedContactForDetails.email || ""}
+                      onChange={(e) =>
+                        setSelectedContactForDetails({
+                          ...selectedContactForDetails,
+                          email: e.target.value,
+                        })
+                      }
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                    <Input
+                      value={selectedContactForDetails.phone || ""}
+                      onChange={(e) =>
+                        setSelectedContactForDetails({
+                          ...selectedContactForDetails,
+                          phone: e.target.value,
+                        })
+                      }
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
+                    <Input
+                      value={selectedContactForDetails.company || ""}
+                      onChange={(e) =>
+                        setSelectedContactForDetails({
+                          ...selectedContactForDetails,
+                          company: e.target.value,
+                        })
+                      }
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Service and Template Selection Section */}
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Configuración de Servicios y Plantillas
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  {/* Service Selection */}
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-700">Servicio Seleccionado</label>
+                    {workflowState.selectedService ? (
+                      <div className="p-3 bg-white rounded-lg border border-green-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-green-800">{workflowState.selectedService.name}</p>
+                            <p className="text-sm text-green-600">
+                              €{Number(workflowState.selectedService.base_price || 0).toFixed(2)}
+                            </p>
+                          </div>
+                          <Badge variant="outline" className="text-green-700 border-green-300">
+                            Seleccionado
+                          </Badge>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-gray-100 rounded-lg border border-gray-200">
+                        <p className="text-sm text-gray-500">No hay servicio seleccionado</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Template Selection */}
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-700">Plantilla Seleccionada</label>
+                    {workflowState.selectedTemplate ? (
+                      <div className="p-3 bg-white rounded-lg border border-blue-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-blue-800">{workflowState.selectedTemplate.name}</p>
+                            <p className="text-sm text-blue-600">{workflowState.selectedTemplate.category}</p>
+                          </div>
+                          <Badge variant="outline" className="text-blue-700 border-blue-300">
+                            Seleccionada
+                          </Badge>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-gray-100 rounded-lg border border-gray-200">
+                        <p className="text-sm text-gray-500">No hay plantilla seleccionada</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    onClick={() => {
+                      setIsContactDetailsOpen(false)
+                      handleServiceSelection()
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Package className="h-4 w-4 mr-2" />
+                    Seleccionar Servicio
+                  </Button>
+
+                  <Button
+                    onClick={() => {
+                      setIsContactDetailsOpen(false)
+                      handleTemplateSelection()
+                    }}
+                    variant="outline"
+                    className="border-purple-200 text-purple-700 hover:bg-purple-50"
+                    disabled={!workflowState.selectedService}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Seleccionar Plantilla
+                  </Button>
+
+                  <Button
+                    onClick={() => {
+                      setIsContactDetailsOpen(false)
+                      handleGenerateProposal()
+                    }}
+                    variant="outline"
+                    className="border-green-200 text-green-700 hover:bg-green-50"
+                    disabled={!workflowState.selectedService || !workflowState.selectedTemplate}
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Generar Propuesta IA
+                  </Button>
+                </div>
+              </div>
+
+              {/* Workflow Progress */}
+              {(workflowState.selectedService || workflowState.selectedTemplate) && (
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-800 mb-3">Progreso del Flujo de Trabajo</h4>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div
+                      className={`flex items-center gap-1 px-2 py-1 rounded ${
+                        workflowState.selectedService ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      <Package className="h-3 w-3" />
+                      Servicio
+                    </div>
+                    <ArrowRight className="h-3 w-3 text-gray-400" />
+                    <div
+                      className={`flex items-center gap-1 px-2 py-1 rounded ${
+                        workflowState.selectedTemplate ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      <FileText className="h-3 w-3" />
+                      Plantilla
+                    </div>
+                    <ArrowRight className="h-3 w-3 text-gray-400" />
+                    <div
+                      className={`flex items-center gap-1 px-2 py-1 rounded ${
+                        workflowState.generatedProposal ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      <Sparkles className="h-3 w-3" />
+                      Propuesta
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button variant="outline" onClick={() => setIsContactDetailsOpen(false)}>
+                Cerrar
+              </Button>
+              <Button
+                onClick={async () => {
+                  // Update contact information
+                  try {
+                    const response = await fetch(`/api/contacts/${selectedContactForDetails.id}`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(selectedContactForDetails),
+                    })
+
+                    if (response.ok) {
+                      toast.success("Contacto actualizado correctamente")
+                      fetchContacts()
+                      setIsContactDetailsOpen(false)
+                    } else {
+                      toast.error("Error al actualizar el contacto")
+                    }
+                  } catch (error) {
+                    console.error("[v0] Error updating contact:", error)
+                    toast.error("Error al actualizar el contacto")
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Guardar Cambios
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <Dialog open={isTemplateSelectorOpen} onOpenChange={setIsTemplateSelectorOpen}>
         <DialogContent className="sm:max-w-[900px] max-h-[80vh] overflow-hidden flex flex-col">
