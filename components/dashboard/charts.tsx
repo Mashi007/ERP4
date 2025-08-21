@@ -1,11 +1,8 @@
 "use client"
 
 import { CardContent } from "@/components/ui/card"
-
 import { CardTitle } from "@/components/ui/card"
-
 import { CardHeader } from "@/components/ui/card"
-
 import type React from "react"
 import { Card } from "@/components/ui/card"
 import { useCurrency } from "@/components/providers/currency-provider"
@@ -82,6 +79,8 @@ export function ListCount({
   labelKey?: string
   countKey?: string
 }) {
+  const { format } = useCurrency()
+
   return (
     <Card className="p-4">
       <div className="text-sm font-medium">{title}</div>
@@ -102,6 +101,7 @@ export function ListCount({
 }
 
 export function TareasPorPropietario({ data }: { data: { owner: string; open: number; completed: number }[] }) {
+  const { format } = useCurrency()
   return <ListCount title="Tareas por propietario" rows={data} labelKey="owner" countKey="completed" />
 }
 
@@ -212,6 +212,7 @@ export function TiempoMedioDeCiclo({
 }
 
 export function ConversionPorEtapa({ data }: { data: { stage: string; conversionPct: number; sample: number }[] }) {
+  const { format } = useCurrency()
   const max = 100
   return (
     <Card>
@@ -318,6 +319,7 @@ export function ConversionPorEtapaComparada({
 }
 
 export function CicloPorSegmento({ data }: { data: { segment: string; days: number; count: number }[] }) {
+  const { format } = useCurrency()
   const max = Math.max(1, ...data.map((d) => d.days))
   return (
     <Card>
